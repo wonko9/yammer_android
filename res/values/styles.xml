@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+	<style name="info_label">
+		<item name="android:layout_height">wrap_content</item>
+		<item name="android:layout_width">wrap_content</item>
+		<item name="android:textAppearance">@style/TextAppearance.info_label</item>
+		<item name="android:paddingRight">4dip</item>
+	</style>
+	
+	<style name="TextAppearance" parent="android:TextAppearance">
+	</style>
+	
+	<style name="TextAppearance.info_label">
+		<item name="android:textSize">14sp</item>
+		<item name="android:textStyle">bold</item>
+	</style>
+	
+    <style name="Nullwire.Theme.Light.NoTitleBar" parent="android:Theme.Light">  
+        <item name="android:textColorPrimary">@android:color/primary_text_light</item>
+        <item name="android:textColorSecondary">@android:color/secondary_text_light</item>
+        <item name="android:textColorTertiary">@android:color/tertiary_text_light</item>
+        <item name="android:textColorPrimaryInverse">@android:color/primary_text_light</item>
+        <item name="android:textColorSecondaryInverse">@android:color/secondary_text_light</item>
+        <item name="android:textColorTertiaryInverse">@android:color/tertiary_text_light</item>
+		<item name="android:windowNoTitle">true</item>
+		<item name="android:preferenceCategoryStyle">@style/Nullwire.Preference.Category</item>
+    </style>
+    
+    <style name="Nullwire.Preference.Category" parent="android:Preference.Category">
+    	<item name="android:layout">@layout/preference_category</item>
+    </style>
+    
+ 	<style name="Nullwire.Widget.TextView.ListSeparator" parent="android:Widget.TextView.ListSeparator">
+		<item name="android:background">@drawable/preference_category_background</item>
+		<item name="android:textColor">#ffffffff</item>	
+ 	</style>    
+</resources>

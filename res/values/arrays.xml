@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+	<array name="list_popup">
+		<item>@string/reply_label</item>
+		<item>@string/delete_label</item>
+	</array>
+	<string-array name="settings_update_entries">
+		<item>Manual refresh</item>
+		<item>Once a minute</item>
+		<item>Every 2 minutes</item>
+		<item>Every 3 minutes</item>
+		<item>Every 5 minutes</item>
+		<item>Every 10 minutes</item>
+	</string-array>
+	<string-array name="settings_update_values">
+		<item>0</item>
+		<item>60</item>
+		<item>120</item>
+		<item>180</item>
+		<item>300</item>
+		<item>600</item>
+	</string-array>
+	<string-array name="settings_reply_entries">
+		<item>Reply to message</item>
+		<item>Open message view</item>
+	</string-array>
+	<string-array name="settings_reply_values">
+		<item>reply</item>
+		<item>message</item>
+	</string-array>
+	<string-array name="settings_feed_entries">
+		<item>All Messages</item>
+		<item>My Feed</item>
+	</string-array>
+	<string-array name="settings_feed_values">
+		<item>all_messages</item>
+		<item>my_feed</item>
+	</string-array>
+	<string-array name="settings_notification_entries">
+		<item>All message</item>
+		<item>Only replies</item>
+	</string-array>
+	<string-array name="settings_notification_values">
+		<item>all</item>
+		<item>replies</item>
+	</string-array>
+	<string-array name="settings_names_entries">
+		<item>Firstname Lastname</item>
+		<item>Firstname</item>
+		<!-- <item>Email only</item>  -->
+	</string-array>
+	<string-array name="settings_names_values">
+		<item>firstname_lastname</item>
+		<item>firstname</item>
+		<!-- <item>email_only</item> -->
+	</string-array>
+</resources>

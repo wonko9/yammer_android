@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+      package="com.yammer"
+      android:versionCode="12"
+      android:versionName="1.0.23">
+
+	<!--
+		Permissions 
+	-->
+	<uses-permission android:name="android.permission.INTERNET" />
+	<uses-permission android:name="android.permission.VIBRATE"/> 
+	<uses-permission android:name="android.permission.READ_PHONE_STATE"/> 
+	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+	<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+	<uses-permission android:name="android.permission.WAKE_LOCK"/> 
+	
+	<!--
+		Application 
+	-->
+    <application 
+    	android:icon="@drawable/icon" 
+    	android:label="@string/app_name" 
+    	android:theme="@style/Nullwire.Theme.Light.NoTitleBar"
+    	android:debuggable="false"
+    	android:name=".Yowl"
+    	>
+
+		<!--
+			Intent Receivers 
+		-->
+		<receiver android:name=".YammerServiceManager" 
+			android:enabled="true" 
+			android:exported="false"
+			android:label="YammerServiceManager">
+			<intent-filter>
+				<action android:name="android.intent.action.BOOT_COMPLETED" />
+			</intent-filter>
+		</receiver>
+
+		<!--
+			Services
+		-->
+        <service 
+        		android:name=".YammerService">
+		</service>
+
+		<!--
+			Activities
+		-->
+        <activity android:name=".Yammer"
+                  android:label="@string/app_name"
+                  android:launchMode="singleTop"
+                  >
+                  <!-- android:screenOrientation="sensor"  -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        
+        <activity 	android:name=".YammerReply" 
+            		android:theme="@android:style/Theme.Translucent.NoTitleBar"
+        			/>
+
+        <activity 	android:name=".YammerShare" 
+            		android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            		android:icon="@drawable/yammer_logo_medium"
+                    android:label="Yammer">
+           	<intent-filter>
+        		<action android:name="android.intent.action.SEND" />
+        		<category android:name="android.intent.category.DEFAULT" /> 
+				<data android:mimeType="text/plain" />
+			</intent-filter>
+        </activity>        
+        
+        <activity 	android:name=".About" 
+    				android:theme="@android:style/Theme.Dialog"
+        			/>
+        
+        <activity 	android:name=".Browser"
+    				android:theme="@android:style/Theme.Black.NoTitleBar"
+    				android:launchMode="singleTop"
+    				/>
+    				
+        <activity 	android:name=".YammerMessage" />
+        
+        <activity 	android:name=".YammerSettings" 
+    				android:theme="@style/Nullwire.Theme.Light.NoTitleBar"
+        			/>
+    </application>
+    
+    <uses-sdk android:minSdkVersion="3" />
+</manifest> 

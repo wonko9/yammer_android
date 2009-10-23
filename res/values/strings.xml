@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="app_name">Yowl for Yammer</string>
+	<string name="request_authorization">Authorizing your account</string>
+	<string name="request_access">Requesting access</string>
+	<string name="reply">Reply</string>
+	<string name="what_are_you_working_on">What are you working on?</string>
+	<string name="reply_label">Reply</string>
+	<string name="delete_label">Delete</string>
+	<string name="popup_title_label">Yammer</string>
+	<string name="follow_label">Follow</string>
+	<string name="unfollow_label">Unfollow</string>
+	<string name="cancel_label">Cancel</string>
+	<string name="a_moment_ago">a moment ago</string>
+	<string name="setting_define_timer">Updates</string>
+	<string name="save">Save</string>
+    <string name="ok">OK</string>	
+	<string name="cancel">Cancel</string>
+	<string name="about">About</string>
+	<string name="reload">Reload</string>
+	<string name="settings">Settings</string>
+	<string name="feeds">Feeds</string>
+	<string name="users">Users</string>
+	<string name="view_message_label">View message</string>
+	<string name="view_thread_label">View thread</string>
+	<string name="days_ago">days ago</string>
+	<string name="minutes_ago">minutes ago</string>
+	<string name="one_minute_ago">one minute ago</string>
+	<string name="hours_ago">hours ago</string>
+	<string name="a_few_minutes_ago">a few minutes ago</string>
+	<string name="about_half_an_hour_ago">about half an hour ago</string>
+	<string name="about_an_hour_ago">about an hour ago</string>
+	<string name="new_yammer_message">New Yammer message</string>
+	<string name="please_authorize">Please authorize!</string>
+	<string name="loading">Loading...</string>
+	<string name="unknown">Unknown</string>
+	<plurals name="new_messages_available">
+		<item quantity="one">There is 1 new Yammer message in your network</item>
+		<item quantity="other">There are %s new Yammer messages in your network</item>
+	</plurals>
+	<string name="about_text">Yammer for Android v%s © 2009 Nullwire ApS\nhttp://nullwire.com\nsupport@nullwire.com</string>
+	<string name="about_disclaimer"> \nDisclaimer: Yowl and Nullwire logo(s) copyright © Nullwire LLC. Yammer logo(s) copyright © Yammer.com.\n\nThe Yammer enterprise microblogging service is not affiliated with or related to Nullwire in any way.</string>
+	<string name="setting_select_active_account">Select active account</string>
+	<string name="url_icon">&#x2192;</string>
+	<string name="check_this_out">Check this out:</string>	
+</resources>

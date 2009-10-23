@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:orientation="horizontal"
+	android:gravity="top"
+	android:background="@drawable/list_row_background"
+	android:padding="4px">
+	<ImageView
+		android:id="@+id/user_icon"
+		android:layout_width="48px"
+		android:layout_height="48px"
+		android:background="#85b7dd"
+		android:src="@drawable/no_photo_small" 
+		android:padding="2px" />
+	<TextView
+		android:id="@+id/label"
+		android:layout_toRightOf="@id/user_icon"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:paddingRight="5px"
+		android:textSize="14sp"
+		android:bufferType="spannable"
+		android:text="TEST" android:paddingLeft="3px"/>
+	<TextView
+		android:id="@+id/tweet_time"
+		android:layout_below="@id/label"
+		android:layout_toRightOf="@id/user_icon"
+		android:textColor="#85b7dd"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:textSize="14sp"
+		android:textStyle="italic"
+		android:padding="5px"
+		/>
+</RelativeLayout>

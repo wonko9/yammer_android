@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<PreferenceScreen
+	xmlns:android="http://schemas.android.com/apk/res/android">
+	<!-- PreferenceCategory
+		android:title="Active Account">
+		<PreferenceScreen
+			android:key="key_active_accounts"
+			android:title="Active accounts"
+			android:summary="Manage your Yammer accounts">
+		</PreferenceScreen>
+	</PreferenceCategory-->
+	<PreferenceCategory
+		android:title="Account">
+		<com.yammer.EditAccountPreference 
+			android:key="key_clear_account"
+			android:title="Clear account information"
+			android:summary="Clear account data and reauthenticate with Yammer."
+			/>
+	</PreferenceCategory>
+	<PreferenceCategory
+		android:title="Messages">
+		<ListPreference
+			android:textColor="#000000"
+			android:key="key_update"
+			android:title="Updates"
+			android:summary="How often should the application check the default Yammer network for new messages?"
+			android:entries="@array/settings_update_entries"
+			android:entryValues="@array/settings_update_values"
+			android:dialogTitle="Choose timeout"
+			android:defaultValue="120"
+			>
+		</ListPreference>
+		<!-- ListPreference
+			android:textColor="#000000"
+			android:key="key_feed"
+			android:title="Default feed"
+			android:summary="Specify your default feed"
+			android:entries="@array/settings_feed_entries"
+			android:entryValues="@array/settings_feed_values"
+			android:dialogTitle="Choose timeout"
+			android:defaultValue="my_messages"
+			>
+		</ListPreference-->
+		<!-- ListPreference
+			android:textColor="#000000"
+			android:key="key_replies"
+			android:title="Message replies"
+			android:summary="What should happen when a message is clicked"
+			android:entries="@array/settings_reply_entries"
+			android:entryValues="@array/settings_reply_values"
+			android:dialogTitle="Choose timeout"
+			android:defaultValue="reply"
+			>
+		</ListPreference-->
+		<ListPreference
+			android:textColor="#000000"
+			android:key="key_names"
+			android:title="Name Display"
+			android:summary="How should names in your network be displayed?"
+			android:entries="@array/settings_names_entries"
+			android:entryValues="@array/settings_names_values"
+			android:dialogTitle="Choose option"
+			android:defaultValue="firstname"
+			>
+		</ListPreference>
+	</PreferenceCategory>
+	<PreferenceCategory
+		android:title="Notifications">
+		<ListPreference
+			android:textColor="#000000"
+			android:key="key_notification"
+			android:title="Notification on.."
+			android:summary="When do you want Yowl to tell you about new messages?"
+			android:entries="@array/settings_notification_entries"
+			android:entryValues="@array/settings_notification_values"
+			android:dialogTitle="Choose notification"
+			android:defaultValue="all"
+			/>
+		<CheckBoxPreference
+			android:key="key_vibrate"
+			android:title="Vibrate"
+			android:summary="Should Yowl vibrate, when there are new messages for you?"
+			android:defaultValue="true"
+			/>	
+	</PreferenceCategory>
+	<PreferenceCategory
+		android:title="Background Service">
+		<CheckBoxPreference
+			android:key="key_background"
+			android:title="Launch Yowl at startup"
+			android:summary="Launch Yowl background service when phone starts up?"
+			android:defaultValue="true"
+			/>	
+	</PreferenceCategory>
+</PreferenceScreen>

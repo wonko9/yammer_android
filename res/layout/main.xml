@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout 
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+android:id/root_layout"
+	android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+	android:background="#035c99"
+    >
+	<EditText
+			android:id="@+android:id/tweet_editor"
+		    android:layout_width="fill_parent" 
+		    android:layout_height="wrap_content" 
+			android:textColor="#ff000000"
+			android:textSize="20sp"
+	    />
+	    
+	<view 	xmlns:android="http://schemas.android.com/apk/res/android"
+			class="com.yammer.TweetListView" 
+			android:id="@+android:id/tweet_list"
+			android:drawSelectorOnTop="true"
+			android:background="#035c99"
+		    android:textColor="#76d5ff"
+			android:layout_weight="1"
+		    android:layout_width="fill_parent" 
+		    android:layout_height="fill_parent"
+    />
+</LinearLayout>
