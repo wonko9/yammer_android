@@ -446,7 +446,7 @@ public class YammerService extends Service {
 		// body - Body of message
 		// Start deletion on network in thread
 		if (G.DEBUG) Log.d(TAG_YSERVICE, "Posting message");
-		oAuth.postResource("https://www.yammer.com/api/v1/messages/", message, messageId);
+		oAuth.postResource(OAuthCustom.BASE_URL + "/api/v1/messages/", message, messageId);
 		Intent intent = new Intent( "com.yammer:PUBLIC_TIMELINE_UPDATED" );
 		sendBroadcast(intent);
 	}
@@ -460,7 +460,7 @@ public class YammerService extends Service {
 	public void deleteMessage(final long messageId) throws NWOAuthAccessDeniedException, NWOAuthConnectionProblem {
 		if (G.DEBUG) Log.d(TAG_YSERVICE, "YammerService::deleteMessage");
 		// Start deletion on network in thread
-		oAuth.deleteResource("https://www.yammer.com/api/v1/messages/"+messageId);		
+		oAuth.deleteResource(OAuthCustom.BASE_URL + "/api/v1/messages/"+messageId);		
 		// Delete it from the database
 		SQLiteDatabase dbDelete = yammerData.getWritableDatabase();
 		int count = dbDelete.delete(TABLE_MESSAGES, MESSAGE_ID+"="+messageId, null);
@@ -500,7 +500,7 @@ public class YammerService extends Service {
 	}
 
 	public void updateCurrentUserData() throws NWOAuthAccessDeniedException {
-		String url = "https://www.yammer.com/api/v1/users/current.json";
+		String url = OAuthCustom.BASE_URL + "/api/v1/users/current.json";
 		// Fetch the user data JSON
 		String userData = null;
 		try {
@@ -546,7 +546,7 @@ public class YammerService extends Service {
 
 	// Check for updates
 	protected void checkForApplicationUpdate() {
-		String url = "http://nullwire.com/static/updates/yowl";
+		String url = OAuthCustom.BASE_URL + "/android/updates/";
 		try {
 			if (G.DEBUG) Log.d(TAG_YSERVICE, "Querying URL "+url+" for new updates");
 			DefaultHttpClient httpClient = new DefaultHttpClient(); 
@@ -592,9 +592,9 @@ public class YammerService extends Service {
 			// Fetch the public timeline
 			String url = null;
 			if (YammerSettings.getDefaultFeed(this).equals("my_feed")) {
-				url = "https://www.yammer.com/api/v1/messages/following.json?newer_than="+lastMessageId;				
+				url = OAuthCustom.BASE_URL + "/api/v1/messages/following.json?newer_than="+lastMessageId;				
 			} else {
-				url = "https://www.yammer.com/api/v1/messages.json?newer_than="+lastMessageId;				
+				url = OAuthCustom.BASE_URL + "/api/v1/messages.json?newer_than="+lastMessageId;				
 			}
 			String timeline = null;
 			timeline = oAuth.accessResource(url);

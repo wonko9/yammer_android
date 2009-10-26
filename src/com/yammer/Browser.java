@@ -35,7 +35,7 @@ public class Browser extends Activity {
         	@Override
         	public void onLoadResource(WebView view, String Url) {
         		if (G.DEBUG) Log.d("BROWSER", "Loading: " + Url);
-        		if ( Url.startsWith("http://nullwire.com/") ) {
+        		if ( Url.startsWith(OAuthCustom.BASE_URL + "/") ) {
         			if (G.DEBUG) Log.d(TAG, "Seems OK. Trying to shut down WebView");
         		}
         	}
@@ -51,12 +51,12 @@ public class Browser extends Activity {
         		} catch( Exception e ) {
         			e.printStackTrace();
         		}
-        		if ( url.equals("https://www.yammer.com/users/new") ) {
-            		if (G.DEBUG) Log.d(TAG, "REDIRECTING user to: https://www.yammer.com/login");        			
+        		if ( url.equals(OAuthCustom.BASE_URL + "/users/new") ) {
+            		if (G.DEBUG) Log.d(TAG, "REDIRECTING user to: /login");        			
         			// Redirect to the login screen
-        	        webView.loadUrl("https://www.yammer.com/login");
+        	        webView.loadUrl(OAuthCustom.BASE_URL + "/login");
         		}
-        		else if ( url.startsWith("http://nullwire.com/yowl/callback?oauth_token=") ) {
+        		else if ( url.startsWith(OAuthCustom.BASE_URL + "/android/callback?oauth_token=") ) {
         			if (G.DEBUG) Log.d(TAG, "Seems OK. Trying to shut down WebView");
         			int callbackTokenIndex = url.indexOf("callback_token") + "callback_token=".length();	
         			String callbackToken = url.substring(callbackTokenIndex);

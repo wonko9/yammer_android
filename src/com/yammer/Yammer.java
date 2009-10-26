@@ -1,7 +1,3 @@
-/**
- * (C)Copyright 2009, Nullwire
- */
-
 package com.yammer;
 
 import static android.provider.BaseColumns._ID;
@@ -56,8 +52,6 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
-
-import com.flurry.android.FlurryAgent;
 
 public class Yammer extends Activity {
 	
@@ -958,8 +952,6 @@ public class Yammer extends Activity {
 	@Override
     public void onStart() {
     	super.onStart();
-		FlurryAgent.onStartSession(this, "42MSX94TFTN91UIDX85K");
-		//FlurryAgent.onError("FortuneActivity:onSaveInstanceState", "<There was no dialog being shown. Ignore. No real error.>", "Message");
     	if (G.DEBUG) Log.d(TAG_Y, "Yammer::onStart");
         // Binding to Yammer service to be able to access service
     	if (G.DEBUG) Log.d(TAG_Y, "Binding to Yammer service");
@@ -1016,8 +1008,6 @@ public class Yammer extends Activity {
         	// Reset the message count - we probably saw any new message
     		getYammerService().resetMessageCount();
     	}
-    	// FlurryAgent session has ended
-		FlurryAgent.onEndSession(this);
     	if (G.DEBUG) Log.d(TAG_Y, "Yammer::onStop");
     	// Need to unbind the service
     	if (G.DEBUG) Log.d(TAG_Y, "Unbinding ServiceConnection");    	

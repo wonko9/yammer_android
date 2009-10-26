@@ -28,23 +28,11 @@ public class NWOAuth {
      * 
      * Yammer properties:
      */
-	String applicationName = "Yowl";
-	String consumerKey = "oiKSxL1n0t2BPV33hWwnmg"; // Yowl!
-    String consumerSecret = "u0wFcKwQADA00eR9OAGF5DVSJGuiPsbFvFZIvp6lmyA"; // Yowl!
-    String callbackUrl = "https://nullwire.com/yowl/callback";
-    String reqUrl = "https://www.yammer.com/oauth/request_token";
-    String authzUrl = "https://www.yammer.com/oauth/authorize";
-    String accessUrl = "https://www.yammer.com/oauth/access_token";
-
-    /*
-	String applicationName = "Android Yammer Test1";
-	String consumerKey = "01vEsltYhVHhNy4hByTBQ";
-    String consumerSecret = "5sddkWHnf8wRwc6UagVIWc4vasP0ogHED4FKV1HT8I";
-    String callbackUrl = "https://nullwire.com/yammer/callback";
-    String reqUrl = "https://www.yammer.com/oauth/request_token";
-    String authzUrl = "https://www.yammer.com/oauth/authorize";
-    String accessUrl = "https://www.yammer.com/oauth/access_token";
-    */
+  	String applicationName = "Yammer Android";
+    String callbackUrl = OAuthCustom.BASE_URL + "android/callback";
+    String reqUrl = OAuthCustom.BASE_URL + "/oauth/request_token";
+    String authzUrl = OAuthCustom.BASE_URL + "/oauth/authorize";
+    String accessUrl = OAuthCustom.BASE_URL + "/oauth/access_token";
     
     String requestToken = null;
     String tokenSecret = null;
@@ -62,7 +50,7 @@ public class NWOAuth {
 	   if (G.DEBUG) Log.d("OAuth", "OAuth::OAuth");
 	   // Create OAuth accessor
 	   this.provider = new OAuthServiceProvider(reqUrl, authzUrl, accessUrl);
-       this.consumer = new OAuthConsumer(callbackUrl, consumerKey, consumerSecret, provider);        
+       this.consumer = new OAuthConsumer(callbackUrl, OAuthCustom.KEY, OAuthCustom.SECERT, provider);        
        this.accessor = new OAuthAccessor(consumer);
        this.client = new OAuthClient(new HttpClient4());
     }
@@ -72,7 +60,7 @@ public class NWOAuth {
    	 */
    	public void reset() {
  	   this.provider = new OAuthServiceProvider(reqUrl, authzUrl, accessUrl);
-       this.consumer = new OAuthConsumer(callbackUrl, consumerKey, consumerSecret, provider);        
+       this.consumer = new OAuthConsumer(callbackUrl, OAuthCustom.KEY, OAuthCustom.SECERT, provider);        
        this.accessor = new OAuthAccessor(consumer);
        this.client = new OAuthClient(new HttpClient4());
        this.requestToken = null;
@@ -212,7 +200,7 @@ public class NWOAuth {
     public String followUser(long userId) throws NWOAuthAccessDeniedException, NWOAuthConnectionProblem {
     	if (G.DEBUG_OAUTH) Log.d("OAuth", "Following user: " + userId);    	
     	String responseBody = null;
-    	String url = "https://www.yammer.com/api/v1/subscriptions/"; 
+    	String url = OAuthCustom.BASE_URL + "/api/v1/subscriptions/"; 
     	Properties paramProps = new Properties();
     	paramProps.setProperty("target_type", "user");
     	paramProps.setProperty("target_id", Long.toString(userId));
@@ -235,7 +223,7 @@ public class NWOAuth {
     public String unfollowUser(long userId) throws NWOAuthAccessDeniedException, NWOAuthConnectionProblem {
     	if (G.DEBUG_OAUTH) Log.d("OAuth", "Unfollowing user: " + userId);    	
     	String responseBody = null;
-        String url = "https://www.yammer.com/api/v1/subscriptions/options?target_id=182108&target_type=user"; 
+        String url = OAuthCustom.BASE_URL + "/api/v1/subscriptions/options?target_id=182108&target_type=user"; 
         //String url = "https://www.yammer.com/api/v1/subscriptions/"; 
     	if (G.DEBUG_OAUTH) Log.d("OAuth", "URL: " + url);    	
     	Properties paramProps = new Properties();
