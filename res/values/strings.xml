@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<string name="app_name">Yowl for Yammer</string>
+	<string name="app_name">Yammer</string>
 	<string name="request_authorization">Authorizing your account</string>
 	<string name="request_access">Requesting access</string>
 	<string name="reply">Reply</string>
