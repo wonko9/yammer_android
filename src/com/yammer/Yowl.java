@@ -11,7 +11,7 @@ import android.util.Log;
 import com.nullwire.trace.ExceptionHandler;
 
 public class Yowl extends Application {
-	private static String TAG = "YowlApp";
+	private static String TAG = "Yammer Android";
 	static Context context = null;
 	@Override
 	public void onCreate() {

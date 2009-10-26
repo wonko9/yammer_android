@@ -1,7 +1,3 @@
-/**
- * (C)Copyright 2009 Nullwire
- */
-
 package com.yammer;
 
 import android.app.Activity;
