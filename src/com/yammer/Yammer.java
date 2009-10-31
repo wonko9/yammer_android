@@ -131,7 +131,7 @@ public class Yammer extends Activity {
                 tweetListView.setOnItemClickListener( new OnItemClickListener() {
 					@Override
 					public void onItemClick(AdapterView<?> adapterView, View view, int id, long row) {
-						if ( YammerSettings.getMessageClickBehaviour(Yammer.this).equals("reply_to_message") ) {
+						if ( YammerSettings.getMessageClickBehaviour(Yammer.this).equals("reply") ) {
 							if (G.DEBUG) Log.d(TAG_Y, "Replying to message");
     						long rowId = row;
     				        String sql = "select _id, message_id from messages where " + _ID + "=" + rowId;
