@@ -1,7 +1,7 @@
 package com.yammer;
 
 public final class G {
-	public static final boolean DEBUG 				= true;
+	public static final boolean DEBUG 				= false;
 	public static final boolean DEBUG_BMDOWNLOADER 	= false;
 	public static final boolean DEBUG_OAUTH 		= false;
 	public static final boolean CUSTOM_EXCEPTIONS 	= true;
