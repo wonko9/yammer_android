@@ -10,11 +10,13 @@ import android.os.Bundle;
 import android.util.Log;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Toast;
 
 public class Browser extends Activity {
 	private static WebView webView = null;
 	private static final String TAG = "Browser";
 	
+	private static final String CALLBACK_TOKEN = "oauth_verifier=";
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -55,10 +57,9 @@ public class Browser extends Activity {
             		if (G.DEBUG) Log.d(TAG, "REDIRECTING user to: /login");        			
         			// Redirect to the login screen
         	        webView.loadUrl(OAuthCustom.BASE_URL + "/login");
-        		}
-        		else if ( url.startsWith(OAuthCustom.BASE_URL + "/android/callback?oauth_token=") ) {
+            } else if ( 0 < url.indexOf(CALLBACK_TOKEN) ) {
         			if (G.DEBUG) Log.d(TAG, "Seems OK. Trying to shut down WebView");
-        			int callbackTokenIndex = url.indexOf("callback_token") + "callback_token=".length();	
+        			int callbackTokenIndex = url.indexOf(CALLBACK_TOKEN) + CALLBACK_TOKEN.length();	
         			String callbackToken = url.substring(callbackTokenIndex);
         			// Extract the 4 digit callback token
         			if (G.DEBUG) Log.d(TAG, "callback_token: " + callbackToken);        			
@@ -69,6 +70,8 @@ public class Browser extends Activity {
         			// We will handle this ourselves - don't do anything
         			// All okay, so set result = 0 - i.e. not canceled
         			setResult(0);
+        		} else if (G.DEBUG) {
+        		  Toast.makeText(getApplicationContext(), "Unknown redirect: "+url, Toast.LENGTH_LONG).show();
         		}
         	}
         	
@@ -131,7 +134,6 @@ public class Browser extends Activity {
 			ProgressDialog dialog = new ProgressDialog(this);
 			dialog.setMessage(getResources().getString(R.string.loading));
     		dialog.setOnCancelListener(new OnCancelListener() {
-				@Override
 				public void onCancel(DialogInterface arg0) {
 					if (G.DEBUG) Log.d(TAG, "Canceling loading dialog");
 					// if canceled, then finish this activity
