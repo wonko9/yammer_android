@@ -455,9 +455,9 @@ public class Yammer extends Activity {
 	
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-		menu.add(0, MENU_FEEDS, Menu.NONE, R.string.feeds).setIcon(R.drawable.menu_show_list);
+		  menu.add(0, MENU_FEEDS, Menu.NONE, R.string.feeds).setIcon(R.drawable.menu_show_list);
     	menu.add(0, MENU_RELOAD, Menu.NONE, R.string.reload).setIcon(R.drawable.menu_refresh);
-    	menu.add(0, MENU_SETTINGS, Menu.NONE, R.string.settings).setIcon(R.drawable.menu_preferences);
+    	menu.add(0, MENU_SETTINGS, Menu.NONE, R.string.settings).setIcon(android.R.drawable.ic_menu_preferences);
     	return (super.onCreateOptionsMenu(menu));
     }
         
