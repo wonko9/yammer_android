@@ -51,8 +51,6 @@ public class YammerService extends Service {
 	//private static int NOTIFICATION_ERROR = 1;
 	private static int NOTIFICATION_APPLICATION_UPDATE = 2;
 
-	// OAuth library initialization
-	NWOAuth oAuth = new NWOAuth();
 	// Are we authorized?
 	private static boolean authorized = false;
 	// Check if an update should be made every 35 seconds
@@ -118,7 +116,7 @@ public class YammerService extends Service {
 		        // Reset last message Id
 		        YammerService.this.lastMessageId = 0;
 		        // Reset the OAuth library
-		        oAuth.reset();
+		        resetOAuth();
 		        // Not authorized anymore
 		        YammerService.setAuthorized(false);
 		        // Release semaphore and allow updates again (if authorized)
@@ -192,9 +190,9 @@ public class YammerService extends Service {
 				sendBroadcast(intent);
 				// Get request token
 				// Fetch the request token and token secret
-				oAuth.getRequestToken();	
+				getOAuth().getRequestToken();	
 				// Make sure that a request token and a secret token was received
-				String responseUrl = oAuth.authorizeUser();
+				String responseUrl = getOAuth().authorizeUser();
 				if ( G.DEBUG ) Log.d(TAG_YSERVICE, "Response URL received: " + responseUrl);
 				// Send an intent that will start the browser
 				intent = new Intent( "com.yammer:AUTHORIZATION_BROWSER" );
@@ -208,7 +206,7 @@ public class YammerService extends Service {
 					Thread.sleep(10);
 				}
 				if (G.DEBUG) Log.d(TAG_YSERVICETHREAD, "User done with authorization");
-				oAuth.enableApplication(YammerService.authenticationToken);
+				getOAuth().enableApplication(YammerService.authenticationToken);
 				// We need to update the current user data
 				updateCurrentUserData();
 				// Set this user and network ID as the default user/network
@@ -219,7 +217,7 @@ public class YammerService extends Service {
 		        editor.commit();
 		        // TODO: Who am I following?
 				// It seems authorization was a success, so store the token and secret
-				yammerData.createNetwork(getCurrentNetworkId(), getCurrentUserId(), oAuth.requestToken, oAuth.tokenSecret);				
+				yammerData.createNetwork(getCurrentNetworkId(), getCurrentUserId(), getOAuth().requestToken, getOAuth().tokenSecret);				
 				// Authorization done, so the progress bar can be removed
 				intent = new Intent( "com.yammer:AUTHORIZATION_DONE" );
 				sendBroadcast(intent);
@@ -313,8 +311,8 @@ public class YammerService extends Service {
 	    		sendBroadcast(authenticateIntent);        		        	
 	        } else {
 	        	// Store token secrets to NWOAuth to be able to authorize
-	        	oAuth.requestToken = accessToken;
-	        	oAuth.tokenSecret = accessTokenSecret;
+	        	getOAuth().requestToken = accessToken;
+	        	getOAuth().tokenSecret = accessTokenSecret;
 	        	// There is already an access token available, so we are authorized
 	        	setAuthorized(true);
 	        }
@@ -446,7 +444,7 @@ public class YammerService extends Service {
 		// body - Body of message
 		// Start deletion on network in thread
 		if (G.DEBUG) Log.d(TAG_YSERVICE, "Posting message");
-		oAuth.postResource(OAuthCustom.BASE_URL + "/api/v1/messages/", message, messageId);
+		getOAuth().postResource(getURLBase() + "/api/v1/messages/", message, messageId);
 		Intent intent = new Intent( "com.yammer:PUBLIC_TIMELINE_UPDATED" );
 		sendBroadcast(intent);
 	}
@@ -460,7 +458,7 @@ public class YammerService extends Service {
 	public void deleteMessage(final long messageId) throws NWOAuthAccessDeniedException, NWOAuthConnectionProblem {
 		if (G.DEBUG) Log.d(TAG_YSERVICE, "YammerService::deleteMessage");
 		// Start deletion on network in thread
-		oAuth.deleteResource(OAuthCustom.BASE_URL + "/api/v1/messages/"+messageId);		
+		getOAuth().deleteResource(getURLBase() + "/api/v1/messages/"+messageId);		
 		// Delete it from the database
 		SQLiteDatabase dbDelete = yammerData.getWritableDatabase();
 		int count = dbDelete.delete(TABLE_MESSAGES, MESSAGE_ID+"="+messageId, null);
@@ -474,7 +472,7 @@ public class YammerService extends Service {
 		if (G.DEBUG) Log.d(TAG_YSERVICE, "YammerService::followUser");
 		// GET https://yammer.com/api/v1/subscriptions/to_user/<id>.json
 		if (G.DEBUG) Log.d(TAG_YSERVICE, "Following user");
-		oAuth.followUser(userId);
+		getOAuth().followUser(userId);
 		if (G.DEBUG) Log.d(TAG_YSERVICE, "User followed!");
 		// Update the database to reflect change
 		yammerData.subscribe(YammerData.ID_TARGET_USER, userId, true);		
@@ -484,7 +482,7 @@ public class YammerService extends Service {
 		if (G.DEBUG) Log.d(TAG_YSERVICE, "YammerService::followUser");
 		// DELETE https://yammer.com/api/v1/subscriptions/
 		if (G.DEBUG) Log.d(TAG_YSERVICE, "Following user");
-		oAuth.unfollowUser(userId);
+		getOAuth().unfollowUser(userId);
 		if (G.DEBUG) Log.d(TAG_YSERVICE, "User followed!");
 		// Update the database to reflect change
 		yammerData.subscribe(YammerData.ID_TARGET_USER, userId, false);		
@@ -500,11 +498,11 @@ public class YammerService extends Service {
 	}
 
 	public void updateCurrentUserData() throws NWOAuthAccessDeniedException {
-		String url = OAuthCustom.BASE_URL + "/api/v1/users/current.json";
+		String url = getURLBase() + "/api/v1/users/current.json";
 		// Fetch the user data JSON
 		String userData = null;
 		try {
-			userData = oAuth.accessResource(url);
+			userData = getOAuth().accessResource(url);
 		} catch (NWOAuthConnectionProblem e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -546,7 +544,7 @@ public class YammerService extends Service {
 
 	// Check for updates
 	protected void checkForApplicationUpdate() {
-		String url = OAuthCustom.BASE_URL + "/android/updates/";
+		String url = getURLBase() + "/android/updates/";
 		try {
 			if (G.DEBUG) Log.d(TAG_YSERVICE, "Querying URL "+url+" for new updates");
 			DefaultHttpClient httpClient = new DefaultHttpClient(); 
@@ -592,12 +590,12 @@ public class YammerService extends Service {
 			// Fetch the public timeline
 			String url = null;
 			if (YammerSettings.getDefaultFeed(this).equals("my_feed")) {
-				url = OAuthCustom.BASE_URL + "/api/v1/messages/following.json?newer_than="+lastMessageId;				
+				url = getURLBase() + "/api/v1/messages/following.json?newer_than="+lastMessageId;				
 			} else {
-				url = OAuthCustom.BASE_URL + "/api/v1/messages.json?newer_than="+lastMessageId;				
+				url = getURLBase() + "/api/v1/messages.json?newer_than="+lastMessageId;				
 			}
 			String timeline = null;
-			timeline = oAuth.accessResource(url);
+			timeline = getOAuth().accessResource(url);
 
 			if (G.DEBUG) Log.d(TAG_YSERVICE, "Public timeline JSON: " + timeline);
 			// If json public timeline doesn't exist, create it
@@ -683,6 +681,10 @@ public class YammerService extends Service {
 			sendBroadcast(intent);
 		}
 	}
+
+  private String getURLBase() {
+    return YammerSettings.getUrl(getApplicationContext());
+  }
 	
 	@Override
 	public void onDestroy() {
@@ -708,6 +710,19 @@ public class YammerService extends Service {
 		return false;
 	}
 
+	
+	private NWOAuth oAuth;
+	
+	private void resetOAuth() {
+	  this.oAuth = null;
+	}
+	private NWOAuth getOAuth() {
+	  if (null == this.oAuth) {
+	    this.oAuth = new NWOAuth(getURLBase());
+	  }
+	  return this.oAuth;
+	}
+
 	public static void setAuthorized(boolean authorized) {
 		YammerService.authorized = authorized;
 	}
@@ -719,4 +734,5 @@ public class YammerService extends Service {
 	public static boolean isAuthorized() {
 		return authorized;
 	}
+	
 }

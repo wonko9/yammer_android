@@ -129,7 +129,6 @@ public class Yammer extends Activity {
                 registerForContextMenu(tweetListView);
                 // Attach an onclick listener to the listview
                 tweetListView.setOnItemClickListener( new OnItemClickListener() {
-					@Override
 					public void onItemClick(AdapterView<?> adapterView, View view, int id, long row) {
 						if ( YammerSettings.getMessageClickBehaviour(Yammer.this).equals("reply") ) {
 							if (G.DEBUG) Log.d(TAG_Y, "Replying to message");
@@ -204,7 +203,6 @@ public class Yammer extends Activity {
     				    			Intent initIntent = new Intent( "com.yammer:TIMELINE_INITIALIZE" );
     				    			sendBroadcast(initIntent);
     				    			runOnUiThread( new Runnable() {
-										@Override
 										public void run() {
 	        				    			updateListView();        		    				    				
 										}
@@ -261,7 +259,6 @@ public class Yammer extends Activity {
 	    		alertDialog.setTitle("Error!");
 	    		alertDialog.setMessage("A network error occured! Try again later.");
 	    		alertDialog.setOnDismissListener(new OnDismissListener() {
-					@Override
 					public void onDismiss(DialogInterface arg0) {
 						updateAuthenticationUI();					
 					}
@@ -320,7 +317,6 @@ public class Yammer extends Activity {
 	
 	protected void showLoadingAnimation(final boolean enabled) {
 		runOnUiThread( new Runnable() {
-			@Override
 			public void run() {
 				try {
 					// Acquire mutex
@@ -377,7 +373,6 @@ public class Yammer extends Activity {
     		AuthenticateDialog authDialog = new AuthenticateDialog(Yammer.this);
     		authDialog.setCancelable(true);
     		authDialog.setOnCancelListener(new OnCancelListener() {
-				@Override
 				public void onCancel(DialogInterface arg0) {
 					// if canceled, then finish this activity
 					finish();
@@ -391,7 +386,6 @@ public class Yammer extends Activity {
 			progressDialog.setMessage(getResources().getString(R.string.loading));
 	        progressDialog.setCancelable(true);
 	        progressDialog.setOnCancelListener(new OnCancelListener() {
-				@Override
 				public void onCancel(DialogInterface arg0) {
 					// Cancel authorization
 					if ( getYammerService() != null ) {
@@ -419,6 +413,7 @@ public class Yammer extends Activity {
 				selectedItem = 1;
 			} 
 			return new AlertDialog.Builder(Yammer.this)
+			      // TODO: i18n'ize
             .setTitle("Select Default Feed")
             .setIcon(R.drawable.yammer_logo_medium)
             .setSingleChoiceItems(R.array.settings_feed_entries, selectedItem, new DialogInterface.OnClickListener() {

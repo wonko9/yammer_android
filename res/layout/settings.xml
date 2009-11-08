@@ -10,8 +10,7 @@
 			android:summary="Manage your Yammer accounts">
 		</PreferenceScreen>
 	</PreferenceCategory-->
-	<PreferenceCategory
-		android:title="Account">
+	<PreferenceCategory android:title="@string/pref_category_account">
 		<com.yammer.EditAccountPreference 
 			android:key="key_clear_account"
 			android:title="Clear account information"
@@ -71,7 +70,7 @@
 			android:textColor="#000000"
 			android:key="key_notification"
 			android:title="Notification on.."
-			android:summary="When do you want Yowl to tell you about new messages?"
+			android:summary="When do you want Yammer to tell you about new messages?"
 			android:entries="@array/settings_notification_entries"
 			android:entryValues="@array/settings_notification_values"
 			android:dialogTitle="Choose notification"
@@ -80,7 +79,7 @@
 		<CheckBoxPreference
 			android:key="key_vibrate"
 			android:title="Vibrate"
-			android:summary="Should Yowl vibrate, when there are new messages for you?"
+			android:summary="Should Yammer vibrate, when there are new messages for you?"
 			android:defaultValue="true"
 			/>	
 	</PreferenceCategory>
@@ -88,9 +87,17 @@
 		android:title="Background Service">
 		<CheckBoxPreference
 			android:key="key_background"
-			android:title="Launch Yowl at startup"
-			android:summary="Launch Yowl background service when phone starts up?"
+			android:title="Launch Yammer at startup"
+			android:summary="Launch Yammer background service when phone starts up?"
 			android:defaultValue="true"
 			/>	
+	</PreferenceCategory>
+	<PreferenceCategory android:title="@string/pref_category_connection">
+		<EditTextPreference 
+			android:key="key_url"
+			android:title="@string/pref_url_title"
+			android:summary="@string/pref_url_summary"
+			android:defaultValue="@string/pref_url_default"
+			/>
 	</PreferenceCategory>
 </PreferenceScreen>

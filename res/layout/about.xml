@@ -12,7 +12,7 @@
 		android:layout_height="wrap_content" 
 		android:layout_width="fill_parent" 
 		android:padding="5px"
-		android:src="@drawable/yowl_logo_white"
+		android:src="@drawable/yammer_logo_medium"
 		/>
 	<TextView
 		android:id="@+id/about_text_view"

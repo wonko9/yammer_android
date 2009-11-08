@@ -39,8 +39,13 @@
 		<item quantity="other">There are %s new Yammer messages in your network</item>
 	</plurals>
 	<string name="about_text">Yammer for Android v%s © 2009 Nullwire ApS\nhttp://nullwire.com\nsupport@nullwire.com</string>
-	<string name="about_disclaimer"> \nDisclaimer: Yowl and Nullwire logo(s) copyright © Nullwire LLC. Yammer logo(s) copyright © Yammer.com.\n\nThe Yammer enterprise microblogging service is not affiliated with or related to Nullwire in any way.</string>
+	<string name="about_disclaimer"> \nDisclaimer: Yammer and Nullwire logo(s) copyright © Nullwire LLC. Yammer logo(s) copyright © Yammer.com.\n\nThe Yammer enterprise microblogging service is not affiliated with or related to Nullwire in any way.</string>
 	<string name="setting_select_active_account">Select active account</string>
 	<string name="url_icon">&#x2192;</string>
-	<string name="check_this_out">Check this out:</string>	
+	<string name="check_this_out">Check this out:</string>
+	<string name="pref_category_account">Account</string>
+    <string name="pref_category_connection">Connection</string>
+    <string name="pref_url_title">Yammer URL</string>
+    <string name="pref_url_summary">URL used to contact Yammer's server.</string>
+    <string name="pref_url_default">https://www.yammer.com</string>
 </resources>

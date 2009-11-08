@@ -81,7 +81,6 @@ public class YammerReply extends Activity {
 	 * clickable.
 	 */
 	 private OnKeyListener onReplyEditKeyListener = new OnKeyListener() {
-		@Override
 		public boolean onKey(View v, int keyCode, KeyEvent event) {
 			// Reply button only enabled, when something written in the edit box
 			setReplyButtonState();

@@ -11,6 +11,6 @@
 		android:layout_height="wrap_content"
 		android:textColor="#55ffffff"
 		android:textStyle="bold"
-		android:text="Yowl BETA © 2009 Nullwire LLC"
+		android:text="Yammer BETA © 2009 Yammer.com, inc"
 		/>
 </RelativeLayout>

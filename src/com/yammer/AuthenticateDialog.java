@@ -27,7 +27,6 @@ public class AuthenticateDialog extends Dialog {
 		setContentView(R.layout.authenticate_dialog);
 		Button okButton = (Button)this.findViewById(R.id.ok_button);
 		okButton.setOnClickListener( new View.OnClickListener() {
-			@Override
 			public void onClick(View arg0) {
 				if (G.DEBUG) Log.d(TAG_AUTHENTICATEDIALOG, "Dismissing authenticate dialog");
 				// Initiate authorization means that the service will start retrieving
