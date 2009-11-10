@@ -544,7 +544,7 @@ public class YammerService extends Service {
 
 	// Check for updates
 	protected void checkForApplicationUpdate() {
-		String url = getURLBase() + "/android/updates/";
+		String url = getURLBase() + "/application_support/android/updates";
 		try {
 			if (G.DEBUG) Log.d(TAG_YSERVICE, "Querying URL "+url+" for new updates");
 			DefaultHttpClient httpClient = new DefaultHttpClient(); 
