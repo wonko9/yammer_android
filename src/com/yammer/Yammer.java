@@ -903,15 +903,6 @@ public class Yammer extends Activity {
           new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT);
         addContentView(noTextOverlayView, layoutParams);	
 
-        // Fade in the Yammer overlay
-        View yammerOverlayView = factory.inflate(R.layout.yammer_overlay, null);
-        layoutParams = 
-          new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT);
-        addContentView(yammerOverlayView, layoutParams);
-
-        // Fade away the nullwire logo
-        Animation animation = AnimationUtils.loadAnimation(Yammer.this, R.drawable.alpha_fadein);
-        findViewById(R.id.yammer_logo_overlay).startAnimation(animation);
 
         // Set key listener used to display "what are you working on" overlay
         tweetEditor.setKeyListener(new TextKeyListener(TextKeyListener.Capitalize.SENTENCES, true) {

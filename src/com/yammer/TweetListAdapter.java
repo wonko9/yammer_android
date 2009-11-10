@@ -217,29 +217,28 @@ public class TweetListAdapter extends SimpleCursorAdapter {
     // Posters full name is white
     from = 0;
     to = fullNameLength;
-    str.setSpan(new ForegroundColorSpan(Color.WHITE), from, to, 0);
+    str.setSpan(new ForegroundColorSpan(Color.BLACK), from, to, 0);
 
     // Do we have a replyee
     if ( replyeeFullNameLength > 0 ) {
       from = to;
       to = from + inReplyToLength;
-      str.setSpan(new ForegroundColorSpan(Color.GREEN), from, to, 0);
-      str.setSpan(new StyleSpan(android.graphics.Typeface.ITALIC), from, to, 0);
+      str.setSpan(new ForegroundColorSpan(Color.rgb(0x4c, 0x4c, 0x4c)), from, to, 0);
       from = to;
       to = from + replyeeFullNameLength;
-      str.setSpan(new ForegroundColorSpan(Color.WHITE), from, to, 0);
+      str.setSpan(new ForegroundColorSpan(Color.BLACK), from, to, 0);
     }
 
     // Add 2 due to the appended ": " to the name
     from = to;
     to = from + 2;
     str.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, to, 0);
-    str.setSpan(new ForegroundColorSpan(Color.WHITE), from, to, 0);
+    str.setSpan(new ForegroundColorSpan(Color.BLACK), from, to, 0);
 
     // Span the rest of the text
     from =  to;
     to = from + message.length();
-    str.setSpan(new ForegroundColorSpan(Color.rgb(0x76, 0xd5, 0xff)), from, to, 0);
+    str.setSpan(new ForegroundColorSpan(Color.BLACK), from, to, 0);
 
     // Set the message
     holder.message.setText(str);

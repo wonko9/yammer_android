@@ -5,10 +5,4 @@
 	android:gravity="bottom|right"
 	android:padding="10px"
 	>
-	<ImageView
-		android:id="@+id/yammer_logo_overlay"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:src="@drawable/yammer_logo_medium"
-		/>
 </RelativeLayout>

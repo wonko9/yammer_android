@@ -19,18 +19,17 @@
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:paddingRight="5px"
-		android:textSize="14sp"
+		android:textSize="12sp"
 		android:bufferType="spannable"
 		android:text="(message)" android:paddingLeft="3px"/>
 	<TextView
 		android:id="@+id/tweet_time"
 		android:layout_below="@id/message"
 		android:layout_toRightOf="@id/user_icon"
-		android:textColor="#85b7dd"
+		android:textColor="#575757"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
-		android:textSize="14sp"
-		android:textStyle="italic"
+		android:textSize="10sp"
 		android:padding="5px"
 		/>
 </RelativeLayout>
