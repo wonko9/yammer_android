@@ -128,27 +128,31 @@ public class TweetListAdapter extends SimpleCursorAdapter {
     return prettyDate;
   }
 
+  static class ViewHolder {
+    ImageView user_icon;
+    TextView  message;
+    TextView  tweet_time;
+  }
 
   @Override
   public View getView(int position, View convertView, ViewGroup parent) {
-    //long start = System.currentTimeMillis();
+    ViewHolder holder;
 
-    //if (G.DEBUG) Log.d(TAG_TWEETLISTADAPTER, "TweetListAdapter::getView");
-    // It seems we need to call the parent getView - otherwise
-    // a crash will occur in AbstractCursor.java:559
+    if ( convertView == null ) {
+      convertView = layoutInflater.inflate(R.layout.list_row, parent, false);
 
-    //super.getView(position, convertView, parent);
+      holder = new ViewHolder();
+      holder.user_icon = (ImageView)convertView.findViewById(R.id.user_icon);
+      holder.message = (TextView)convertView.findViewById(R.id.message);
+      holder.tweet_time = (TextView)convertView.findViewById(R.id.tweet_time);
+
+      convertView.setTag(holder);
+
+    } else {
+      holder = (ViewHolder)convertView.getTag();
+    }
 
     c.moveToPosition(position);
-
-    // Did we fetch an old view to be reused - if not, create a new one
-    if ( convertView == null ) {
-      //if (G.DEBUG) Log.d(TAG_TWEETLISTADAPTER, "A new view was created for tweet");
-      // Get text view for tweet to be displayed - assume we can reuse an old one from convertView
-      convertView = layoutInflater.inflate(R.layout.list_row, parent, false);
-    } else {
-      //return convertView;
-    }
 
     // Get the message/tweet text from the database
     String message = c.getString(columnIndex);
@@ -222,26 +226,19 @@ public class TweetListAdapter extends SimpleCursorAdapter {
     // Span the rest of the text
     from =  to;
     to = from + message.length();
-    str.setSpan(new ForegroundColorSpan(Color.rgb(0x76, 0xd5, 0xff)), from, to, 0); 
-    // Get the text view
-    TextView tweetTextView = (TextView)convertView.findViewById(R.id.label);
-    tweetTextView.setText(str);
-    //if (G.DEBUG) Log.d(TAG_TWEETLISTADAPTER, "String: " + str);
-    // Get the timestamp column
-    long timestamp = c.getLong(createdColumnIndex);
-    // Convert the timestamp to a prettier timestamp (e.g. 5 hours ago etc.)
-    // Get the ID of the timestamp
-    TextView tweetTime = (TextView)convertView.findViewById(R.id.tweet_time);
-    tweetTime.setText(prettyDate(timestamp));
+    str.setSpan(new ForegroundColorSpan(Color.rgb(0x76, 0xd5, 0xff)), from, to, 0);
 
-    // Download and decode user avatar
-    ImageView icon = (ImageView)convertView.findViewById(R.id.user_icon);
+    // Get the text view
+    holder.message.setText(str);
+
+    // Convert the timestamp to a prettier timestamp (e.g. 5 hours ago etc.)
+    holder.tweet_time.setText(prettyDate(c.getLong(createdColumnIndex)));
+
+    // Download and decode avatar
     String url = c.getString(mugshotUrlColumnIndex);
     String md5 = c.getString(mugshotMd5ColumnIndex);
     Bitmap bm = bitmapDownloader.getBitmap(url, md5);
-    icon.setImageBitmap(bm);
-
-    //if (G.DEBUG) Log.d(TAG_TWEETLISTADAPTER, "Render time ("+position+"): " + (System.currentTimeMillis() - start));
+    holder.user_icon.setImageBitmap(bm);
 
     return convertView;
   }

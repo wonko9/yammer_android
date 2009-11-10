@@ -14,17 +14,17 @@
 		android:src="@drawable/no_photo_small" 
 		android:padding="2px" />
 	<TextView
-		android:id="@+id/label"
+		android:id="@+id/message"
 		android:layout_toRightOf="@id/user_icon"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:paddingRight="5px"
 		android:textSize="14sp"
 		android:bufferType="spannable"
-		android:text="TEST" android:paddingLeft="3px"/>
+		android:text="(message)" android:paddingLeft="3px"/>
 	<TextView
 		android:id="@+id/tweet_time"
-		android:layout_below="@id/label"
+		android:layout_below="@id/message"
 		android:layout_toRightOf="@id/user_icon"
 		android:textColor="#85b7dd"
 		android:layout_width="fill_parent"
