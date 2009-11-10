@@ -15,7 +15,6 @@ import java.util.Date;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
@@ -35,6 +34,8 @@ public class TweetListAdapter extends SimpleCursorAdapter {
   private static BitmapDownloader bitmapDownloader = null;
   LayoutInflater layoutInflater = null;
   Context context = null;
+
+  final String in_reply_to;
   final String a_moment_ago;
   final String one_minute_ago;
   final String a_few_minutes_ago;
@@ -43,6 +44,7 @@ public class TweetListAdapter extends SimpleCursorAdapter {
   final String about_an_hour_ago;
   final String hours_ago;
   final String days_ago;
+
   final int columnIndex;
   final int fullNameColumnIndex;
   final int emailColumnIndex;
@@ -51,7 +53,9 @@ public class TweetListAdapter extends SimpleCursorAdapter {
   final int createdColumnIndex;
   final int mugshotUrlColumnIndex;
   final int mugshotMd5ColumnIndex;
+
   Cursor c;
+
   final SimpleDateFormat formatter;
 
   public TweetListAdapter(Context context, int layout, Cursor c, String[] from, int[] to) {
@@ -66,7 +70,9 @@ public class TweetListAdapter extends SimpleCursorAdapter {
     }
     // Store context
     this.context = context;
+
     // prefetch the strings used to build the view
+    in_reply_to = " " + context.getResources().getString(R.string.in_reply_to) + " ";
     a_moment_ago = context.getResources().getString(R.string.a_moment_ago);
     one_minute_ago = context.getResources().getString(R.string.one_minute_ago);
     a_few_minutes_ago = context.getResources().getString(R.string.a_few_minutes_ago);
@@ -154,10 +160,9 @@ public class TweetListAdapter extends SimpleCursorAdapter {
 
     c.moveToPosition(position);
 
-    // Get the message/tweet text from the database
-    String message = c.getString(columnIndex);
     // Get full name of poster
     String fullName = c.getString(fullNameColumnIndex);
+
     // Full name not found?
     if ( fullName == null ) {
       // Use email for full name
@@ -168,8 +173,10 @@ public class TweetListAdapter extends SimpleCursorAdapter {
       // Assume name is unknown
       fullName = context.getResources().getString(R.string.unknown);
     }
+
     // Get full name of replyee
     String replyeeFullName = c.getString(replyeeColumnIndex);
+
     // Convert full name to first name only
     if (YammerSettings.getDisplayName(this.context).equals("firstname")) {
       if (0 < fullName.indexOf(' ')) {
@@ -193,21 +200,25 @@ public class TweetListAdapter extends SimpleCursorAdapter {
 
     String postPrefix = "";
     if ( replyeeFullName != null  ) {
-      String inReplyTo = " in reply to ";
-      inReplyToLength = inReplyTo.length();
+      inReplyToLength = in_reply_to.length();
       replyeeFullNameLength = replyeeFullName.length();
-      postPrefix = fullName + inReplyTo + replyeeFullName;
+      postPrefix = fullName + in_reply_to + replyeeFullName;
     } else {
       postPrefix = fullName;
     }
 
+    // Get the message/tweet text from the database
+    String message = c.getString(columnIndex);
+
     // Colorize the message
     int from = 0, to = 0;
-    SpannableString str = SpannableString.valueOf( postPrefix+ ": " + message);	    		
+    SpannableString str = SpannableString.valueOf(postPrefix+ ": " + message);
+
     // Posters full name is white
     from = 0;
     to = fullNameLength;
     str.setSpan(new ForegroundColorSpan(Color.WHITE), from, to, 0);
+
     // Do we have a replyee
     if ( replyeeFullNameLength > 0 ) {
       from = to;
@@ -217,28 +228,29 @@ public class TweetListAdapter extends SimpleCursorAdapter {
       from = to;
       to = from + replyeeFullNameLength;
       str.setSpan(new ForegroundColorSpan(Color.WHITE), from, to, 0);
-    }		
+    }
+
     // Add 2 due to the appended ": " to the name
     from = to;
     to = from + 2;
     str.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, to, 0);
     str.setSpan(new ForegroundColorSpan(Color.WHITE), from, to, 0);
+
     // Span the rest of the text
     from =  to;
     to = from + message.length();
     str.setSpan(new ForegroundColorSpan(Color.rgb(0x76, 0xd5, 0xff)), from, to, 0);
 
-    // Get the text view
+    // Set the message
     holder.message.setText(str);
 
     // Convert the timestamp to a prettier timestamp (e.g. 5 hours ago etc.)
     holder.tweet_time.setText(prettyDate(c.getLong(createdColumnIndex)));
 
     // Download and decode avatar
-    String url = c.getString(mugshotUrlColumnIndex);
-    String md5 = c.getString(mugshotMd5ColumnIndex);
-    Bitmap bm = bitmapDownloader.getBitmap(url, md5);
-    holder.user_icon.setImageBitmap(bm);
+    holder.user_icon.setImageBitmap(
+        bitmapDownloader.getBitmap(c.getString(mugshotUrlColumnIndex), c.getString(mugshotMd5ColumnIndex))
+    );
 
     return convertView;
   }

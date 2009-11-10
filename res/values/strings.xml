@@ -43,6 +43,7 @@
 	<string name="setting_select_active_account">Select active account</string>
 	<string name="url_icon">&#x2192;</string>
 	<string name="check_this_out">Check this out:</string>
+	<string name="in_reply_to">in reply to</string>
 	<string name="pref_category_account">Account</string>
     <string name="pref_category_connection">Connection</string>
     <string name="pref_url_title">Yammer URL</string>
