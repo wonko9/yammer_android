@@ -691,6 +691,8 @@ public class YammerService extends Service {
   }
 
   private String getURLBase() {
+    if (OAuthCustom.USE_DEV_BASE_URL)
+      return OAuthCustom.BASE_URL;
     return YammerSettings.getUrl(getApplicationContext());
   }
 
