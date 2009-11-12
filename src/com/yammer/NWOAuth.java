@@ -239,7 +239,7 @@ public class NWOAuth {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    return responseBody;    	
+    return responseBody;
   }
 
   public String postResource(String url, String body, long messageId) throws NWOAuthAccessDeniedException, NWOAuthConnectionProblem {

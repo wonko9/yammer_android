@@ -108,16 +108,13 @@ public class YammerActivity extends Activity {
         db = getYammerService().yammerData.getReadableDatabase();
         if (DEBUG) Log.d(TAG_Y, "Querying for known messages in network");
 
-        String myFeed = "";
-        if (FEED_MY_FEED.equals(YammerSettings.getDefaultFeed(YammerActivity.this))) {
-          myFeed = "(users.is_following OR messages.user_id='"+getYammerService().getCurrentUserId()+"') AND";
-        }
-
+        // remove logic here looking for users you are following or your id since call to /messages/following will already do this        
+     
         String sql = 
           "select messages._id, messages.message, messages.message_id, messages.timestamp, users.mugshot_url, users.mugshot_md5, users.full_name, users.is_following, users.email, u1.full_name as replyee_full_name, u1.email as replyee_email from messages " + 
           "left join users on users.user_id=messages.user_id " +
           "left join messages as m1 on messages.replied_to_id=m1.message_id " + 
-          "left join users as u1 on u1.user_id=m1.user_id where messages.deleted='0' AND "+myFeed+" messages.network_id='"+getYammerService().getCurrentNetworkId()+"' order by messages.message_id desc";
+          "left join users as u1 on u1.user_id=m1.user_id where messages.deleted='0' AND messages.network_id='"+getYammerService().getCurrentNetworkId()+"' order by messages.message_id desc";
         Cursor cursor = db.rawQuery(sql, null);
         cursor.moveToFirst();
 
