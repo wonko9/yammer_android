@@ -38,6 +38,7 @@
 		<item quantity="one">There is 1 new Yammer message in your network</item>
 		<item quantity="other">There are %s new Yammer messages in your network</item>
 	</plurals>
+	<string name='select_default_feed'>Select Default Feed</string>
 	<string name='application_update_title'>Yammer Updated</string>
 	<string name='application_update_text'>A new version of Yammer is available.</string>
 	<string name="about_text">Yammer v%s\n© 2009 Yammer, Inc.\nhttp://www.yammer.com/</string>
@@ -50,5 +51,5 @@
     <string name="pref_category_connection">Connection</string>
     <string name="pref_url_title">Yammer URL</string>
     <string name="pref_url_summary">URL used to contact Yammer\'s server.</string>
-    <string name="pref_url_default">https://staging.yammer.com</string>
+    <string name="pref_url_default">https://www.yammer.com</string>
 </resources>

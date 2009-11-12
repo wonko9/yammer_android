@@ -28,6 +28,9 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
 public class TweetListAdapter extends SimpleCursorAdapter {
+
+  private static final boolean DEBUG = G.DEBUG;
+
   private static String TAG_TWEETLISTADAPTER = "TWEETLISTADAPTER";
 
   // Single bitmap loader needed
@@ -60,7 +63,7 @@ public class TweetListAdapter extends SimpleCursorAdapter {
 
   public TweetListAdapter(Context context, int layout, Cursor c, String[] from, int[] to) {
     super(context, layout, c, from, to);
-    if (G.DEBUG) Log.d(TAG_TWEETLISTADAPTER, "TweetListAdapter constructor");
+    if (DEBUG) Log.d(TAG_TWEETLISTADAPTER, "TweetListAdapter constructor");
     // Retrieve view inflater
     this.layoutInflater = LayoutInflater.from(context);
     // Create bitmap downloader

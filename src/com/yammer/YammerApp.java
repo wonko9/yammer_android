@@ -12,7 +12,7 @@ import com.nullwire.trace.ExceptionHandler;
 
 public class YammerApp extends Application {
   
-  private static boolean DEBUG = G.DEBUG;
+  private static final boolean DEBUG = G.DEBUG;
   
   private static String TAG = "Yammer Android";
   

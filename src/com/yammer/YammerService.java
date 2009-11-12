@@ -36,7 +36,7 @@ import android.util.Log;
 
 public class YammerService extends Service {
 
-  private static boolean DEBUG = G.DEBUG;
+  private static final boolean DEBUG = G.DEBUG;
 
   private static final String TAG_YSERVICE = "YammerService";
   private static final String PREFS_NAME = "YammerPrefs";
@@ -598,7 +598,7 @@ public class YammerService extends Service {
       }
       // Fetch the public timeline
       String url = null;
-      if (YammerSettings.getDefaultFeed(this).equals("my_feed")) {
+      if (YammerActivity.FEED_MY_FEED.equals(YammerSettings.getDefaultFeed(this))) {
         url = getURLBase() + "/api/v1/messages/following.json?newer_than="+lastMessageId;				
       } else {
         url = getURLBase() + "/api/v1/messages.json?newer_than="+lastMessageId;				
@@ -686,8 +686,7 @@ public class YammerService extends Service {
       // Store the last message ID in the database
       yammerData.updateLastMessageId(getCurrentNetworkId(), lastMessageId);
       // Send an intent
-      Intent intent = new Intent( "com.yammer:PUBLIC_TIMELINE_UPDATED" );
-      sendBroadcast(intent);
+      sendBroadcast(new Intent( "com.yammer:PUBLIC_TIMELINE_UPDATED" ));
     }
   }
 
