@@ -197,7 +197,6 @@ public class YammerService extends Service {
         // Send an intent that will start the browser
         intent = new Intent( "com.yammer:AUTHORIZATION_BROWSER" );
         intent.putExtra("responseUrl", responseUrl);
-        //intent.putExtra("responseUrl", "http://nullwire.com/test/test.php");
         sendBroadcast(intent);
         // Wait for user to finish authorization
         if (DEBUG) Log.d(TAG_YSERVICETHREAD, "Waiting for user to finish authorization");
@@ -384,7 +383,7 @@ public class YammerService extends Service {
   /**
    * Notify user about new activity or errors
    */
-  public void notifyUser(String message, int type) {
+  public void notifyUser(int _message_id, int type) {
     // Only notify when we are not bound to the activity
     if ( type == NOTIFICATION_NEW_MESSAGE && bound == true ) {
       return;
@@ -394,10 +393,13 @@ public class YammerService extends Service {
     // Default icon
     int icon = R.drawable.yammer_notification_icon;
     if ( type == NOTIFICATION_APPLICATION_UPDATE ) {
-      icon = R.drawable.yowl_icon_small;			
+      icon = R.drawable.yammer_logo_small;			
     }
 
-    Notification notification = new Notification(icon, message, System.currentTimeMillis()); 
+    Notification notification = new Notification(icon,
+        getResources().getString(_message_id), 
+        System.currentTimeMillis()
+    ); 
     notification.ledARGB = 0xff035c99; 
     notification.ledOnMS = 200; 
     notification.ledOffMS = 200; 
@@ -411,19 +413,26 @@ public class YammerService extends Service {
 
     if ( type == NOTIFICATION_NEW_MESSAGE ) {
       // Intent of this notification - launch yammer activity
-      Intent intent = new Intent(this, Yammer.class);
+      Intent intent = new Intent(this, YammerActivity.class);
       PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
       // Only show number of new messages if more than one
       if ( newMessageCount > 1 ) {
         notification.number = newMessageCount;	        	
       }
-      String contentText = getResources().getQuantityString(R.plurals.new_messages_available, newMessageCount, newMessageCount);
-      notification.setLatestEventInfo(this, getResources().getString(R.string.new_yammer_message), contentText, pendingIntent);        	
+      notification.setLatestEventInfo(this, 
+          getResources().getString(R.string.new_yammer_message),
+          getResources().getQuantityString(R.plurals.new_messages_available, newMessageCount, newMessageCount),
+          pendingIntent
+      );
+      
     } else if ( type == NOTIFICATION_APPLICATION_UPDATE ) {
-      // Launch market - search for Nullwire
       Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://search?q=pname:"+getPackageName()));
       PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
-      notification.setLatestEventInfo(this, "Application Update", "A new version of Yowl is available.", pendingIntent);
+      notification.setLatestEventInfo(this,
+          getResources().getString(R.string.application_update_title),
+          getResources().getString(R.string.application_update_text),
+          pendingIntent
+       );
     }
 
     if (DEBUG) Log.d(TAG_YSERVICE, "Displaying notification - " + newMessageCount + " new messages!");
@@ -562,7 +571,7 @@ public class YammerService extends Service {
       if ( versionCode > pi.versionCode ) {
         // Notify user about new version
         if (DEBUG) Log.d(TAG_YSERVICE, "New version is available. Notifying user.");
-        notifyUser("There is a new version available of Yowl. Click this message to update.", NOTIFICATION_APPLICATION_UPDATE);
+        notifyUser(R.string.application_update_title, NOTIFICATION_APPLICATION_UPDATE);
       }
     } catch (Exception e) {
       if (DEBUG) Log.d(TAG_YSERVICE, "Error while checking for application updates");
@@ -672,7 +681,7 @@ public class YammerService extends Service {
       // Is notification required?
       if ( notificationRequired ) {
         // Yep, so notify the user with a notification icon
-        notifyUser(getResources().getString(R.string.new_yammer_message), NOTIFICATION_NEW_MESSAGE);				
+        notifyUser(R.string.new_yammer_message, NOTIFICATION_NEW_MESSAGE);				
       }
       // Store the last message ID in the database
       yammerData.updateLastMessageId(getCurrentNetworkId(), lastMessageId);

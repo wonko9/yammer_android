@@ -50,7 +50,7 @@ import android.util.Log;
 public class YammerData extends SQLiteOpenHelper {
 
 	private static final String TAG_YDATABASE = "YammerDB";
-	private static final String DATABASE_NAME = "yowl.db";
+	private static final String DATABASE_NAME = "yammer.db";
 	private static final int DATABASE_VERSION = 17;
 	
 	public YammerData(Context ctx) {

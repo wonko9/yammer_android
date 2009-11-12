@@ -1,5 +1,5 @@
 /**
- * (C)Copyright 2009, Nullwire
+ * (C)Copyright 2009, Yammer, Inc.
  */
 
 package com.yammer;

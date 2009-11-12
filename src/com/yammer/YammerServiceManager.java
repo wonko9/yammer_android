@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.util.Log;
 
 public class YammerServiceManager extends BroadcastReceiver {
+  
+  private static final boolean DEBUG = G.DEBUG;
 
 	public static final String TAG = "YammerServiceManager";
 	
@@ -14,9 +16,9 @@ public class YammerServiceManager extends BroadcastReceiver {
 	public void onReceive(Context context, Intent intent) {
 		// just make sure we are getting the right intent (better safe than sorry)
 		if( "android.intent.action.BOOT_COMPLETED".equals(intent.getAction())) {
-			if (G.DEBUG) Log.d(TAG, "Received intent: android.intent.action.BOOT_COMPLETED");			
+			if (DEBUG) Log.d(TAG, "Received intent: android.intent.action.BOOT_COMPLETED");			
 			if ( !YammerSettings.startServiceAtBoot(context) ) {
-				if (G.DEBUG) Log.d(TAG, "Yowl configured not to start at boot");
+				if (DEBUG) Log.d(TAG, "Yammer configured not to start at boot");
 				return;
 			}
 			ComponentName comp = new ComponentName(context.getPackageName(), YammerService.class.getName());

@@ -44,8 +44,6 @@ import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View.OnKeyListener;
 import android.view.WindowManager.LayoutParams;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -53,7 +51,7 @@ import android.widget.RelativeLayout;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 
-public class Yammer extends Activity {
+public class YammerActivity extends Activity {
 
   private static final String TAG_Y = "Yammer";
 
@@ -72,7 +70,7 @@ public class Yammer extends Activity {
   private YammerService getYammerService() {
     if (G.DEBUG) Log.d(TAG_Y, "Yammer::getYammerService()");
     if ( mYammerService == null ) {
-      bindService( 	new Intent(Yammer.this, YammerService.class), 
+      bindService( 	new Intent(YammerActivity.this, YammerService.class), 
           mConnection, 
           Context.BIND_AUTO_CREATE);    				
     }
@@ -106,7 +104,7 @@ public class Yammer extends Activity {
         if (G.DEBUG) Log.d(TAG_Y, "Querying for known messages in network");
 
         String myFeed = "";
-        if (YammerSettings.getDefaultFeed(Yammer.this) == "my_feed") {
+        if (YammerSettings.getDefaultFeed(YammerActivity.this) == "my_feed") {
           myFeed = "(users.is_following='1' OR messages.user_id='"+getYammerService().getCurrentUserId()+"') AND";
         }
 
@@ -119,7 +117,7 @@ public class Yammer extends Activity {
         cursor.moveToFirst();
 
         if (G.DEBUG) Log.d(TAG_Y, "Creating new TweetListAdapter");
-        TweetListAdapter tweetListAdapter = new TweetListAdapter(Yammer.this, R.layout.list_row, cursor, PROJECTION, new int[] {R.id.message} );
+        TweetListAdapter tweetListAdapter = new TweetListAdapter(YammerActivity.this, R.layout.list_row, cursor, PROJECTION, new int[] {R.id.message} );
         if (G.DEBUG) Log.d(TAG_Y, "Binding adapter to list: " + tweetListView);
         tweetListView.setAdapter(tweetListAdapter);
         startManagingCursor(cursor);                	
@@ -130,7 +128,7 @@ public class Yammer extends Activity {
         // Attach an onclick listener to the listview
         tweetListView.setOnItemClickListener( new OnItemClickListener() {
           public void onItemClick(AdapterView<?> adapterView, View view, int id, long row) {
-            if ( YammerSettings.getMessageClickBehaviour(Yammer.this).equals("reply") ) {
+            if ( YammerSettings.getMessageClickBehaviour(YammerActivity.this).equals("reply") ) {
               if (G.DEBUG) Log.d(TAG_Y, "Replying to message");
               long rowId = row;
               String sql = "select _id, message_id from messages where " + _ID + "=" + rowId;
@@ -138,7 +136,7 @@ public class Yammer extends Activity {
               Cursor c = db.rawQuery(sql, null);
               c.moveToFirst();
               // Just show the reply activity 
-              Intent i = new Intent(Yammer.this, YammerReply.class);
+              Intent i = new Intent(YammerActivity.this, YammerReply.class);
               // Post the message ID being replied upon along with the intent
               int columnIndex = c.getColumnIndex(MESSAGE_ID);
               if (G.DEBUG) Log.d(TAG_Y, "columnIndex: " + columnIndex);
@@ -149,7 +147,7 @@ public class Yammer extends Activity {
             } else {
               if (G.DEBUG) Log.d(TAG_Y, "Viewing message");    							
               // Create activity YammerSettings
-              Intent i = new Intent(Yammer.this, YammerMessage.class);
+              Intent i = new Intent(YammerActivity.this, YammerMessage.class);
               // We use startActivityForResult because we want to know when
               // the authorization has completed. If startActivity is used,
               // no result can be delivered back - it is fire and forget.
@@ -253,7 +251,7 @@ public class Yammer extends Activity {
         /**
          * A fatal network error has occured - user must be notified
          */
-        AlertDialog.Builder builder = new AlertDialog.Builder(Yammer.this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(YammerActivity.this);
         AlertDialog alertDialog = builder.create();
         alertDialog.setIcon(android.R.drawable.ic_dialog_alert);
         alertDialog.setTitle("Error!");
@@ -370,7 +368,7 @@ public class Yammer extends Activity {
         if (G.DEBUG) Log.d(TAG_Y, "Yammer::onCreateDialog("+id+")");
         if ( id == ID_DIALOG_MUST_AUTHENTICATE ) {
           // Show "Start Yammer Authentication" dialog
-          AuthenticateDialog authDialog = new AuthenticateDialog(Yammer.this);
+          AuthenticateDialog authDialog = new AuthenticateDialog(YammerActivity.this);
           authDialog.setCancelable(true);
           authDialog.setOnCancelListener(new OnCancelListener() {
             public void onCancel(DialogInterface arg0) {
@@ -412,7 +410,7 @@ public class Yammer extends Activity {
           if ( YammerSettings.getDefaultFeed(this).equals("my_feed") ) {
             selectedItem = 1;
           } 
-          return new AlertDialog.Builder(Yammer.this)
+          return new AlertDialog.Builder(YammerActivity.this)
           // TODO: i18n'ize
           .setTitle("Select Default Feed")
           .setIcon(R.drawable.yammer_logo_medium)
@@ -420,12 +418,12 @@ public class Yammer extends Activity {
             public void onClick(DialogInterface dialog, int whichButton) {
               if (whichButton == 0) {
                 if (G.DEBUG) Log.d(TAG_Y, "Feed 'all_messages' selected" );                	
-                YammerSettings.setDefaultFeed(Yammer.this, "all_messages");
+                YammerSettings.setDefaultFeed(YammerActivity.this, "all_messages");
                 Intent initIntent = new Intent( "com.yammer:TIMELINE_INITIALIZE" );
                 sendBroadcast(initIntent);			
               } else {
                 if (G.DEBUG) Log.d(TAG_Y, "Feed 'my_feed' selected" );                	
-                YammerSettings.setDefaultFeed(Yammer.this, "my_feed");
+                YammerSettings.setDefaultFeed(YammerActivity.this, "my_feed");
                 Intent initIntent = new Intent( "com.yammer:TIMELINE_INITIALIZE" );
                 sendBroadcast(initIntent);			
               }
@@ -563,7 +561,7 @@ public class Yammer extends Activity {
         }
         // Start building the menu
         menu.setHeaderTitle(message);   
-        menu.setHeaderIcon(R.drawable.icon_small);
+        menu.setHeaderIcon(R.drawable.yammer_logo_small);
         // For version 1.1
         //menu.add(0, MENU_VIEW_MESSAGE, ContextMenu.NONE, R.string.view_message_label);
         // For version 1.2
@@ -581,7 +579,7 @@ public class Yammer extends Activity {
         }
         // If this is myself, then there is a delete button
         if ( myself ) {
-          menu.add(0, MENU_DELETE, ContextMenu.NONE, R.string.delete_label).setIcon(R.drawable.icon_small);
+          menu.add(0, MENU_DELETE, ContextMenu.NONE, R.string.delete_label).setIcon(R.drawable.yammer_logo_small);
         }
 
         // Submenu for URLs
@@ -734,7 +732,7 @@ public class Yammer extends Activity {
           errorMessage = "An unknown error occured, please try again.";
         }
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(Yammer.this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(YammerActivity.this);
         AlertDialog alertDialog = builder.create();
         alertDialog.setIcon(android.R.drawable.ic_dialog_alert);
         alertDialog.setTitle("Error!");
@@ -897,7 +895,7 @@ public class Yammer extends Activity {
         final TextKeyListener listener = TextKeyListener.getInstance(true, TextKeyListener.Capitalize.SENTENCES);
 
         // Overlay on top of EditText when no text was entered
-        LayoutInflater factory = LayoutInflater.from(Yammer.this);
+        LayoutInflater factory = LayoutInflater.from(YammerActivity.this);
         noTextOverlayView = factory.inflate(R.layout.no_text_overlay, null);
         RelativeLayout.LayoutParams layoutParams = 
           new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT);
@@ -941,7 +939,7 @@ public class Yammer extends Activity {
         if (G.DEBUG) Log.d(TAG_Y, "Yammer::onStart");
         // Binding to Yammer service to be able to access service
         if (G.DEBUG) Log.d(TAG_Y, "Binding to Yammer service");
-        bindService( 	new Intent(Yammer.this, YammerService.class), 
+        bindService( 	new Intent(YammerActivity.this, YammerService.class), 
             mConnection, 
             Context.BIND_AUTO_CREATE);
       }

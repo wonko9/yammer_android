@@ -7,7 +7,7 @@
 	android:gravity="center"
     >
 	<ImageView
-		android:id="@+id/nullwire_logo"
+		android:id="@+id/yammer_logo"
 		android:layout_centerHorizontal="true"	
 		android:layout_height="wrap_content" 
 		android:layout_width="fill_parent" 
@@ -21,7 +21,7 @@
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:textColor="#ffffffff"
-		android:layout_below="@id/nullwire_logo"
+		android:layout_below="@id/yammer_logo"
 		android:textStyle="bold"
 		android:autoLink="all"
 		android:textColorLink="#ffffffff"
