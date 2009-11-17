@@ -32,8 +32,6 @@ import android.graphics.drawable.AnimationDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.text.Editable;
-import android.text.method.TextKeyListener;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.KeyEvent;
