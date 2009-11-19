@@ -120,11 +120,6 @@ implements SharedPreferences.OnSharedPreferenceChangeListener
     return getPreferences(context).getBoolean("key_vibrate", true);
   }
 
-  public static String getNotificationOn(Context context) {
-    if (G.DEBUG) Log.d(TAG_YSETTINGS, "key_notification: " + getPreferences(context).getString("key_notification", "all"));    	
-    return getPreferences(context).getString("key_notification", "all");
-  }
-
   private static SharedPreferences getPreferences(Context _ctx) {
     return PreferenceManager.getDefaultSharedPreferences(_ctx);
   }

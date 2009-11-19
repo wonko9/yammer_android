@@ -36,14 +36,8 @@
 		<item>all_messages</item>
 		<item>my_feed</item>
 	</string-array>
-	<string-array name="settings_notification_entries">
-		<item>All message</item>
-		<item>Only replies</item>
-	</string-array>
-	<string-array name="settings_notification_values">
-		<item>all</item>
-		<item>replies</item>
-	</string-array>
+	
+	
 	<string-array name="settings_names_entries">
 		<item>Firstname Lastname</item>
 		<item>Firstname</item>

@@ -404,7 +404,7 @@ public class YammerService extends Service {
     notification.defaults = Notification.DEFAULT_SOUND;        
     notification.flags = Notification.FLAG_SHOW_LIGHTS | Notification.FLAG_AUTO_CANCEL; 
 
-    // Vibra enabled?
+    // Vibrate enabled?
     if (YammerSettings.getVibrate(this)) {
       notification.vibrate = new long[] {0, 100, 100, 100, 100, 100};	        	
     }
