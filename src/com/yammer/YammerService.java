@@ -1,8 +1,6 @@
 package com.yammer;
 
-import static com.yammer.YammerDataConstants.MESSAGE_ID;
-
-import static com.yammer.YammerDataConstants.TABLE_MESSAGES;
+import com.yammer.YammerDataConstants;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -470,7 +468,7 @@ public class YammerService extends Service {
     getOAuth().deleteResource(getURLBase() + "/api/v1/messages/"+messageId);		
     // Delete it from the database
     SQLiteDatabase dbDelete = yammerData.getWritableDatabase();
-    int count = dbDelete.delete(TABLE_MESSAGES, MESSAGE_ID+"="+messageId, null);
+    int count = dbDelete.delete(YammerDataConstants.TABLE_MESSAGES, YammerDataConstants.MESSAGE_ID+"="+messageId, null);
     if (DEBUG) Log.d(TAG_YSERVICE, "Items deleted: " + count);
     // It seems we were able to delete the message send an intent to update the timeline
     Intent intent = new Intent( "com.yammer:PUBLIC_TIMELINE_UPDATED" );
