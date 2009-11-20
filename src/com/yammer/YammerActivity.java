@@ -68,10 +68,7 @@ public class YammerActivity extends Activity {
   private View noTextOverlayView = null; 
   private final Semaphore loadingRefCounterSemaphore = new Semaphore(1);
 
-  public static final String FEED_ALL_MESSAGES = "all_messages";
-  public static final String FEED_MY_FEED = "my_feed";
-
-  private YammerService getYammerService() {
+    private YammerService getYammerService() {
     if (DEBUG) Log.d(TAG_Y, "Yammer::getYammerService()");
     if ( mYammerService == null ) {
       bindService( 	new Intent(YammerActivity.this, YammerService.class), 
@@ -206,10 +203,10 @@ public class YammerActivity extends Activity {
                       updateListView();        		    				    				
                     }
                   });
-                } catch (NWOAuthConnectionProblem e) {
+                } catch (YammerProxy.ConnectionProblem e) {
                   // TODO Auto-generated catch block
                   e.printStackTrace();
-                } catch (NWOAuthAccessDeniedException e) {
+                } catch (YammerProxy.AccessDeniedException e) {
                   // TODO Auto-generated catch block
                   e.printStackTrace();
                 } finally {
@@ -516,8 +513,31 @@ public class YammerActivity extends Activity {
     return (super.onOptionsItemSelected(item));  
   }
 
+  private void reload() {
+    new Thread(
+        new Runnable() {
+          public void run() {
+            // Delete it from the server
+            try {
+              showLoadingAnimation(true);
+              // Instruct YammerService activity to reload the timeline
+              getYammerService().updatePublicMessages();
+              getYammerService().updateCurrentUserData();
+              // Update the timeline view
+              sendBroadcast("com.yammer:PUBLIC_TIMELINE_UPDATED");
+            } catch (YammerProxy.AccessDeniedException e) {
+              // TODO Auto-generated catch block
+              e.printStackTrace();
+            } catch (YammerProxy.ConnectionProblem e) {
+              // TODO Auto-generated catch block
+              e.printStackTrace();
+            } finally {
+              showLoadingAnimation(false);									
+            }
+          }
+        }).start();
+  }
 
-  @Override
   public void onCreateContextMenu(ContextMenu menu, View view, ContextMenuInfo menuInfo) {
     if (DEBUG) Log.d(TAG_Y, "Create context menu");
     // Get the row ID
@@ -644,10 +664,10 @@ public class YammerActivity extends Activity {
                 try {
                   showLoadingAnimation(true);
                   getYammerService().deleteMessage(messageId);
-                } catch (NWOAuthAccessDeniedException e) {
+                } catch (YammerProxy.AccessDeniedException e) {
                   // TODO Auto-generated catch block
                   e.printStackTrace();
-                } catch (NWOAuthConnectionProblem e) {
+                } catch (YammerProxy.ConnectionProblem e) {
                   // TODO Auto-generated catch block
                   e.printStackTrace();
                 } finally {
@@ -667,10 +687,10 @@ public class YammerActivity extends Activity {
                 try {
                   showLoadingAnimation(true);
                   getYammerService().followUser(userId);
-                } catch (NWOAuthAccessDeniedException e) {
+                } catch (YammerProxy.AccessDeniedException e) {
                   // TODO Auto-generated catch block
                   e.printStackTrace();
-                } catch (NWOAuthConnectionProblem e) {
+                } catch (YammerProxy.ConnectionProblem e) {
                   // TODO Auto-generated catch block
                   e.printStackTrace();
                 } finally {
@@ -690,10 +710,10 @@ public class YammerActivity extends Activity {
                 try {
                   showLoadingAnimation(true);
                   getYammerService().unfollowUser(userId);
-                } catch (NWOAuthAccessDeniedException e) {
+                } catch (YammerProxy.AccessDeniedException e) {
                   // TODO Auto-generated catch block
                   e.printStackTrace();
-                } catch (NWOAuthConnectionProblem e) {
+                } catch (YammerProxy.ConnectionProblem e) {
                   // TODO Auto-generated catch block
                   e.printStackTrace();
                 } finally {
@@ -749,10 +769,10 @@ public class YammerActivity extends Activity {
                   getYammerService().postMessage(reply, messageId);
                   // Update the messages timeline
                   getYammerService().updatePublicMessages();
-                } catch (NWOAuthAccessDeniedException e) {
+                } catch (YammerProxy.AccessDeniedException e) {
                   // TODO Auto-generated catch block
                   e.printStackTrace();
-                } catch (NWOAuthConnectionProblem e) {
+                } catch (YammerProxy.ConnectionProblem e) {
                   // TODO Auto-generated catch block
                   e.printStackTrace();
                 } finally {
@@ -861,10 +881,10 @@ public class YammerActivity extends Activity {
                       getYammerService().postMessage(message, 0);
                       // Update the messages timeline
                       getYammerService().updatePublicMessages();
-                    } catch (NWOAuthAccessDeniedException e) {
+                    } catch (YammerProxy.AccessDeniedException e) {
                       // TODO Auto-generated catch block
                       e.printStackTrace();
-                    } catch (NWOAuthConnectionProblem e) {
+                    } catch (YammerProxy.ConnectionProblem e) {
                       // TODO Auto-generated catch block
                       e.printStackTrace();
                     } finally {
@@ -960,7 +980,6 @@ public class YammerActivity extends Activity {
     super.onDestroy();
   }
 
-  @Override
   public void onStop() {
     super.onStop();
     // mYammerService may be null here if keyboard is opened, closed very fast

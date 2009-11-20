@@ -21,7 +21,20 @@ import net.oauth.client.httpclient4.HttpClient4;
 import net.oauth.http.HttpResponseMessage;
 import android.util.Log;
 
-public class NWOAuth {
+public class YammerProxy {
+  
+  private static final boolean DEBUG = G.DEBUG;
+  
+  public static final String DEFAULT_FEED = "My Feed";
+  
+  public static class AccessDeniedException extends Exception {
+    private static final long serialVersionUID = 4940776001569856135L;
+  }
+
+  public static class ConnectionProblem extends Exception {
+    private static final long serialVersionUID = 4940776001569856139L;
+  }
+
 
   /**
    * Properties for service we are trying to authenticate against.
@@ -47,7 +60,7 @@ public class NWOAuth {
   private OAuthClient client = null;
   private OAuthServiceProvider provider = null;
 
-  public NWOAuth(String _baseURL) {
+  public YammerProxy(String _baseURL) {
     this.baseURL = _baseURL;
     reset();
   }
@@ -66,35 +79,35 @@ public class NWOAuth {
 
   /**
    * Request a OAuth "Request Token".
-   * @throws NWOAuthConnectionProblem 
+   * @throws ConnectionProblem 
    */
-  public void getRequestToken() throws NWOAuthConnectionProblem {    	
-    if (G.DEBUG) Log.d("OAuth", "NWOAuth::getRequestToken");
+  public void getRequestToken() throws ConnectionProblem {    	
+    if (DEBUG) Log.d("OAuth", "NWOAuth::getRequestToken");
 
     if ( accessor == null ) {
-      if ( G.DEBUG ) Log.e("OAuth", "accessor not available (yet!)");
+      if ( DEBUG ) Log.e("OAuth", "accessor not available (yet!)");
       return;
     }   
 
     try {
       client.getRequestToken(accessor);
     } catch (java.io.IOException e) {
-      if (G.DEBUG) Log.e("yammerApp", "IOException: " + e.toString());    	
-      throw new NWOAuthConnectionProblem();
+      if (DEBUG) Log.e("yammerApp", "IOException: " + e.toString());    	
+      throw new ConnectionProblem();
     } catch (OAuthException e) {
-      if (G.DEBUG) Log.e("yammerApp", "OAuthException: " + e.toString());
-      throw new NWOAuthConnectionProblem();
+      if (DEBUG) Log.e("yammerApp", "OAuthException: " + e.toString());
+      throw new ConnectionProblem();
     } catch (Exception e) {
       // Do something
-      if (G.DEBUG) Log.e("yammerApp", "An unknown error occured: " + e.toString());
-      throw new NWOAuthConnectionProblem();
+      if (DEBUG) Log.e("yammerApp", "An unknown error occured: " + e.toString());
+      throw new ConnectionProblem();
     }
     // We should now have a request token and a token secret
     this.requestToken = accessor.requestToken;
     this.tokenSecret = accessor.tokenSecret;
 
-    if (G.DEBUG) Log.d("OAuth", "Request token: " + this.requestToken);
-    if (G.DEBUG) Log.d("OAuth", "Request token secret: " + this.tokenSecret);    
+    if (DEBUG) Log.d("OAuth", "Request token: " + this.requestToken);
+    if (DEBUG) Log.d("OAuth", "Request token secret: " + this.tokenSecret);    
   }
 
   /**
@@ -111,8 +124,8 @@ public class NWOAuth {
     return true;
   }
 
-  public void enableApplication(String callbackToken) throws NWOAuthAccessDeniedException {
-    if (G.DEBUG_OAUTH) Log.d("OAuth", "NWOAuth::enableApplication");
+  public void enableApplication(String callbackToken) throws AccessDeniedException {
+    if (DEBUG) Log.d("OAuth", "NWOAuth::enableApplication");
     Properties paramProps = new Properties();
     paramProps.setProperty("oauth_token", this.requestToken);
     try {
@@ -120,32 +133,32 @@ public class NWOAuth {
       // Store the access token secret
       this.requestToken =  response.getParameter("oauth_token");
       this.tokenSecret =  response.getParameter("oauth_token_secret");
-      if (G.DEBUG_OAUTH) Log.d("OAuth", "oauth_token: " + this.requestToken);
-      if (G.DEBUG_OAUTH) Log.d("OAuth", "oauth_token_secret: " + this.tokenSecret);
+      if (DEBUG) Log.d("OAuth", "oauth_token: " + this.requestToken);
+      if (DEBUG) Log.d("OAuth", "oauth_token_secret: " + this.tokenSecret);
     } catch (IOException e) {
       e.printStackTrace();
-      if (G.DEBUG_OAUTH) Log.d("OAuth", "IOException");
+      if (DEBUG) Log.d("OAuth", "IOException");
     } catch (URISyntaxException e) {
       e.printStackTrace();
-      if (G.DEBUG_OAUTH) Log.d("OAuth", "URISyntaxException");
+      if (DEBUG) Log.d("OAuth", "URISyntaxException");
     } catch (OAuthProblemException e) {
-      if (G.DEBUG_OAUTH) Log.d("OAuth", "HTTP status code: "+e.getHttpStatusCode());
+      if (DEBUG) Log.d("OAuth", "HTTP status code: "+e.getHttpStatusCode());
       // Check if this is a redirect
       if (e.getHttpStatusCode() == 302) {
-        if (G.DEBUG_OAUTH) Log.d( "OAuth", (String) e.getParameters().get(HttpResponseMessage.LOCATION) );
+        if (DEBUG) Log.d( "OAuth", (String) e.getParameters().get(HttpResponseMessage.LOCATION) );
       }
     } catch (OAuthException e) {
       e.printStackTrace();
-      if (G.DEBUG) Log.d("OAuth", "OAuthException");
+      if (DEBUG) Log.d("OAuth", "OAuthException");
     }
   }
 
   /**
    * Request "Access Token".
-   * @throws NWOAuthAccessDeniedException 
+   * @throws AccessDeniedException 
    */
-  public String authorizeUser() throws NWOAuthAccessDeniedException {
-    if (G.DEBUG) Log.d("OAuth", "NWOAuth::getAccessToken");
+  public String authorizeUser() throws AccessDeniedException {
+    if (DEBUG) Log.d("OAuth", "NWOAuth::getAccessToken");
 
     assert( this.requestToken != null && this.accessor != null );
 
@@ -165,24 +178,24 @@ public class NWOAuth {
       // TODO Auto-generated catch block
       e.printStackTrace();
     } catch (OAuthProblemException e) {
-      if (G.DEBUG_OAUTH) Log.d("OAuth", "HTTP status code: "+e.getHttpStatusCode());
+      if (DEBUG) Log.d("OAuth", "HTTP status code: "+e.getHttpStatusCode());
       // Try to retrieve the URL that resultet in the "error"
       // We need to do this because the OAuth library creates the URL being queried
       // with signatures and all, so we let the OAuth library create the URL, try
       // to do the request and then if it fails return the URL to let us try to 
       // request it with the browser.
       URL calledUrl = (URL)e.getParameters().get("URL");
-      if (G.DEBUG_OAUTH) Log.d("OAuth", "Called URL: "+calledUrl);
+      if (DEBUG) Log.d("OAuth", "Called URL: "+calledUrl);
       responseUrl = calledUrl.toString();        	
       // Check if this is a redirect
       if (e.getHttpStatusCode() == 302) {
-        if (G.DEBUG_OAUTH) Log.d("OAuth", "302 Location: " + (String) e.getParameters().get(HttpResponseMessage.LOCATION));
+        if (DEBUG) Log.d("OAuth", "302 Location: " + (String) e.getParameters().get(HttpResponseMessage.LOCATION));
       }
     } catch (OAuthException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    if (G.DEBUG_OAUTH) Log.d("OAuth", "authorizeUserResulting URL: "+responseUrl);
+    if (DEBUG) Log.d("OAuth", "authorizeUserResulting URL: "+responseUrl);
     return responseUrl;
   }
 
@@ -190,11 +203,11 @@ public class NWOAuth {
    * Follow user with given user ID on Yammer
    * @param userId
    * @return
-   * @throws NWOAuthAccessDeniedException
-   * @throws NWOAuthConnectionProblem
+   * @throws AccessDeniedException
+   * @throws ConnectionProblem
    */
-  public String followUser(long userId) throws NWOAuthAccessDeniedException, NWOAuthConnectionProblem {
-    if (G.DEBUG_OAUTH) Log.d("OAuth", "Following user: " + userId);    	
+  public String followUser(long userId) throws AccessDeniedException, ConnectionProblem {
+    if (DEBUG) Log.d("OAuth", "Following user: " + userId);    	
     String responseBody = null;
     String url = this.baseURL + "/api/v1/subscriptions/"; 
     Properties paramProps = new Properties();
@@ -205,7 +218,7 @@ public class NWOAuth {
     } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
-      throw new NWOAuthConnectionProblem();
+      throw new ConnectionProblem();
     } catch (URISyntaxException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -216,12 +229,12 @@ public class NWOAuth {
     return responseBody;
   }
 
-  public String unfollowUser(long userId) throws NWOAuthAccessDeniedException, NWOAuthConnectionProblem {
-    if (G.DEBUG_OAUTH) Log.d("OAuth", "Unfollowing user: " + userId);    	
+  public String unfollowUser(long userId) throws AccessDeniedException, ConnectionProblem {
+    if (DEBUG) Log.d("OAuth", "Unfollowing user: " + userId);    	
     String responseBody = null;
     String url = this.baseURL + "/api/v1/subscriptions/options?target_id=182108&target_type=user"; 
     //String url = "https://www.yammer.com/api/v1/subscriptions/"; 
-    if (G.DEBUG_OAUTH) Log.d("OAuth", "URL: " + url);    	
+    if (DEBUG) Log.d("OAuth", "URL: " + url);    	
     Properties paramProps = new Properties();
     paramProps.setProperty("target_type", "user");
     paramProps.setProperty("target_id", Long.toString(userId));
@@ -231,7 +244,7 @@ public class NWOAuth {
     } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
-      throw new NWOAuthConnectionProblem();
+      throw new ConnectionProblem();
     } catch (URISyntaxException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -242,8 +255,8 @@ public class NWOAuth {
     return responseBody;
   }
 
-  public String postResource(String url, String body, long messageId) throws NWOAuthAccessDeniedException, NWOAuthConnectionProblem {
-    if (G.DEBUG_OAUTH) Log.d("OAuth", "Posting resource: " + url);    	
+  public String postResource(String url, String body, long messageId) throws AccessDeniedException, ConnectionProblem {
+    if (DEBUG) Log.d("OAuth", "Posting resource: " + url);    	
     //OAuthMessage response;
     String responseBody = null;
     Properties paramProps = new Properties();
@@ -258,7 +271,7 @@ public class NWOAuth {
     } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
-      throw new NWOAuthConnectionProblem();
+      throw new ConnectionProblem();
     } catch (URISyntaxException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -270,8 +283,8 @@ public class NWOAuth {
     return responseBody;
   }
 
-  public String deleteResource(String url) throws NWOAuthAccessDeniedException, NWOAuthConnectionProblem {
-    if (G.DEBUG) Log.d("OAuth", "Deleting resource: " + url);    	
+  public String deleteResource(String url) throws AccessDeniedException, ConnectionProblem {
+    if (DEBUG) Log.d("OAuth", "Deleting resource: " + url);    	
     String responseBody = null;
     Properties paramProps = new Properties();
     paramProps.setProperty("oauth_token", this.requestToken);
@@ -282,7 +295,7 @@ public class NWOAuth {
     } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
-      throw new NWOAuthConnectionProblem();
+      throw new ConnectionProblem();
     } catch (URISyntaxException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -296,11 +309,11 @@ public class NWOAuth {
 
   /**
    * Access protected resource
-   * @throws NWOAuthAccessDeniedException 
-   * @throws NWOAuthConnectionProblem 
+   * @throws AccessDeniedException 
+   * @throws ConnectionProblem 
    */
-  public String accessResource(String url) throws NWOAuthAccessDeniedException, NWOAuthConnectionProblem {
-    if (G.DEBUG_OAUTH) Log.d("OAuth", "Accessing resource: " + url);
+  public String accessResource(String url) throws AccessDeniedException, ConnectionProblem {
+    if (DEBUG) Log.d("OAuth", "Accessing resource: " + url);
     Properties paramProps = new Properties();
     paramProps.setProperty("oauth_token", this.requestToken);
     OAuthMessage response;
@@ -308,11 +321,11 @@ public class NWOAuth {
     try {
       response = sendRequest(paramProps, url, "GET");
       responseBody = response.readBodyAsString();
-      if (G.DEBUG_OAUTH) Log.d("OAuth", responseBody);
+      if (DEBUG) Log.d("OAuth", responseBody);
     } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
-      throw new NWOAuthConnectionProblem();
+      throw new ConnectionProblem();
     } catch (URISyntaxException e) {
       e.printStackTrace();
     } catch (OAuthException e) {
@@ -324,8 +337,8 @@ public class NWOAuth {
   }
 
   @SuppressWarnings("unchecked")
-  private OAuthMessage sendRequest(Map map, String url, String method) throws IOException, URISyntaxException, OAuthException, NWOAuthAccessDeniedException {
-    if (G.DEBUG_OAUTH) Log.d("OAuth", "NWOAuth::sendRequest");
+  private OAuthMessage sendRequest(Map map, String url, String method) throws IOException, URISyntaxException, OAuthException, AccessDeniedException {
+    if (DEBUG) Log.d("OAuth", "NWOAuth::sendRequest");
 
     List<Map.Entry> params = new ArrayList<Map.Entry>();
     Iterator it = map.entrySet().iterator();
@@ -343,16 +356,16 @@ public class NWOAuth {
       } else {
         accessor.consumer.setProperty(OAuthClient.PARAMETER_STYLE, "QUERY_STRING");    			
       }
-      if (G.DEBUG_OAUTH) Log.d("NWOAuth", "Invoking: " + url + " params: "+params.toString());
+      if (DEBUG) Log.d("NWOAuth", "Invoking: " + url + " params: "+params.toString());
       return client.invoke(accessor, method, url, params);
     } catch (OAuthProblemException e) {
       int statusCode = e.getHttpStatusCode();
-      if (G.DEBUG_OAUTH) Log.d("OAuth", "HTTP status code: "+statusCode);
+      if (DEBUG) Log.d("OAuth", "HTTP status code: "+statusCode);
       if (302 == statusCode) { 
-        if (G.DEBUG_OAUTH) Log.d("OAuth", (String)e.getParameters().get(HttpResponseMessage.LOCATION));
+        if (DEBUG) Log.d("OAuth", (String)e.getParameters().get(HttpResponseMessage.LOCATION));
         throw e;
       } else if (401 == statusCode) {
-        throw (NWOAuthAccessDeniedException)new NWOAuthAccessDeniedException().fillInStackTrace();
+        throw (AccessDeniedException)new AccessDeniedException().fillInStackTrace();
       }
     }
     // It seems an error occured
