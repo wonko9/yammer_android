@@ -2,13 +2,9 @@ package com.yammer;
 
 import static android.provider.BaseColumns._ID;
 
-import static com.yammer.YammerDataConstants.FULL_NAME;
-import static com.yammer.YammerDataConstants.IS_FOLLOWING;
-import static com.yammer.YammerDataConstants.MESSAGE;
-import static com.yammer.YammerDataConstants.MESSAGE_ID;
-import static com.yammer.YammerDataConstants.URL;
-import static com.yammer.YammerDataConstants.USER_ID;
+import com.yammer.YammerDataConstants;
 
+import java.util.Arrays;
 import java.util.concurrent.Semaphore;
 
 import android.app.Activity;
@@ -60,7 +56,7 @@ public class YammerActivity extends Activity {
   private SQLiteDatabase db = null;;
   private YammerIntentReceiver yammerIntentReceiver = null;
   boolean listViewInitialized = false;
-  private static final String[] PROJECTION = new String[] {MESSAGE};
+  private static final String[] PROJECTION = new String[] {YammerDataConstants.MESSAGE};
   // Whenever something starts to load, this will be increased 
   // by 1 - when loading stops, the counter is decreased and 
   // if it reaches zero, the loading animation disappears.
@@ -136,7 +132,7 @@ public class YammerActivity extends Activity {
               // Just show the reply activity 
               Intent i = new Intent(YammerActivity.this, YammerReply.class);
               // Post the message ID being replied upon along with the intent
-              int columnIndex = c.getColumnIndex(MESSAGE_ID);
+              int columnIndex = c.getColumnIndex(YammerDataConstants.MESSAGE_ID);
               if (DEBUG) Log.d(TAG_Y, "columnIndex: " + columnIndex);
               long messageId = c.getLong(columnIndex);
               i.putExtra("messageId", messageId);
@@ -196,8 +192,7 @@ public class YammerActivity extends Activity {
                   getYammerService().updatePublicMessages();
                   getYammerService().updateCurrentUserData();
                   // Initialize the tweets view
-                  Intent initIntent = new Intent( "com.yammer:TIMELINE_INITIALIZE" );
-                  sendBroadcast(initIntent);
+                  sendBroadcast("com.yammer:TIMELINE_INITIALIZE");
                   runOnUiThread( new Runnable() {
                     public void run() {
                       updateListView();        		    				    				
@@ -392,8 +387,7 @@ public class YammerActivity extends Activity {
             // Don't reset if already authorized
             if ( !YammerService.isAuthorized() ) {
               // Clear all account information
-              Intent intent = new Intent( "com.yammer:RESET_ACCOUNT" );
-              sendBroadcast(intent);													
+              sendBroadcast("com.yammer:RESET_ACCOUNT");
             }
           }
         }
@@ -471,38 +465,11 @@ public class YammerActivity extends Activity {
     switch ( item.getItemId() ) {
     case MENU_RELOAD:
       if (DEBUG) Log.d(TAG_Y, "MENU_RELOAD selected");
-      new Thread(
-          new Runnable() {
-            public void run() {
-              // Delete it from the server
-              try {
-                showLoadingAnimation(true);
-                // Instruct YammerService activity to reload the timeline
-                getYammerService().updatePublicMessages();
-                getYammerService().updateCurrentUserData();
-                // Update the timeline view
-                Intent intent = new Intent( "com.yammer:PUBLIC_TIMELINE_UPDATED" );
-                sendBroadcast(intent);
-              } catch (NWOAuthAccessDeniedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-              } catch (NWOAuthConnectionProblem e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-              } finally {
-                showLoadingAnimation(false);									
-              }
-            }
-          }).start();
+      reload();
       break;
     case MENU_SETTINGS:
       if (DEBUG) Log.d(TAG_Y, "MENU_SETTINGS selected");
-      // Create activity YammerSettings
-      Intent i = new Intent(this, YammerSettings.class);
-      // We use startActivityForResult because we want to know when
-      // the authorization has completed. If startActivity is used,
-      // no result can be delivered back - it is fire and forget.
-      startActivityForResult(i, YAMMER_SETTINGS_CREATE);        
+      startActivityForResult(new Intent(this, YammerSettings.class), YAMMER_SETTINGS_CREATE);        
       break;
     case MENU_FEEDS:
       if (DEBUG) Log.d(TAG_Y, "MENU_FEEDS selected");
@@ -549,16 +516,16 @@ public class YammerActivity extends Activity {
     Cursor c = db.rawQuery(sql, null);
     c.moveToFirst();
     // Get the user ID of the user who  posted the message
-    int columnIndex = c.getColumnIndex(USER_ID);
+    int columnIndex = c.getColumnIndex(YammerDataConstants.USER_ID);
     long userId = c.getLong(columnIndex);
     // Get the message posted
-    columnIndex = c.getColumnIndex(MESSAGE);
+    columnIndex = c.getColumnIndex(YammerDataConstants.MESSAGE);
     String message = c.getString(columnIndex);
     // Get the full name of the user who posted the message
-    columnIndex = c.getColumnIndex(FULL_NAME);
+    columnIndex = c.getColumnIndex(YammerDataConstants.FULL_NAME);
     String fullName = c.getString(columnIndex);
     // Get the full name of the user who posted the message
-    columnIndex = c.getColumnIndex(IS_FOLLOWING);
+    columnIndex = c.getColumnIndex(YammerDataConstants.IS_FOLLOWING);
     int isFollowing = c.getInt(columnIndex);
     //menu.setHeaderTitle(R.string.popup_title_label);
     // Is this my own message?
@@ -593,7 +560,7 @@ public class YammerActivity extends Activity {
     //Menu urlSubMenu = null;
     if (DEBUG) Log.d(TAG_Y, "c.getCount(): " + c.getCount());
     // Add any URL's that may have been enclosed in the message
-    columnIndex = c.getColumnIndex(URL);
+    columnIndex = c.getColumnIndex(YammerDataConstants.FIELD_URLS_URL);
     for ( int i=0; i<c.getCount(); i++) {
       String url = c.getString(columnIndex);
       // No URLs in this post, so break	
@@ -631,10 +598,10 @@ public class YammerActivity extends Activity {
       Cursor c = db.rawQuery(sql, null);
       c.moveToFirst();	
       // Retrieve the message ID og the message clicked on
-      int columnIndex = c.getColumnIndex(MESSAGE_ID);
+      int columnIndex = c.getColumnIndex(YammerDataConstants.MESSAGE_ID);
       if (DEBUG) Log.d(TAG_Y, "columnIndex: " + columnIndex);
       final long messageId = c.getLong(columnIndex);
-      columnIndex = c.getColumnIndex(USER_ID);
+      columnIndex = c.getColumnIndex(YammerDataConstants.USER_ID);
       final long userId = c.getLong(columnIndex);
       // Which item was selected
       switch ( item.getItemId() ) {
@@ -809,12 +776,10 @@ public class YammerActivity extends Activity {
       return;
     } else if ( YammerService.isAuthorized() == false ) {
       // We must authenticate
-      Intent authenticateIntent = new Intent( "com.yammer:MUST_AUTHENTICATE_DIALOG" );
-      sendBroadcast(authenticateIntent);
+      sendBroadcast("com.yammer:MUST_AUTHENTICATE_DIALOG");
     } else { 
       // Initialize the tweets view
-      Intent initIntent = new Intent( "com.yammer:TIMELINE_INITIALIZE" );
-      sendBroadcast(initIntent);
+      sendBroadcast("com.yammer:TIMELINE_INITIALIZE");
     }		
   }
 
@@ -993,5 +958,9 @@ public class YammerActivity extends Activity {
     unbindService(mConnection);
     // TODO: Unregister receiver
     // Make sure intent receiver was registered before unregistering it
+  }
+  
+  private void sendBroadcast(String _intent) {
+    sendBroadcast(new Intent(_intent));
   }
 }

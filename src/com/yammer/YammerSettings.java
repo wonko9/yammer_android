@@ -15,31 +15,33 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 public class YammerSettings extends PreferenceActivity
-implements SharedPreferences.OnSharedPreferenceChangeListener  
+  implements SharedPreferences.OnSharedPreferenceChangeListener  
 {
+  
+  private static final boolean DEBUG = G.DEBUG;
 
   private static String TAG_YSETTINGS = "YammerSettings";
 
   protected void onCreate(Bundle savedInstanceState) {
-    if (G.DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings::onCreate");
+    if (DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings.onCreate");
     super.onCreate(savedInstanceState);
     addPreferencesFromResource(R.layout.settings);
   }
 
   protected void onResume() {
-    if (G.DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings::onResume");
+    if (DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings.onResume");
     getPreferenceManager().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
     super.onResume();
   }
 
   protected void onPause() {
-    if (G.DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings::onPause");
+    if (DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings.onPause");
     getPreferenceManager().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
     super.onPause();
   }
 
   protected void onDestroy() {
-    if (G.DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings::onDestroy");
+    if (DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings.onDestroy");
     super.onDestroy();
   }
 
@@ -55,7 +57,7 @@ implements SharedPreferences.OnSharedPreferenceChangeListener
   public boolean onOptionsItemSelected(MenuItem item) {
     switch( item.getItemId() ) {
     case MENU_ABOUT:
-      if (G.DEBUG) Log.d(TAG_YSETTINGS, "MENU_ABOUT");
+      if (DEBUG) Log.d(TAG_YSETTINGS, "MENU_ABOUT");
       // Create activity YammerSettings
       Intent i = new Intent(this, AboutActivity.class);
       // We use startActivityForResult because we want to know when
@@ -68,55 +70,55 @@ implements SharedPreferences.OnSharedPreferenceChangeListener
   }
 
   public void onSharedPreferenceChanged(SharedPreferences _prefs, String _key) {
-    if (G.DEBUG) Log.d(TAG_YSETTINGS, "onSharedPreferenceChange: " + _key);
+    if (DEBUG) Log.d(TAG_YSETTINGS, "onSharedPreferenceChange: " + _key);
     if("key_url".equals(_key)) {
       getApplicationContext().sendBroadcast(new Intent( "com.yammer:RESET_ACCOUNT" ));
     }
   }
 
   public static boolean startServiceAtBoot(Context context) {
-    if (G.DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings::startService");
+    if (DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings.startService");
     return getPreferences(context).getBoolean("key_background", true);
   }
 
-  public static void setDefaultFeed(Context context, String feedName) {
-    if (G.DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings::getDefaultFeed");
+  public static void setFeed(Context context, String feedName) {
+    if (DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings.getFeed");
     SharedPreferences settings = getPreferences(context);				
     SharedPreferences.Editor editor = settings.edit();
     editor.putString("key_feed", feedName);
     editor.commit();    	
   }
 
-  public static String getDefaultFeed(Context context) {
-    if (G.DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings::getDefaultFeed");    	
-    if (G.DEBUG) Log.d(TAG_YSETTINGS, "key_feed: " + getPreferences(context).getString("key_feed", "all_messages"));
-    return getPreferences(context).getString("key_feed", "all_messages");
+  public static String getFeed(Context context) {
+    String ret = getPreferences(context).getString("key_feed", YammerProxy.DEFAULT_FEED);
+    if (DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings.getFeed: " + ret);
+    return ret;
   }
 
   public static String getUrl(Context context) {
     String ret = getPreferences(context).getString("key_url", context.getString(R.string.pref_url_default)); 
-    if (G.DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings::getUrl:" + ret);      
+    if (DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings.getUrl:" + ret);      
     return ret; 
   }
 
   public static long getUpdateTimeout(Context context) {
-    //if (G.DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings::getUpdateTimeout");    	    	
+    //if (DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings.getUpdateTimeout");    	    	
     return Long.parseLong(getPreferences(context).getString("key_update", "120"))*1000;
   }
 
   public static String getMessageClickBehaviour(Context context) {
-    if (G.DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings::getMessageClickBehaviour");
-    if (G.DEBUG) Log.d(TAG_YSETTINGS, "key_replies: " + getPreferences(context).getString("key_replies", "reply"));
+    if (DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings.getMessageClickBehaviour");
+    if (DEBUG) Log.d(TAG_YSETTINGS, "key_replies: " + getPreferences(context).getString("key_replies", "reply"));
     return getPreferences(context).getString("key_replies", "reply");
   }
 
   public static String getDisplayName(Context context) {
-    if (G.DEBUG) Log.d(TAG_YSETTINGS, "key_names: " + getPreferences(context).getString("key_names", "firstname"));
+    if (DEBUG) Log.d(TAG_YSETTINGS, "key_names: " + getPreferences(context).getString("key_names", "firstname"));
     return getPreferences(context).getString("key_names", "firstname");
   }
 
   public static boolean getVibrate(Context context) {
-    if (G.DEBUG) Log.d(TAG_YSETTINGS, "key_vibrate: " + getPreferences(context).getBoolean("key_vibrate", true));
+    if (DEBUG) Log.d(TAG_YSETTINGS, "key_vibrate: " + getPreferences(context).getBoolean("key_vibrate", true));
     return getPreferences(context).getBoolean("key_vibrate", true);
   }
 

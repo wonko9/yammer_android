@@ -1,36 +1,6 @@
 package com.yammer;
 
-import static android.provider.BaseColumns._ID;
-import static com.yammer.YammerDataConstants.ACCESS_TOKEN;
-import static com.yammer.YammerDataConstants.ACCESS_TOKEN_SECRET;
-import static com.yammer.YammerDataConstants.CLIENT_TYPE;
-import static com.yammer.YammerDataConstants.CREATED_AT;
-import static com.yammer.YammerDataConstants.DELETED;
-import static com.yammer.YammerDataConstants.EMAIL;
-import static com.yammer.YammerDataConstants.FULL_NAME;
-import static com.yammer.YammerDataConstants.IS_FOLLOWING;
-import static com.yammer.YammerDataConstants.LAST_MESSAGE_ID;
-import static com.yammer.YammerDataConstants.MESSAGE;
-import static com.yammer.YammerDataConstants.MESSAGE_ID;
-import static com.yammer.YammerDataConstants.MUGSHOT_MD5;
-import static com.yammer.YammerDataConstants.MUGSHOT_URL;
-import static com.yammer.YammerDataConstants.NAME;
-import static com.yammer.YammerDataConstants.NETWORK_ID;
-import static com.yammer.YammerDataConstants.REPLIED_TO_ID;
-import static com.yammer.YammerDataConstants.SENDER_ID;
-import static com.yammer.YammerDataConstants.SENDER_TYPE;
-import static com.yammer.YammerDataConstants.TABLE_MESSAGES;
-import static com.yammer.YammerDataConstants.TABLE_NETWORKS;
-import static com.yammer.YammerDataConstants.TABLE_URLS;
-import static com.yammer.YammerDataConstants.TABLE_USERS;
-import static com.yammer.YammerDataConstants.THREAD_ID;
-import static com.yammer.YammerDataConstants.TIMESTAMP;
-import static com.yammer.YammerDataConstants.TITLE;
-import static com.yammer.YammerDataConstants.URL;
-import static com.yammer.YammerDataConstants.URL_FAVICON_ID;
-import static com.yammer.YammerDataConstants.URL_TITLE;
-import static com.yammer.YammerDataConstants.USER_ID;
-import static com.yammer.YammerDataConstants.WEB_URL;
+import com.yammer.YammerDataConstants;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -42,12 +12,23 @@ import org.json.JSONObject;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
-public class YammerData extends SQLiteOpenHelper {
+public class YammerData extends SQLiteOpenHelper implements YammerDataConstants {
+
+  private static final boolean DEBUG = G.DEBUG;
+
+  public static class YammerDataException extends Exception {
+    private static final long serialVersionUID = -3367954627916549416L;
+    public YammerDataException(Exception _cause) {
+      super();
+      initCause(_cause);
+    }
+  }
 
   private static final String TAG_YDATABASE = "YammerDB";
   private static final String DATABASE_NAME = "yammer.db";
@@ -57,11 +38,11 @@ public class YammerData extends SQLiteOpenHelper {
     super(ctx, DATABASE_NAME, null, DATABASE_VERSION);
   }
 
-  @Override
   public void onCreate(SQLiteDatabase db) {
-    if (G.DEBUG) Log.d(TAG_YDATABASE, "YammerData::onCreate");
+    if (DEBUG) Log.d(TAG_YDATABASE, "YammerData.onCreate");
+
     // Create the needed tables
-    if (G.DEBUG) Log.d(TAG_YDATABASE, "Creating messages tables");
+    if (DEBUG) Log.d(TAG_YDATABASE, "Creating table: " + TABLE_USERS);
     db.execSQL(	"CREATE TABLE " + TABLE_MESSAGES +" ("
         + _ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " 
         + TIMESTAMP + " INTEGER, " 
@@ -77,7 +58,8 @@ public class YammerData extends SQLiteOpenHelper {
         + DELETED + " BOOLEAN DEFAULT 0"
         + ");"
     );
-    if (G.DEBUG) Log.d(TAG_YDATABASE, "Creating users tables");
+
+    if (DEBUG) Log.d(TAG_YDATABASE, "Creating table: " + TABLE_USERS);
     db.execSQL(	"CREATE TABLE " + TABLE_USERS +" (" 
         + _ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
         + USER_ID + " BIGINT UNIQUE NOT NULL, "
@@ -87,12 +69,13 @@ public class YammerData extends SQLiteOpenHelper {
         + NAME + " TEXT, "
         + TITLE + " TEXT, "
         + EMAIL + " TEXT, "
-        + URL + " TEXT, "
+        + FIELD_USERS_URL + " TEXT, "
         + IS_FOLLOWING + " BOOLEAN DEFAULT 0, "
         + WEB_URL + " TEXT"
         + ");"
     );
-    if (G.DEBUG) Log.d(TAG_YDATABASE, "Creating networks tables");
+
+    if (DEBUG) Log.d(TAG_YDATABASE, "Creating table: " + TABLE_NETWORKS);
     db.execSQL(	"CREATE TABLE " + TABLE_NETWORKS +" (" 
         + _ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
         + NETWORK_ID + " BIGINT NOT NULL, "
@@ -102,21 +85,22 @@ public class YammerData extends SQLiteOpenHelper {
         + LAST_MESSAGE_ID + " BIGINT"
         + ");"
     );
-    if (G.DEBUG) Log.d(TAG_YDATABASE, "Creating urls tables");
-    db.execSQL(	"CREATE TABLE " + TABLE_URLS +" (" 
+
+    if (G.DEBUG) Log.d(TAG_YDATABASE, "Creating table:" + TABLE_URLS);
+    db.execSQL("CREATE TABLE " + TABLE_URLS +" (" 
         + _ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-        + MESSAGE_ID + " BIGINT NOT NULL, "
-        + NETWORK_ID + " BIGINT NOT NULL, "
-        + URL + " TEXT, "
-        + URL_TITLE + " TEXT, "
-        + URL_FAVICON_ID + " TEXT"
+        + FIELD_URLS_MESSAGE_ID + " BIGINT NOT NULL, "
+        + FIELD_URLS_NETWORK_ID + " BIGINT NOT NULL, "
+        + FIELD_URLS_URL + " TEXT, "
+        + FIELD_URLS_TITLE + " TEXT, "
+        + FIELD_URLS_FAVICON_ID + " TEXT"
         + ");"
     );
   }
 
-  @Override
   public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-    if (G.DEBUG) Log.i(TAG_YDATABASE, "YammerData::onUpgrade");
+    if (DEBUG) Log.i(TAG_YDATABASE, "YammerData.onUpgrade");
+
     // Drop all tables
     db.execSQL("DROP TABLE IF EXISTS " + TABLE_MESSAGES);
     db.execSQL("DROP TABLE IF EXISTS " + TABLE_USERS);
@@ -126,14 +110,19 @@ public class YammerData extends SQLiteOpenHelper {
     onCreate(db);
   }
 
-
-  public void resetData(long networkId) {
-    if (G.DEBUG) Log.d(TAG_YDATABASE, "YammerData::resetData");
+  public void clearMessages() {
+    if (DEBUG) Log.d(TAG_YDATABASE, "YammerData.resetData");
     SQLiteDatabase db = this.getWritableDatabase();
-    // Remove all entries related to the given network ID
+    db.execSQL("DELETE FROM " + TABLE_MESSAGES);
+    clearFeeds();
+  }
+  
+  public void resetData(long networkId) {
+    if (DEBUG) Log.d(TAG_YDATABASE, "YammerData.resetData for network");
+    SQLiteDatabase db = this.getWritableDatabase();
     db.execSQL("DELETE FROM " + TABLE_MESSAGES + " WHERE " + NETWORK_ID + "=" + networkId);
     db.execSQL("DELETE FROM " + TABLE_NETWORKS + " WHERE " + NETWORK_ID + "=" + networkId);
-    db.execSQL("DELETE FROM " + TABLE_URLS + " WHERE " + NETWORK_ID + "=" + networkId);
+    clearFeeds();
   }
 
   public boolean isMessageFromUser(long messageId, long userId) {
@@ -148,7 +137,7 @@ public class YammerData extends SQLiteOpenHelper {
         return true;
       }
     } catch (Exception e) {
-      if (G.DEBUG) Log.d(TAG_YDATABASE, "Whoops.. isMessageFromUser failed: " + e.getMessage());
+      if (DEBUG) Log.d(TAG_YDATABASE, "Whoops.. isMessageFromUser failed: " + e.getMessage());
       e.printStackTrace();
     } finally {
       c.close();
@@ -182,7 +171,7 @@ public class YammerData extends SQLiteOpenHelper {
   }
 
   public void createNetwork(long networkId, long userId, String accessToken, String accessTokenSecret) {
-    if (G.DEBUG) Log.d(TAG_YDATABASE, "YammerData::createNetwork");
+    if (DEBUG) Log.d(TAG_YDATABASE, "YammerData.createNetwork");
     try {
       // Update the database
       SQLiteDatabase db = this.getWritableDatabase();
@@ -198,7 +187,7 @@ public class YammerData extends SQLiteOpenHelper {
       db.delete(TABLE_MESSAGES, NETWORK_ID + "=" + networkId, null);
     } catch (SQLiteConstraintException e) {
       e.printStackTrace();
-      if (G.DEBUG) Log.d(TAG_YDATABASE, "SQLiteConstraintException - network already exists probably, so just updating it");
+      if (DEBUG) Log.d(TAG_YDATABASE, "SQLiteConstraintException - network already exists probably, so just updating it");
       // Network already exists probably, so just update it
       updateAccessTokens(networkId, accessToken, accessTokenSecret);
     }
@@ -221,7 +210,7 @@ public class YammerData extends SQLiteOpenHelper {
       accessToken = c.getString(columnIndex);
       c.close();
     } catch (Exception e) {
-      if (G.DEBUG) Log.d(TAG_YDATABASE, "It seems an access token could not be found - returning null");
+      if (DEBUG) Log.d(TAG_YDATABASE, "It seems an access token could not be found - returning null");
     } finally {
       c.close();
     }
@@ -244,7 +233,7 @@ public class YammerData extends SQLiteOpenHelper {
       int columnIndex = c.getColumnIndex(ACCESS_TOKEN_SECRET);
       accessTokenSecret = c.getString(columnIndex);
     } catch (Exception e) {
-      if (G.DEBUG) Log.d(TAG_YDATABASE, "It seems an access token could not be found - returning null");
+      if (DEBUG) Log.d(TAG_YDATABASE, "It seems an access token could not be found - returning null");
     } finally {
       c.close();
     }
@@ -252,7 +241,7 @@ public class YammerData extends SQLiteOpenHelper {
   }
 
   public void updateAccessTokens(long networkId, String accessToken, String accessTokenSecret) {
-    if (G.DEBUG) Log.d(TAG_YDATABASE, "YammerData::updateAccessTokens");
+    if (DEBUG) Log.d(TAG_YDATABASE, "YammerData.updateAccessTokens");
     // Update the database
     SQLiteDatabase db = this.getWritableDatabase();
     ContentValues values = new ContentValues();
@@ -260,7 +249,7 @@ public class YammerData extends SQLiteOpenHelper {
     values.put(ACCESS_TOKEN_SECRET, accessTokenSecret);
     int count = db.update(TABLE_NETWORKS, values, NETWORK_ID + "=" + networkId, null);
     if ( count != 1 ) {
-      if (G.DEBUG) Log.w(TAG_YDATABASE, "Problem updating network state. Count: " + count);
+      if (DEBUG) Log.w(TAG_YDATABASE, "Problem updating network state. Count: " + count);
     }		
   }
 
@@ -281,7 +270,7 @@ public class YammerData extends SQLiteOpenHelper {
       messageId = c.getLong(columnIndex);
     } catch (Exception e) {
       e.printStackTrace();
-      if (G.DEBUG) Log.d(TAG_YDATABASE, "It seems last message ID could not be found - returning 0");
+      if (DEBUG) Log.d(TAG_YDATABASE, "It seems last message ID could not be found - returning 0");
     } finally {
       c.close();			
     }
@@ -294,14 +283,14 @@ public class YammerData extends SQLiteOpenHelper {
    * @param messageId
    */
   public void updateLastMessageId(long networkId, long messageId) {
-    if (G.DEBUG) Log.d(TAG_YDATABASE, "YammerData::updateLastMessageId");
+    if (DEBUG) Log.d(TAG_YDATABASE, "YammerData.updateLastMessageId");
     // Update the database
     SQLiteDatabase db = this.getWritableDatabase();
     ContentValues values = new ContentValues();
     values.put(LAST_MESSAGE_ID, messageId);
     int count = db.update(TABLE_NETWORKS, values, NETWORK_ID + "=" + networkId, null);
     if ( count != 1 ) {
-      if (G.DEBUG) Log.w(TAG_YDATABASE, "Problem updating network state. Count: " + count);
+      if (DEBUG) Log.w(TAG_YDATABASE, "Problem updating network state. Count: " + count);
     }
   }
 
@@ -318,7 +307,7 @@ public class YammerData extends SQLiteOpenHelper {
       String clientType = messageReference.getString("client_type");
       String repliedToId = messageReference.getString("replied_to_id");
       String createdAt = messageReference.getString("created_at");
-      if (G.DEBUG) Log.d(TAG_YDATABASE, "Added message_id: " + messageId);
+      if (DEBUG) Log.d(TAG_YDATABASE, "Added message_id: " + messageId);
       // Update the database
       SQLiteDatabase db = this.getWritableDatabase();
       ContentValues values = new ContentValues();
@@ -338,7 +327,7 @@ public class YammerData extends SQLiteOpenHelper {
       try {
         timestamp = dateFormat.parse(createdAt).getTime();
       } catch (ParseException e) {
-        if (G.DEBUG) Log.w(TAG_YDATABASE, "Could not parse date");
+        if (DEBUG) Log.w(TAG_YDATABASE, "Could not parse date");
       }			
       values.put(TIMESTAMP, timestamp);
       // Insert into database
@@ -346,16 +335,16 @@ public class YammerData extends SQLiteOpenHelper {
       try {
         // Fetch any URL's embedded in the message
         JSONArray jsonArray = messageBody.getJSONArray("urls");
-        if (G.DEBUG) Log.d(TAG_YDATABASE, "jsonArray.length(): " + jsonArray.length());
+        if (DEBUG) Log.d(TAG_YDATABASE, "jsonArray.length(): " + jsonArray.length());
         // Add all fetched messages tp the database
         for( int i=0; i < jsonArray.length(); i++ ) {
           String url = jsonArray.getString(i);
-          if (G.DEBUG) Log.d(TAG_YDATABASE, "Extracted URL: " + url);
+          if (DEBUG) Log.d(TAG_YDATABASE, "Extracted URL: " + url);
           // Add the URL to the database
           addUrl(messageId, networkId, url);
         }
       } catch( Exception e ) {
-        if (G.DEBUG) Log.d(TAG_YDATABASE, "No URL's found");
+        if (DEBUG) Log.d(TAG_YDATABASE, "No URL's found");
         //e.printStackTrace();
       }
       // Return the ID of the message stored
@@ -396,11 +385,11 @@ public class YammerData extends SQLiteOpenHelper {
       values.put(WEB_URL, webUrl);
       values.put(EMAIL, email);
       values.put(TITLE, jobTitle);
-      values.put(URL, url);
+      values.put(FIELD_USERS_URL, url);
       // Insert into database
       SQLiteDatabase db = this.getWritableDatabase();
       db.insertOrThrow(TABLE_USERS, null, values);			
-      if (G.DEBUG) Log.d(TAG_YDATABASE, "Added user_id: " + userId);
+      if (DEBUG) Log.d(TAG_YDATABASE, "Added user_id: " + userId);
     } catch (JSONException e) {
       e.printStackTrace();
       // Message wasn't added
@@ -415,13 +404,11 @@ public class YammerData extends SQLiteOpenHelper {
   }
 
   public void addUrl(long messageId, long networkId, String url) {
-    ContentValues values = new ContentValues();			
-    values.put(MESSAGE_ID, messageId);
-    values.put(NETWORK_ID, networkId);
-    values.put(URL, url);
-    // Insert into database
-    SQLiteDatabase db = this.getWritableDatabase();
-    db.insertOrThrow(TABLE_URLS, null, values);		
+    ContentValues values = new ContentValues();                        
+    values.put(FIELD_URLS_MESSAGE_ID, messageId);
+    values.put(FIELD_URLS_NETWORK_ID, networkId);
+    values.put(FIELD_URLS_URL, url);
+    getWritableDatabase().insertOrThrow(TABLE_URLS, null, values);                
   }
 
 }
