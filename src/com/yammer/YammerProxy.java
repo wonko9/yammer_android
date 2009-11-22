@@ -82,7 +82,7 @@ public class YammerProxy {
    * @throws ConnectionProblem 
    */
   public void getRequestToken() throws ConnectionProblem {    	
-    if (DEBUG) Log.d("OAuth", "NWOAuth::getRequestToken");
+    if (DEBUG) Log.d("OAuth", "YammerProxy.getRequestToken");
 
     if ( accessor == null ) {
       if ( DEBUG ) Log.e("OAuth", "accessor not available (yet!)");
@@ -125,7 +125,7 @@ public class YammerProxy {
   }
 
   public void enableApplication(String callbackToken) throws AccessDeniedException {
-    if (DEBUG) Log.d("OAuth", "NWOAuth::enableApplication");
+    if (DEBUG) Log.d("OAuth", "YammerProxy.enableApplication");
     Properties paramProps = new Properties();
     paramProps.setProperty("oauth_token", this.requestToken);
     try {
@@ -158,7 +158,7 @@ public class YammerProxy {
    * @throws AccessDeniedException 
    */
   public String authorizeUser() throws AccessDeniedException {
-    if (DEBUG) Log.d("OAuth", "NWOAuth::getAccessToken");
+    if (DEBUG) Log.d("YammerProxy", "YammerProxy.authorizeUser");
 
     assert( this.requestToken != null && this.accessor != null );
 
@@ -185,17 +185,17 @@ public class YammerProxy {
       // to do the request and then if it fails return the URL to let us try to 
       // request it with the browser.
       URL calledUrl = (URL)e.getParameters().get("URL");
-      if (DEBUG) Log.d("OAuth", "Called URL: "+calledUrl);
+      if (DEBUG) Log.d("YammerProxy", "Called URL: "+calledUrl);
       responseUrl = calledUrl.toString();        	
       // Check if this is a redirect
       if (e.getHttpStatusCode() == 302) {
-        if (DEBUG) Log.d("OAuth", "302 Location: " + (String) e.getParameters().get(HttpResponseMessage.LOCATION));
+        if (DEBUG) Log.d("YammerProxy", "302 Location: " + (String) e.getParameters().get(HttpResponseMessage.LOCATION));
       }
     } catch (OAuthException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    if (DEBUG) Log.d("OAuth", "authorizeUserResulting URL: "+responseUrl);
+    if (DEBUG) Log.d("YammerProxy", "authorizeUserResulting URL: "+responseUrl);
     return responseUrl;
   }
 
@@ -207,7 +207,7 @@ public class YammerProxy {
    * @throws ConnectionProblem
    */
   public String followUser(long userId) throws AccessDeniedException, ConnectionProblem {
-    if (DEBUG) Log.d("OAuth", "Following user: " + userId);    	
+    if (DEBUG) Log.d("YammerProxy", "Following user: " + userId);    	
     String responseBody = null;
     String url = this.baseURL + "/api/v1/subscriptions/"; 
     Properties paramProps = new Properties();
@@ -230,11 +230,11 @@ public class YammerProxy {
   }
 
   public String unfollowUser(long userId) throws AccessDeniedException, ConnectionProblem {
-    if (DEBUG) Log.d("OAuth", "Unfollowing user: " + userId);    	
+    if (DEBUG) Log.d("YammerProxy", "Unfollowing user: " + userId);    	
     String responseBody = null;
     String url = this.baseURL + "/api/v1/subscriptions/options?target_id=182108&target_type=user"; 
     //String url = "https://www.yammer.com/api/v1/subscriptions/"; 
-    if (DEBUG) Log.d("OAuth", "URL: " + url);    	
+    if (DEBUG) Log.d("YammerProxy", "URL: " + url);    	
     Properties paramProps = new Properties();
     paramProps.setProperty("target_type", "user");
     paramProps.setProperty("target_id", Long.toString(userId));
@@ -256,7 +256,7 @@ public class YammerProxy {
   }
 
   public String postResource(String url, String body, long messageId) throws AccessDeniedException, ConnectionProblem {
-    if (DEBUG) Log.d("OAuth", "Posting resource: " + url);    	
+    if (DEBUG) Log.d("YammerProxy", "Posting resource: " + url);    	
     //OAuthMessage response;
     String responseBody = null;
     Properties paramProps = new Properties();
@@ -284,7 +284,7 @@ public class YammerProxy {
   }
 
   public String deleteResource(String url) throws AccessDeniedException, ConnectionProblem {
-    if (DEBUG) Log.d("OAuth", "Deleting resource: " + url);    	
+    if (DEBUG) Log.d("YammerProxy", "Deleting resource: " + url);    	
     String responseBody = null;
     Properties paramProps = new Properties();
     paramProps.setProperty("oauth_token", this.requestToken);
@@ -338,7 +338,7 @@ public class YammerProxy {
 
   @SuppressWarnings("unchecked")
   private OAuthMessage sendRequest(Map map, String url, String method) throws IOException, URISyntaxException, OAuthException, AccessDeniedException {
-    if (DEBUG) Log.d("OAuth", "NWOAuth::sendRequest");
+    if (DEBUG) Log.d("OAuth", "YammerProxy.sendRequest");
 
     List<Map.Entry> params = new ArrayList<Map.Entry>();
     Iterator it = map.entrySet().iterator();
@@ -356,7 +356,7 @@ public class YammerProxy {
       } else {
         accessor.consumer.setProperty(OAuthClient.PARAMETER_STYLE, "QUERY_STRING");    			
       }
-      if (DEBUG) Log.d("NWOAuth", "Invoking: " + url + " params: "+params.toString());
+      if (DEBUG) Log.d("YammerProxy", "Invoking: " + url + " params: "+params.toString());
       return client.invoke(accessor, method, url, params);
     } catch (OAuthProblemException e) {
       int statusCode = e.getHttpStatusCode();

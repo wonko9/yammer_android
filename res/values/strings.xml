@@ -38,7 +38,7 @@
 		<item quantity="one">There is 1 new Yammer message in your network</item>
 		<item quantity="other">There are %s new Yammer messages in your network</item>
 	</plurals>
-	<string name='select_default_feed'>Select Default Feed</string>
+	<string name='select_feed'>Select Feed</string>
 	<string name='application_update_title'>Yammer Updated</string>
 	<string name='application_update_text'>A new version of Yammer is available.</string>
 	<string name="about_text">Yammer v%s\n© 2009 Yammer, Inc.\nhttp://www.yammer.com/</string>

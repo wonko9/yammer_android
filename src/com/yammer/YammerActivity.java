@@ -43,6 +43,7 @@ import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 
@@ -64,7 +65,7 @@ public class YammerActivity extends Activity {
   private View noTextOverlayView = null; 
   private final Semaphore loadingRefCounterSemaphore = new Semaphore(1);
 
-    private YammerService getYammerService() {
+  private YammerService getYammerService() {
     if (DEBUG) Log.d(TAG_Y, "Yammer::getYammerService()");
     if ( mYammerService == null ) {
       bindService( 	new Intent(YammerActivity.this, YammerService.class), 
@@ -81,7 +82,6 @@ public class YammerActivity extends Activity {
     /**
      * Intent receiver
      */
-    @Override
     public void onReceive(Context context, Intent intent) {
       /**
        * Launch the browser and let the user authenticate himself
@@ -95,7 +95,7 @@ public class YammerActivity extends Activity {
         }
       } else if ( intent.getAction().equals("com.yammer:TIMELINE_INITIALIZE") ) {				
         if (DEBUG) Log.d(TAG_Y, "Initializing timeline");
-        // Configure view with adapter
+
         final TweetListView tweetListView = (TweetListView) findViewById(R.id.tweet_list);
         db = getYammerService().yammerData.getReadableDatabase();
         if (DEBUG) Log.d(TAG_Y, "Querying for known messages in network");
@@ -150,10 +150,9 @@ public class YammerActivity extends Activity {
           }                	
         });
 
-        // Set the selector
+        showHeaderForFeed(YammerSettings.getFeed(YammerActivity.this));
         tweetListView.setSelector(R.layout.list_row_selector);
         tweetListView.setDividerHeight(1);
-        // Create loader wheel 
         createLoaderWheelView();
         // Should loader wheel display (i.e. a loading operation is in progress)
         displayLoaderWheel();                
@@ -396,32 +395,33 @@ public class YammerActivity extends Activity {
     } else if ( id == ID_DIALOG_ERROR_FATAL ) {
       // 
     } else if ( id == ID_DIALOG_FEEDS ) {
-      // Default selected item = "all_messages"
-      int selectedItem = 0;
-      // Which item selected?
-      if (FEED_MY_FEED.equals(YammerSettings.getDefaultFeed(this))) {
-        selectedItem = 1;
-      } 
-      return new AlertDialog.Builder(YammerActivity.this)
-      .setTitle(R.string.select_default_feed)
-      .setIcon(R.drawable.yammer_logo_medium)
-      .setSingleChoiceItems(R.array.settings_feed_entries, selectedItem, new DialogInterface.OnClickListener() {
-        public void onClick(DialogInterface _dialog, int _button) {
-          String feed = null;
-
-          switch (_button) {
-          case 1: feed = FEED_MY_FEED; break;
-          default: feed = FEED_ALL_MESSAGES; break;
-          }
-
-          if (DEBUG) Log.d(TAG_Y, "Feed '" + feed + "' selected" );                  
-          YammerSettings.setDefaultFeed(YammerActivity.this, feed);
-          sendBroadcast(new Intent("com.yammer:TIMELINE_INITIALIZE"));
-          _dialog.dismiss();
-        }
-      }).create();		
+      return createFeedDialog();		
     }
     return super.onCreateDialog(id);
+  }
+
+  private Dialog createFeedDialog() {
+    final YammerData yd = new YammerData(this);
+    final String[] feeds = yd.getFeedNames();
+    int selected = Arrays.asList(feeds).indexOf(YammerSettings.getFeed(this));
+    if (selected < 0) selected = 0;
+
+    return new AlertDialog.Builder(YammerActivity.this)
+    .setTitle(R.string.select_feed)
+    .setIcon(R.drawable.yammer_logo_medium)
+    .setSingleChoiceItems(feeds, selected,
+        new DialogInterface.OnClickListener() {
+      public void onClick(DialogInterface _dialog, int _button) {
+        String feed = feeds[_button];
+        if (DEBUG) Log.d(TAG_Y, "Feed '" + feed + "' selected" );                  
+        YammerSettings.setFeed(YammerActivity.this, feed);
+        showHeaderForFeed(feed);
+        yd.clearMessages();
+        reload();
+        _dialog.dismiss();
+      }
+    }
+    ).create();
   }
 
   @Override
@@ -959,7 +959,23 @@ public class YammerActivity extends Activity {
     // TODO: Unregister receiver
     // Make sure intent receiver was registered before unregistering it
   }
-  
+
+  public void showHeaderForFeed(String _feed) {
+    EditText editor = (EditText)findViewById(R.id.tweet_editor);
+    TextView header = (TextView)findViewById(R.id.feed_label);
+
+    if(YammerProxy.DEFAULT_FEED.equals(_feed)) {
+      header.setVisibility(View.GONE);
+      editor.setVisibility(View.VISIBLE);
+      noTextOverlayView.setVisibility(View.VISIBLE);
+    } else {
+      editor.setVisibility(View.GONE);
+      noTextOverlayView.setVisibility(View.GONE);
+      header.setText(_feed+':');
+      header.setVisibility(View.VISIBLE);
+    }
+  }
+
   private void sendBroadcast(String _intent) {
     sendBroadcast(new Intent(_intent));
   }

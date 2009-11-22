@@ -8,10 +8,9 @@ public class TweetListView extends ListView {
 	
 	static final String TAG_TWEETLIST = "TWEETLIST";
 
-	/**
-	 * 		super(context, attrs);
-	 */
 	public TweetListView(Context context, AttributeSet attrs) {
 		super(context, attrs);
 	}
+	
+	
 }

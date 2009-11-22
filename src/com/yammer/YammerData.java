@@ -18,6 +18,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+// TODO: Dry up getWritableDatabase() calls
+
 public class YammerData extends SQLiteOpenHelper implements YammerDataConstants {
 
   private static final boolean DEBUG = G.DEBUG;
@@ -32,7 +34,7 @@ public class YammerData extends SQLiteOpenHelper implements YammerDataConstants 
 
   private static final String TAG_YDATABASE = "YammerDB";
   private static final String DATABASE_NAME = "yammer.db";
-  private static final int DATABASE_VERSION = 17;
+  private static final int DATABASE_VERSION = 19;
 
   public YammerData(Context ctx) {
     super(ctx, DATABASE_NAME, null, DATABASE_VERSION);
@@ -96,6 +98,17 @@ public class YammerData extends SQLiteOpenHelper implements YammerDataConstants 
         + FIELD_URLS_FAVICON_ID + " TEXT"
         + ");"
     );
+
+    if (DEBUG) Log.d(TAG_YDATABASE, "Creating table: " + TABLE_FEEDS);
+    db.execSQL( "CREATE TABLE " + TABLE_FEEDS +" (" 
+        + _ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+        + FIELD_FEED_NAME + " TEXT, "
+        + FIELD_FEED_URL + " TEXT, "
+        + FIELD_FEED_DESCRIPTION + " TEXT, "
+        + FIELD_FEED_ORDER + " INTEGER "
+        + ");"
+    );
+
   }
 
   public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -106,15 +119,15 @@ public class YammerData extends SQLiteOpenHelper implements YammerDataConstants 
     db.execSQL("DROP TABLE IF EXISTS " + TABLE_USERS);
     db.execSQL("DROP TABLE IF EXISTS " + TABLE_NETWORKS);
     db.execSQL("DROP TABLE IF EXISTS " + TABLE_URLS);
+    db.execSQL("DROP TABLE IF EXISTS " + TABLE_FEEDS);
+
     // Recreate all tables
     onCreate(db);
   }
 
   public void clearMessages() {
     if (DEBUG) Log.d(TAG_YDATABASE, "YammerData.resetData");
-    SQLiteDatabase db = this.getWritableDatabase();
-    db.execSQL("DELETE FROM " + TABLE_MESSAGES);
-    clearFeeds();
+    this.getWritableDatabase().execSQL("DELETE FROM " + TABLE_MESSAGES);
   }
   
   public void resetData(long networkId) {
@@ -147,28 +160,6 @@ public class YammerData extends SQLiteOpenHelper implements YammerDataConstants 
 
   public static int ID_TARGET_USER = 0;
   public static int ID_TARGET_TAG = 1;
-
-  public void subscribe(int target, long subscriptionId, boolean subscribe) {
-    if ( target == ID_TARGET_USER ) {
-      // subscribe or unsubscribe user
-      SQLiteDatabase db = this.getWritableDatabase();
-      ContentValues values = new ContentValues();
-      values.put(IS_FOLLOWING, subscribe);
-      int count = db.update(TABLE_USERS, values, USER_ID + "=" + subscriptionId, null);			
-      if (G.DEBUG) Log.d(TAG_YDATABASE, "Number of user updated: " + count);
-    } else if ( target == ID_TARGET_TAG ) {
-      // Not supported
-    }
-  }
-
-  public void subscribeReset(long networkId) {
-    // subscribe or unsubscribe user
-    SQLiteDatabase db = this.getWritableDatabase();
-    ContentValues values = new ContentValues();
-    values.put(IS_FOLLOWING, false);
-    int count = db.update(TABLE_USERS, values, null, null);			
-    if (G.DEBUG) Log.d(TAG_YDATABASE, "Number of user updated: " + count);
-  }
 
   public void createNetwork(long networkId, long userId, String accessToken, String accessTokenSecret) {
     if (DEBUG) Log.d(TAG_YDATABASE, "YammerData.createNetwork");
@@ -256,7 +247,7 @@ public class YammerData extends SQLiteOpenHelper implements YammerDataConstants 
   /**
    * Get the highest message ID in the messages table
    * @param networkId
-   * @return
+   * @returns the highest message ID in the messages table
    */
   public long getLastMessageId(long networkId) {
     long messageId = 0;
@@ -264,10 +255,9 @@ public class YammerData extends SQLiteOpenHelper implements YammerDataConstants 
     try {
       // Update the database
       SQLiteDatabase db = this.getReadableDatabase();
-      c = db.query(TABLE_NETWORKS, new String[] {LAST_MESSAGE_ID}, NETWORK_ID+"="+networkId, null, null, null, null);
+      c = db.query(TABLE_MESSAGES, new String[] {"MAX("+MESSAGE_ID+")"}, NETWORK_ID+"="+networkId, null, null, null, null);
       c.moveToFirst();
-      int columnIndex = c.getColumnIndex(LAST_MESSAGE_ID);
-      messageId = c.getLong(columnIndex);
+      messageId = c.getLong(0);
     } catch (Exception e) {
       e.printStackTrace();
       if (DEBUG) Log.d(TAG_YDATABASE, "It seems last message ID could not be found - returning 0");
@@ -278,21 +268,27 @@ public class YammerData extends SQLiteOpenHelper implements YammerDataConstants 
   }	
 
   /**
-   * Update the last message ID for given network
+   * Get the lowest message ID in the messages table
    * @param networkId
-   * @param messageId
+   * @returns the lowest message ID in the messages table
    */
-  public void updateLastMessageId(long networkId, long messageId) {
-    if (DEBUG) Log.d(TAG_YDATABASE, "YammerData.updateLastMessageId");
-    // Update the database
-    SQLiteDatabase db = this.getWritableDatabase();
-    ContentValues values = new ContentValues();
-    values.put(LAST_MESSAGE_ID, messageId);
-    int count = db.update(TABLE_NETWORKS, values, NETWORK_ID + "=" + networkId, null);
-    if ( count != 1 ) {
-      if (DEBUG) Log.w(TAG_YDATABASE, "Problem updating network state. Count: " + count);
+  public long getFirstMessageId(long networkId) {
+    long messageId = 0;
+    Cursor c = null;
+    try {
+      // Update the database
+      SQLiteDatabase db = this.getReadableDatabase();
+      c = db.query(TABLE_MESSAGES, new String[] {"MIN("+MESSAGE_ID+")"}, NETWORK_ID+"="+networkId, null, null, null, null);
+      c.moveToFirst();
+      messageId = c.getLong(0);
+    } catch (Exception e) {
+      e.printStackTrace();
+      if (DEBUG) Log.d(TAG_YDATABASE, "It seems first message ID could not be found - returning 0");
+    } finally {
+      c.close();      
     }
-  }
+    return messageId;
+  } 
 
   public long addMessage(long networkId, JSONObject messageReference) throws Exception {
     // Try to get the parsed message
@@ -393,12 +389,12 @@ public class YammerData extends SQLiteOpenHelper implements YammerDataConstants 
     } catch (JSONException e) {
       e.printStackTrace();
       // Message wasn't added
-      throw new Exception("Could not add message to database (JSONException): " + 
+      throw new Exception("Could not add user to database (JSONException): " + 
           userReference.toString());
       // No message stored, so return -1
     } catch (SQLiteConstraintException e) {
       // Could not add the message
-      throw new Exception("Could not add message to database (SQLiteConstraintException): " + 
+      throw new Exception("Could not add user to database (SQLiteConstraintException): " + 
           userReference.toString());
     }		
   }
@@ -411,4 +407,49 @@ public class YammerData extends SQLiteOpenHelper implements YammerDataConstants 
     getWritableDatabase().insertOrThrow(TABLE_URLS, null, values);                
   }
 
+  public void clearFeeds() {
+    if (DEBUG) Log.d(TAG_YDATABASE, "YammerData.clearFeeds");
+    getWritableDatabase().execSQL("DELETE FROM " + TABLE_FEEDS);
+  }
+
+  public void addFeed(JSONObject _feed) throws YammerDataException {
+    try {
+      ContentValues values = new ContentValues();     
+      values.put(FIELD_FEED_NAME, _feed.getString("name"));
+      values.put(FIELD_FEED_URL, _feed.getString("url"));
+      values.put(FIELD_FEED_DESCRIPTION, _feed.getString("feed_description"));
+      values.put(FIELD_FEED_ORDER, _feed.getInt("ordering_index"));
+      getWritableDatabase().insertOrThrow(TABLE_FEEDS, null, values);      
+    } catch(JSONException ex) {
+      throw new YammerDataException(ex);
+    } catch(SQLException ex) {
+      throw new YammerDataException(ex);
+    }
+  }
+  
+  public String[] getFeedNames() {
+    Cursor cur = getReadableDatabase().query(TABLE_FEEDS, new String[] {FIELD_FEED_NAME}, null, null, null, null, FIELD_FEED_ORDER);
+    String[] names = new String[cur.getCount()]; 
+    cur.moveToFirst();
+    for (int ii=0 ; ii < names.length ; ii++) {
+      names[ii] = cur.getString(cur.getColumnIndex(FIELD_FEED_NAME));
+      cur.moveToNext();
+    }
+    cur.close();
+    return names;
+  }
+  
+  public String getURLForFeed(String _name) throws YammerDataException {
+    try {
+      Cursor cur = getReadableDatabase().query(TABLE_FEEDS, new String[] {FIELD_FEED_URL}, equalClause(FIELD_FEED_NAME, _name), null, null, null, null);
+      cur.moveToFirst();
+      return cur.getString(cur.getColumnIndex(FIELD_FEED_URL));
+    } catch(SQLException ex) {
+      throw new YammerDataException(ex);
+    }
+  }
+
+  private static final String equalClause(String _field, String _value) {
+    return _field + "=\"" + _value + '"';
+  }
 }
