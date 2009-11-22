@@ -12,8 +12,9 @@
   android:id="@+android:id/tweet_editor"
   android:layout_width="fill_parent" 
   android:layout_height="wrap_content" 
-  android:textColor="#ff000000"
+  android:textColor="#ff888888"
   android:textSize="20sp"
+  android:visibility="gone"
 />
 
 <TextView
@@ -25,6 +26,37 @@
   android:textSize="14sp"
   android:visibility="gone"
 />
+
+
+<LinearLayout 
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+android:id/updated_at_layout"
+  android:orientation="horizontal"
+  android:gravity="center_horizontal"
+  android:layout_width="fill_parent"
+  android:layout_height="wrap_content"
+  android:background="#ffffff"
+>
+	<ImageView
+	  android:id="@+android:id/updated_at_icon"
+	  android:layout_width="wrap_content" 
+	  android:layout_height="fill_parent" 
+	  android:background="#ffffff"
+	  android:src="@drawable/menu_refresh"
+	  android:scaleType="centerInside"
+	  android:adjustViewBounds="true"
+	  android:maxHeight="15dip"
+	/>
+
+	<TextView
+	  android:id="@+android:id/updated_at_label"
+	  android:layout_width="wrap_content" 
+	  android:layout_height="fill_parent" 
+	  android:textColor="#777777"
+	  android:text="Updated at: 99:99 pm 99/99/99"
+	  android:textSize="12sp"
+	/>
+</LinearLayout>
 	    
 <view 	
   xmlns:android="http://schemas.android.com/apk/res/android"

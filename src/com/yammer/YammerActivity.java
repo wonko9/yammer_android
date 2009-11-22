@@ -4,7 +4,10 @@ import static android.provider.BaseColumns._ID;
 
 import com.yammer.YammerDataConstants;
 
+import java.text.SimpleDateFormat;
+
 import java.util.Arrays;
+import java.util.Date;
 import java.util.concurrent.Semaphore;
 
 import android.app.Activity;
@@ -62,11 +65,10 @@ public class YammerActivity extends Activity {
   // by 1 - when loading stops, the counter is decreased and 
   // if it reaches zero, the loading animation disappears.
   private static int loadingRefCounter = 0;
-  private View noTextOverlayView = null; 
   private final Semaphore loadingRefCounterSemaphore = new Semaphore(1);
 
   private YammerService getYammerService() {
-    if (DEBUG) Log.d(TAG_Y, "Yammer::getYammerService()");
+    if (DEBUG) Log.d(TAG_Y, "Yammer.getYammerService()");
     if ( mYammerService == null ) {
       bindService( 	new Intent(YammerActivity.this, YammerService.class), 
           mConnection, 
@@ -159,7 +161,7 @@ public class YammerActivity extends Activity {
         if (DEBUG) Log.d(TAG_Y, "ListViewInitialized");
         listViewInitialized = true;
       } else if ( intent.getAction().equals("com.yammer:MUST_AUTHENTICATE_DIALOG") ) {
-        if ( DEBUG ) Log.d(TAG_Y, "com.yammer::MUST_AUTHENTICATE_DIALOG");
+        if ( DEBUG ) Log.d(TAG_Y, "com.yammer.MUST_AUTHENTICATE_DIALOG");
         try {
           removeDialog(ID_DIALOG_LOADING);
         } catch (Exception e) {
@@ -333,7 +335,7 @@ public class YammerActivity extends Activity {
   }
 
   protected View createLoaderWheelView() {
-    if (DEBUG) Log.d(TAG_Y, "Yammer::createLoaderWheelView");
+    if (DEBUG) Log.d(TAG_Y, "Yammer.createLoaderWheelView");
     View loaderWheelView = (ImageView)findViewById(R.id.loader_animation_overlay); 
     if ( loaderWheelView == null /*Loader wheel view not shown yet*/ ) {
       if (DEBUG) Log.d(TAG_Y, "loaderWheelView doesn't exist, so creating it.");
@@ -357,7 +359,7 @@ public class YammerActivity extends Activity {
 
   @Override
   protected Dialog onCreateDialog(int id) {
-    if (DEBUG) Log.d(TAG_Y, "Yammer::onCreateDialog("+id+")");
+    if (DEBUG) Log.d(TAG_Y, "Yammer.onCreateDialog("+id+")");
     if ( id == ID_DIALOG_MUST_AUTHENTICATE ) {
       // Show "Start Yammer Authentication" dialog
       AuthenticateDialog authDialog = new AuthenticateDialog(YammerActivity.this);
@@ -433,7 +435,7 @@ public class YammerActivity extends Activity {
   }
 
   public void updateListView() {
-    if (DEBUG) Log.d(TAG_Y, "Yammer::updateListView");
+    if (DEBUG) Log.d(TAG_Y, "Yammer.updateListView");
     try {
       // Reconfigure the list view
       TweetListView tweetListView = (TweetListView) findViewById(R.id.tweet_list);
@@ -716,7 +718,7 @@ public class YammerActivity extends Activity {
   }
 
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    if (DEBUG) Log.d(TAG_Y, "Yammer::onActivityResult");
+    if (DEBUG) Log.d(TAG_Y, "Yammer.onActivityResult");
     switch(requestCode) {
     case YAMMER_REPLY_CREATE:
       if ( resultCode == 0 ) {
@@ -785,29 +787,29 @@ public class YammerActivity extends Activity {
 
   private ServiceConnection mConnection = new ServiceConnection() {
     public void onServiceConnected(ComponentName className, IBinder service) {
-      if (DEBUG) Log.d(TAG_Y, "ServiceConnection::onServiceConnected");
+      if (DEBUG) Log.d(TAG_Y, "ServiceConnection.onServiceConnected");
       mYammerService = ((YammerService.YammerBinder)service).getService();
       if (mYammerService == null) return;
       updateAuthenticationUI();
     }
 
     public void onServiceDisconnected(ComponentName className) {
-      if (DEBUG) Log.d(TAG_Y, "ServiceConnection::onServiceDisconnected");
+      if (DEBUG) Log.d(TAG_Y, "ServiceConnection.onServiceDisconnected");
       mYammerService = null;
     }
   };
 
   public Object onRetainNonConfigurationInstance() {
-    if (DEBUG) Log.d(TAG_Y, "Yammer::onRetainNonConfigurationInstance");
+    if (DEBUG) Log.d(TAG_Y, "Yammer.onRetainNonConfigurationInstance");
     return super.onRetainNonConfigurationInstance();
   }
 
   /** Called when the activity is first created. */
   @Override
   public void onCreate(Bundle savedInstanceState) {
-    if (DEBUG) Log.d(TAG_Y, "Yammer::onCreate");
+    if (DEBUG) Log.d(TAG_Y, "Yammer.onCreate");
     super.onCreate(savedInstanceState);
-    if (DEBUG) Log.d(TAG_Y, "onCreate::savedInstance: " + savedInstanceState);
+    if (DEBUG) Log.d(TAG_Y, "onCreate.savedInstance: " + savedInstanceState);
 
     //setTheme(android.R.style.Theme_Black_NoTitleBar);
     setContentView(R.layout.main);
@@ -828,13 +830,13 @@ public class YammerActivity extends Activity {
     registerReceiver(yammerIntentReceiver, filter);
 
     // Setup a clicklistener for the message textedit
-    final EditText tweetEditor = (EditText)findViewById(R.id.tweet_editor);
+    final EditText tweetEditor = getEditor();
     tweetEditor.setOnKeyListener(new OnKeyListener() {
       public boolean onKey(View v, int keyCode, KeyEvent event) {
         if ( keyCode == KeyEvent.KEYCODE_ENTER  ) {
           // We only want to post the message, when key is released
           if ( event.getAction() == KeyEvent.ACTION_UP ) {
-            final String message = tweetEditor.getText().toString();
+            final String message = getEditorText();
             if (DEBUG) Log.d(TAG_Y, "POST MESSAGE: " + message);
             // Post the message to the network
             new Thread(
@@ -857,9 +859,7 @@ public class YammerActivity extends Activity {
                     }
                   }
                 }).start();
-            // Remove message from tweet editor
-            tweetEditor.setText("");
-            toggleTextOverlay(tweetEditor);
+            setEditorText(null);
           }
           return true;
         }
@@ -867,72 +867,83 @@ public class YammerActivity extends Activity {
       }
     });
 
-    // Overlay on top of EditText when no text was entered
-    LayoutInflater factory = LayoutInflater.from(YammerActivity.this);
-    this.noTextOverlayView = factory.inflate(R.layout.no_text_overlay, null);
-    RelativeLayout.LayoutParams layoutParams = 
-      new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT);
-    addContentView(this.noTextOverlayView, layoutParams);	
-
     // Set key listener used to display "what are you working on" overlay
     tweetEditor.setOnTouchListener(new View.OnTouchListener() {
       public boolean onTouch(View _view, MotionEvent _event) {
-        if (DEBUG) Log.d(TAG_Y, "tweetEditor::onTouch");
-        noTextOverlayView.setVisibility(EditText.INVISIBLE);
+        if (DEBUG) Log.d(TAG_Y, "tweetEditor.onTouch");
+        setEditorText("");
         return false;
       }
     });
-
+    
+    setEditorText(null);
   }
 
-  private void toggleTextOverlay(View textView) {
-    if (DEBUG) Log.d(TAG_Y, "TweetEditor text length: " + ((EditText)textView).getText().length());
-    if ( ((EditText)textView).getText().length() > 0 ) {
-      noTextOverlayView.setVisibility(EditText.INVISIBLE);
+  private EditText editor = null;
+  private EditText getEditor() {
+    if (null == editor) editor = (EditText)findViewById(R.id.tweet_editor);
+    return editor; 
+  }
+  
+  private TextView feedHeader = null;
+  private TextView getFeedHeader() {
+    if(null == feedHeader) feedHeader = (TextView)findViewById(R.id.feed_label);
+    return feedHeader;
+  }
+
+  private TextView updatedAtHeader = null;
+  private TextView getUpdatedAtHeader() {
+    if(null == updatedAtHeader) updatedAtHeader = (TextView)findViewById(R.id.updated_at_label);
+    return updatedAtHeader;
+  }
+
+  /**
+   * Set editor text.
+   * 
+   * @param _text new value (null sets text to prompt)
+   */
+  private void setEditorText(String _text) {
+    EditText editor = getEditor();
+    
+    String prompt = getString(R.string.what_are_you_working_on);
+    if(null == _text) _text = prompt;
+    
+    editor.setText(_text);
+    
+    if(prompt.equals(_text)) {
+      editor.setTextColor(0xFF888888);
     } else {
-      noTextOverlayView.setVisibility(EditText.VISIBLE);		                    	
-    }	    									
+      editor.setTextColor(0xFF000000);
+    }
   }
-
-  @Override
+  
+  private String getEditorText() {
+    String text = getEditor().getText().toString();
+    if(getString(R.string.what_are_you_working_on).equals(text)) {
+      text = null;
+    }
+    return text;
+  }
+    
   public void onStart() {
     super.onStart();
-    if (DEBUG) Log.d(TAG_Y, "Yammer::onStart");
-    // Binding to Yammer service to be able to access service
-    if (DEBUG) Log.d(TAG_Y, "Binding to Yammer service");
-    bindService( 	new Intent(YammerActivity.this, YammerService.class), 
-        mConnection, 
-        Context.BIND_AUTO_CREATE);
+    if (DEBUG) Log.d(TAG_Y, "Yammer.onStart");
+//    setEditorText(null);
+    bindService(new Intent(YammerActivity.this, YammerService.class), mConnection, Context.BIND_AUTO_CREATE);
   }
 
-  @Override
   public void onResume() {
-    if (DEBUG) Log.d(TAG_Y, "Yammer::onResume");
+    if (DEBUG) Log.d(TAG_Y, "Yammer.onResume");
     super.onResume();
-    try {
-      // Show text overlay?
-      final EditText tweetEditor = (EditText)findViewById(R.id.tweet_editor);
-      toggleTextOverlay(tweetEditor);    		
-    } catch(Exception e) {
-      e.printStackTrace();
-    }
-
-    if ( getYammerService() != null ) {
+    if (getYammerService() != null) {
       getYammerService().resetMessageCount();
     } else {
       if (DEBUG) Log.d(TAG_Y, "mYammerService was null - could not do onResume tasks for YammerService");
     }
   }
 
-  @Override
-  public void onPause() {
-    if (DEBUG) Log.d(TAG_Y, "Yammer::onPause");
-    super.onPause();
-  }
-
-  @Override
   public void onDestroy() {
-    if (DEBUG) Log.d(TAG_Y, "Yammer::onDestroy");
+    if (DEBUG) Log.d(TAG_Y, "Yammer.onDestroy");
     if ( yammerIntentReceiver != null ) {
       if (DEBUG) Log.d(TAG_Y, "Unregistering receiver");
       unregisterReceiver(yammerIntentReceiver);
@@ -952,7 +963,7 @@ public class YammerActivity extends Activity {
       // Reset the message count - we probably saw any new message
       getYammerService().resetMessageCount();
     }
-    if (DEBUG) Log.d(TAG_Y, "Yammer::onStop");
+    if (DEBUG) Log.d(TAG_Y, "Yammer.onStop");
     // Need to unbind the service
     if (DEBUG) Log.d(TAG_Y, "Unbinding ServiceConnection");    	
     unbindService(mConnection);
@@ -961,19 +972,20 @@ public class YammerActivity extends Activity {
   }
 
   public void showHeaderForFeed(String _feed) {
-    EditText editor = (EditText)findViewById(R.id.tweet_editor);
-    TextView header = (TextView)findViewById(R.id.feed_label);
-
     if(YammerProxy.DEFAULT_FEED.equals(_feed)) {
-      header.setVisibility(View.GONE);
-      editor.setVisibility(View.VISIBLE);
-      noTextOverlayView.setVisibility(View.VISIBLE);
+      getFeedHeader().setVisibility(View.GONE);
+      getEditor().setVisibility(View.VISIBLE);
     } else {
-      editor.setVisibility(View.GONE);
-      noTextOverlayView.setVisibility(View.GONE);
-      header.setText(_feed+':');
-      header.setVisibility(View.VISIBLE);
+      getEditor().setVisibility(View.GONE);
+      getFeedHeader().setVisibility(View.VISIBLE);
+      getFeedHeader().setText(_feed+':');
     }
+    
+    getUpdatedAtHeader().setText(formatTimestamp(R.string.updated_at_header, new Date()));
+  }
+
+  private String formatTimestamp(int _res, Date _date) {
+    return new SimpleDateFormat(getString(_res)).format(_date);
   }
 
   private void sendBroadcast(String _intent) {

@@ -17,6 +17,7 @@ public class YammerApp extends Application {
   private static String TAG = "Yammer Android";
   
   static Context context = null;
+
   @Override
   public void onCreate() {
     super.onCreate();

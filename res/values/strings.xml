@@ -47,9 +47,11 @@
 	<string name="url_icon">&#x2192;</string>
 	<string name="check_this_out">Check this out:</string>
 	<string name="in_reply_to">in reply to</string>
+	
 	<string name="pref_category_account">Account</string>
     <string name="pref_category_connection">Connection</string>
     <string name="pref_url_title">Yammer URL</string>
     <string name="pref_url_summary">URL used to contact Yammer\'s server.</string>
     <string name="pref_url_default">https://www.yammer.com</string>
+	<string name="updated_at_header">\'Updated at:\' h:m a M/d/yy</string>
 </resources>
