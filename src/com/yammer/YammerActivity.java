@@ -875,7 +875,7 @@ public class YammerActivity extends Activity {
         return false;
       }
     });
-    
+
     setEditorText(null);
   }
 
@@ -884,7 +884,7 @@ public class YammerActivity extends Activity {
     if (null == editor) editor = (EditText)findViewById(R.id.tweet_editor);
     return editor; 
   }
-  
+
   private TextView feedHeader = null;
   private TextView getFeedHeader() {
     if(null == feedHeader) feedHeader = (TextView)findViewById(R.id.feed_label);
@@ -904,19 +904,19 @@ public class YammerActivity extends Activity {
    */
   private void setEditorText(String _text) {
     EditText editor = getEditor();
-    
+
     String prompt = getString(R.string.what_are_you_working_on);
     if(null == _text) _text = prompt;
-    
+
     editor.setText(_text);
-    
+
     if(prompt.equals(_text)) {
       editor.setTextColor(0xFF888888);
     } else {
       editor.setTextColor(0xFF000000);
     }
   }
-  
+
   private String getEditorText() {
     String text = getEditor().getText().toString();
     if(getString(R.string.what_are_you_working_on).equals(text)) {
@@ -924,11 +924,10 @@ public class YammerActivity extends Activity {
     }
     return text;
   }
-    
+
   public void onStart() {
     super.onStart();
     if (DEBUG) Log.d(TAG_Y, "Yammer.onStart");
-//    setEditorText(null);
     bindService(new Intent(YammerActivity.this, YammerService.class), mConnection, Context.BIND_AUTO_CREATE);
   }
 
@@ -980,8 +979,10 @@ public class YammerActivity extends Activity {
       getFeedHeader().setVisibility(View.VISIBLE);
       getFeedHeader().setText(_feed+':');
     }
-    
-    getUpdatedAtHeader().setText(formatTimestamp(R.string.updated_at_header, new Date()));
+
+    getUpdatedAtHeader().setText(
+        formatTimestamp(R.string.updated_at_header, YammerSettings.getUpdatedAt(this))
+    );
   }
 
   private String formatTimestamp(int _res, Date _date) {

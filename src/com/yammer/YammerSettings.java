@@ -4,6 +4,8 @@
 
 package com.yammer;
 
+import java.util.Date;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -82,7 +84,7 @@ public class YammerSettings extends PreferenceActivity
   }
 
   public static void setFeed(Context context, String feedName) {
-    if (DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings.getFeed");
+    if (DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings.setFeed: " + feedName);
     SharedPreferences settings = getPreferences(context);				
     SharedPreferences.Editor editor = settings.edit();
     editor.putString("key_feed", feedName);
@@ -93,6 +95,24 @@ public class YammerSettings extends PreferenceActivity
     String ret = getPreferences(context).getString("key_feed", YammerProxy.DEFAULT_FEED);
     if (DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings.getFeed: " + ret);
     return ret;
+  }
+
+  public static void setUpdatedAt(Context context) {
+    setUpdatedAt(context, new Date());
+  }
+  
+  public static void setUpdatedAt(Context context, Date time) {
+    if (DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings.setUpdatedAt: " + time.toString());
+    SharedPreferences settings = getPreferences(context);       
+    SharedPreferences.Editor editor = settings.edit();
+    editor.putLong("key_updated_at", time.getTime());
+    editor.commit();      
+  }
+
+  public static Date getUpdatedAt(Context context) {
+    Date time = new Date(getPreferences(context).getLong("key_updated_at", System.currentTimeMillis()));
+    if (DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings.getUpdatedAt: " + time.toString());
+    return time;
   }
 
   public static String getUrl(Context context) {

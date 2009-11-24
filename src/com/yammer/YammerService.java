@@ -633,6 +633,8 @@ public class YammerService extends Service {
           }
           timelineUpdated = true;
         }
+        
+        YammerSettings.setUpdatedAt(this);
       } catch (Exception e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
