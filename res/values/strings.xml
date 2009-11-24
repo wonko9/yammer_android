@@ -17,9 +17,10 @@
     <string name="ok">OK</string>	
 	<string name="cancel">Cancel</string>
 	<string name="about">About</string>
-	<string name="reload">Reload</string>
-	<string name="settings">Settings</string>
-	<string name="feeds">Feeds</string>
+	<string name="menu_feeds">Feeds</string>
+	<string name="menu_directory">Directory</string>
+	<string name="menu_reload">Reload</string>
+	<string name="menu_settings">Settings</string>
 	<string name="users">Users</string>
 	<string name="view_message_label">View message</string>
 	<string name="view_thread_label">View thread</string>

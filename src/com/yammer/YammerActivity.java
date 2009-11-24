@@ -428,9 +428,10 @@ public class YammerActivity extends Activity {
 
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
-    menu.add(0, MENU_FEEDS, Menu.NONE, R.string.feeds).setIcon(R.drawable.menu_show_list);
-    menu.add(0, MENU_RELOAD, Menu.NONE, R.string.reload).setIcon(R.drawable.menu_refresh);
-    menu.add(0, MENU_SETTINGS, Menu.NONE, R.string.settings).setIcon(android.R.drawable.ic_menu_preferences);
+    menu.add(0, MENU_FEEDS, Menu.NONE, R.string.menu_feeds).setIcon(R.drawable.menu_feeds);
+    menu.add(0, MENU_DIRECTORY, Menu.NONE, R.string.menu_directory).setIcon(R.drawable.menu_directory);
+    menu.add(0, MENU_RELOAD, Menu.NONE, R.string.menu_reload).setIcon(R.drawable.menu_refresh);
+    menu.add(0, MENU_SETTINGS, Menu.NONE, R.string.menu_settings).setIcon(android.R.drawable.ic_menu_preferences);
     return (super.onCreateOptionsMenu(menu));
   }
 
@@ -812,7 +813,7 @@ public class YammerActivity extends Activity {
     if (DEBUG) Log.d(TAG_Y, "onCreate.savedInstance: " + savedInstanceState);
 
     //setTheme(android.R.style.Theme_Black_NoTitleBar);
-    setContentView(R.layout.main);
+    setContentView(R.layout.yammer_activity);
 
     // Register supported intents
     if (DEBUG) Log.d(TAG_Y, "Registering intents for Yammer");
