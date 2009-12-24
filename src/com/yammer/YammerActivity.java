@@ -429,7 +429,7 @@ public class YammerActivity extends Activity {
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     menu.add(0, MENU_FEEDS, Menu.NONE, R.string.menu_feeds).setIcon(R.drawable.menu_feeds);
-    menu.add(0, MENU_DIRECTORY, Menu.NONE, R.string.menu_directory).setIcon(R.drawable.menu_directory);
+//    menu.add(0, MENU_DIRECTORY, Menu.NONE, R.string.menu_directory).setIcon(R.drawable.menu_directory);
     menu.add(0, MENU_RELOAD, Menu.NONE, R.string.menu_reload).setIcon(R.drawable.menu_refresh);
     menu.add(0, MENU_SETTINGS, Menu.NONE, R.string.menu_settings).setIcon(android.R.drawable.ic_menu_preferences);
     return (super.onCreateOptionsMenu(menu));
