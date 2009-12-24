@@ -1,4 +1,4 @@
-package com.yammer;
+package com.yammer.v1;
 
 import android.content.Context;
 import android.util.AttributeSet;

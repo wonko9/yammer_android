@@ -1,4 +1,4 @@
-package com.yammer;
+package com.yammer.v1;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

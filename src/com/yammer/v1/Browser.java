@@ -1,4 +1,4 @@
-package com.yammer;
+package com.yammer.v1;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -104,7 +104,7 @@ public class Browser extends Activity {
         //              e.printStackTrace();
         //            }
         // Send an intent to the Yammer activity notifying about the error
-        sendBroadcast(new Intent( "com.yammer:NETWORK_ERROR_FATAL" ));
+        sendBroadcast(new Intent( "com.yammer.v1:NETWORK_ERROR_FATAL" ));
         // Finish the browser activity
         finish();
       }

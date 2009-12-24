@@ -1,4 +1,4 @@
-package com.yammer;
+package com.yammer.v1;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -70,7 +70,7 @@ public class YammerProxy {
    */
   public void reset() {
     this.provider = new OAuthServiceProvider(baseURL+reqPath, baseURL+authzPath, baseURL+accessPath);
-    this.consumer = new OAuthConsumer(baseURL+callbackPath, OAuthCustom.KEY, OAuthCustom.SECERT, provider);        
+    this.consumer = new OAuthConsumer(baseURL+callbackPath, OAuthCustom.KEY, OAuthCustom.SECRET, provider);        
     this.accessor = new OAuthAccessor(consumer);
     this.client = new OAuthClient(new HttpClient4());
     this.requestToken = null;

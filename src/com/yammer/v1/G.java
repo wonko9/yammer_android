@@ -1,4 +1,4 @@
-package com.yammer;
+package com.yammer.v1;
 
 public final class G {
 	public static final boolean DEBUG 				= false;

@@ -60,7 +60,7 @@
 	    
 <view 	
   xmlns:android="http://schemas.android.com/apk/res/android"
-  class="com.yammer.TweetListView" 
+  class="com.yammer.v1.TweetListView" 
   android:id="@+android:id/tweet_list"
   android:drawSelectorOnTop="true"
   android:background="#ffffff"

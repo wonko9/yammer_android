@@ -5,7 +5,7 @@
     <property name="android-tools" value="../android/tools" />
     
     <!-- Application Package Name -->
-    <property name="application-package" value="com.yammer" />
+    <property name="application-package" value="com.yammer.v1" />
 
     <!-- The intermediates directory -->
     <!-- Eclipse uses "bin" for its own output, so we do the same. -->
@@ -279,7 +279,7 @@
     </target>
     
     <!--
-    adb shell am instrument -w com.yammer/android.test.InstrumentationTestRunner
+    adb shell am instrument -w com.yammer.v1/android.test.InstrumentationTestRunner
     -->
     <target name="test">
         <echo>Running all unittests</echo>
@@ -287,7 +287,7 @@
             <arg value="shell" />
             <arg value="am instrument" />
             <arg value="-w" />
-            <arg value="com.yammer/android.test.InstrumentationTestRunner" />
+            <arg value="com.yammer.v1/android.test.InstrumentationTestRunner" />
         </exec>
     </target>
 

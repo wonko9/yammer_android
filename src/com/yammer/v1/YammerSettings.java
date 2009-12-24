@@ -2,7 +2,7 @@
  * (C)Copyright 2009 Yammer.
  */
 
-package com.yammer;
+package com.yammer.v1;
 
 import java.util.Date;
 
@@ -74,7 +74,7 @@ public class YammerSettings extends PreferenceActivity
   public void onSharedPreferenceChanged(SharedPreferences _prefs, String _key) {
     if (DEBUG) Log.d(TAG_YSETTINGS, "onSharedPreferenceChange: " + _key);
     if("key_url".equals(_key)) {
-      getApplicationContext().sendBroadcast(new Intent( "com.yammer:RESET_ACCOUNT" ));
+      getApplicationContext().sendBroadcast(new Intent( "com.yammer.v1:RESET_ACCOUNT" ));
     }
   }
 

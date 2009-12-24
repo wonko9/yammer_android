@@ -11,7 +11,7 @@
 		</PreferenceScreen>
 	</PreferenceCategory-->
 	<PreferenceCategory android:title="@string/pref_category_account">
-		<com.yammer.EditAccountPreference 
+		<com.yammer.v1.EditAccountPreference 
 			android:key="key_clear_account"
 			android:title="Clear account information"
 			android:summary="Clear account data and reauthenticate with Yammer."

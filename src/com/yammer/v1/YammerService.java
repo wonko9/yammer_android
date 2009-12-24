@@ -1,9 +1,9 @@
-package com.yammer;
+package com.yammer.v1;
 
-import com.yammer.YammerDataConstants;
-import com.yammer.YammerData.YammerDataException;
-import com.yammer.YammerProxy.AccessDeniedException;
-import com.yammer.YammerProxy.ConnectionProblem;
+import com.yammer.v1.YammerDataConstants;
+import com.yammer.v1.YammerData.YammerDataException;
+import com.yammer.v1.YammerProxy.AccessDeniedException;
+import com.yammer.v1.YammerProxy.ConnectionProblem;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -99,7 +99,7 @@ public class YammerService extends Service {
     @Override
     public void onReceive(Context context, Intent intent) {
       if (DEBUG) Log.d(TAG_YSERVICE, "Intent received: " + intent.getAction());
-      if ( intent.getAction().equals("com.yammer:RESET_ACCOUNT") ) {
+      if ( intent.getAction().equals("com.yammer.v1:RESET_ACCOUNT") ) {
         // Acquire sempahore to disallow updates
         if ( !jsonUpdateSemaphore.tryAcquire() ) {
           if (DEBUG) Log.d(TAG_YSERVICE, "Could not acquire permit to update semaphore - aborting");
@@ -117,8 +117,8 @@ public class YammerService extends Service {
         YammerService.setAuthorized(false);
         // Allow updates again (if authorized)
         jsonUpdateSemaphore.release();
-        sendBroadcast("com.yammer:MUST_AUTHENTICATE_DIALOG");
-      } else if ( intent.getAction().equals("com.yammer:POST_MESSAGE" )) {
+        sendBroadcast("com.yammer.v1:MUST_AUTHENTICATE_DIALOG");
+      } else if ( intent.getAction().equals("com.yammer.v1:POST_MESSAGE" )) {
         /*
          * Usually called from external something like the browser
          * when a user tries to share something.
@@ -180,7 +180,7 @@ public class YammerService extends Service {
         isAuthenticating = true;
         if ( DEBUG ) Log.d(TAG_YSERVICE, "YammerService bound to Yammer: " + bound);
         // Yes, bound.. So Have the Yammer activity show a progress bar
-        Intent intent = new Intent( "com.yammer:AUTHORIZATION_START" );
+        Intent intent = new Intent( "com.yammer.v1:AUTHORIZATION_START" );
         sendBroadcast(intent);
         // Get request token
         // Fetch the request token and token secret
@@ -189,7 +189,7 @@ public class YammerService extends Service {
         String responseUrl = getYammer().authorizeUser();
         if ( DEBUG ) Log.d(TAG_YSERVICE, "Response URL received: " + responseUrl);
         // Send an intent that will start the browser
-        intent = new Intent( "com.yammer:AUTHORIZATION_BROWSER" );
+        intent = new Intent( "com.yammer.v1:AUTHORIZATION_BROWSER" );
         intent.putExtra("responseUrl", responseUrl);
         sendBroadcast(intent);
         // Wait for user to finish authorization
@@ -212,7 +212,7 @@ public class YammerService extends Service {
         // It seems authorization was a success, so store the token and secret
         yammerData.createNetwork(getCurrentNetworkId(), getCurrentUserId(), getYammer().requestToken, getYammer().tokenSecret);				
         // Authorization done, so the progress bar can be removed
-        sendBroadcast(new Intent("com.yammer:AUTHORIZATION_DONE"));
+        sendBroadcast(new Intent("com.yammer.v1:AUTHORIZATION_DONE"));
         // Authorized done, so network requests towards the
         // Yammer network can start
         setAuthorized(true);
@@ -220,7 +220,7 @@ public class YammerService extends Service {
         isAuthenticating = false;				
       } catch ( YammerProxy.ConnectionProblem e ) {
         // Send an intent to the Yammer activity notifying about the error
-        Intent intent = new Intent( "com.yammer:NETWORK_ERROR_FATAL" );
+        Intent intent = new Intent( "com.yammer.v1:NETWORK_ERROR_FATAL" );
         sendBroadcast(intent);        		
       } catch ( Exception e ) {
         Log.d(TAG_YSERVICETHREAD, "An exception occured: " + e.toString());
@@ -296,7 +296,7 @@ public class YammerService extends Service {
       if ( (accessToken == null || accessTokenSecret == null) && !isAuthenticating ) {
         // No access token present, so notify yammer activity that authentication
         // should be done first.
-        Intent authenticateIntent = new Intent( "com.yammer:MUST_AUTHENTICATE_DIALOG" );
+        Intent authenticateIntent = new Intent( "com.yammer.v1:MUST_AUTHENTICATE_DIALOG" );
         sendBroadcast(authenticateIntent);        		        	
       } else {
         // Store token secrets to NWOAuth to be able to authorize
@@ -307,8 +307,8 @@ public class YammerService extends Service {
       }
 
       IntentFilter filter = new IntentFilter();
-      filter.addAction("com.yammer:RESET_ACCOUNT");
-      filter.addAction("com.yammer:POST_MESSAGE");
+      filter.addAction("com.yammer.v1:RESET_ACCOUNT");
+      filter.addAction("com.yammer.v1:POST_MESSAGE");
       registerReceiver(new YammerIntentReceiver(), filter);	        
 
       // Start the update timer
@@ -444,7 +444,7 @@ public class YammerService extends Service {
     // Start deletion on network in thread
     if (DEBUG) Log.d(TAG_YSERVICE, "Posting message");
     getYammer().postResource(getURLBase() + "/api/v1/messages/", message, messageId);
-    Intent intent = new Intent( "com.yammer:PUBLIC_TIMELINE_UPDATED" );
+    Intent intent = new Intent( "com.yammer.v1:PUBLIC_TIMELINE_UPDATED" );
     sendBroadcast(intent);
   }
 
@@ -463,7 +463,7 @@ public class YammerService extends Service {
     int count = dbDelete.delete(YammerDataConstants.TABLE_MESSAGES, YammerDataConstants.MESSAGE_ID+"="+messageId, null);
     if (DEBUG) Log.d(TAG_YSERVICE, "Items deleted: " + count);
     // It seems we were able to delete the message send an intent to update the timeline
-    Intent intent = new Intent( "com.yammer:PUBLIC_TIMELINE_UPDATED" );
+    Intent intent = new Intent( "com.yammer.v1:PUBLIC_TIMELINE_UPDATED" );
     sendBroadcast(intent);
   }
 
@@ -655,7 +655,7 @@ public class YammerService extends Service {
         notifyUser(R.string.new_yammer_message, NOTIFICATION_NEW_MESSAGE);				
       }
       // Send an intent
-      sendBroadcast(new Intent("com.yammer:PUBLIC_TIMELINE_UPDATED"));
+      sendBroadcast(new Intent("com.yammer.v1:PUBLIC_TIMELINE_UPDATED"));
     }
   }
 

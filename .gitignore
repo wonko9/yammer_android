@@ -1,5 +1,5 @@
 .DS_Store
-src/com/yammer/OAuthCustom.java
+src/com/yammer/v1/OAuthCustom.java
 .settings/*
 bin/*
 gen/*

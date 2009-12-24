@@ -1,4 +1,4 @@
-package com.yammer;
+package com.yammer.v1;
 
 import android.app.Application;
 import android.content.Context;
@@ -30,13 +30,6 @@ public class YammerApp extends Application {
     try {
       PackageInfo pi = pm.getPackageInfo(this.getPackageName(), 0);
       G.APP_VERSION = pi.versionName;
-      String[] versionSplit = pi.versionName.split("\\.");
-      if (DEBUG) Log.i(TAG, "versionName: " + pi.versionName );
-      if (DEBUG) Log.i(TAG, "minorVersion: " + versionSplit[2]);
-      if ( Integer.parseInt(versionSplit[2]) % 2  != 0) {
-        // Create and show the BETA overlay
-        G.IS_BETA = true;
-      }
     } catch (NameNotFoundException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();

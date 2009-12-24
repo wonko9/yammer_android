@@ -1,14 +1,14 @@
-package com.yammer;
+package com.yammer.v1;
 
-import static com.yammer.YammerDataConstants.EMAIL;
+import static com.yammer.v1.YammerDataConstants.EMAIL;
 
-import static com.yammer.YammerDataConstants.FULL_NAME;
-import static com.yammer.YammerDataConstants.MESSAGE;
-import static com.yammer.YammerDataConstants.MUGSHOT_MD5;
-import static com.yammer.YammerDataConstants.MUGSHOT_URL;
-import static com.yammer.YammerDataConstants.REPLYEE_EMAIL;
-import static com.yammer.YammerDataConstants.REPLYEE_FULL_NAME;
-import static com.yammer.YammerDataConstants.TIMESTAMP;
+import static com.yammer.v1.YammerDataConstants.FULL_NAME;
+import static com.yammer.v1.YammerDataConstants.MESSAGE;
+import static com.yammer.v1.YammerDataConstants.MUGSHOT_MD5;
+import static com.yammer.v1.YammerDataConstants.MUGSHOT_URL;
+import static com.yammer.v1.YammerDataConstants.REPLYEE_EMAIL;
+import static com.yammer.v1.YammerDataConstants.REPLYEE_FULL_NAME;
+import static com.yammer.v1.YammerDataConstants.TIMESTAMP;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

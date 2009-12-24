@@ -1,6 +1,6 @@
-package com.yammer;
+package com.yammer.v1;
 
-import com.yammer.YammerDataConstants;
+import com.yammer.v1.YammerDataConstants;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

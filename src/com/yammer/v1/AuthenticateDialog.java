@@ -1,4 +1,4 @@
-package com.yammer;
+package com.yammer.v1;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -31,7 +31,7 @@ public class AuthenticateDialog extends Dialog {
 				if (G.DEBUG) Log.d(TAG_AUTHENTICATEDIALOG, "Dismissing authenticate dialog");
 				// Initiate authorization means that the service will start retrieving
 				// tokens and so on. Service will also send intents to start the browser.
-				Intent intent = new Intent( "com.yammer:AUTHORIZATION_INITIATE" );
+				Intent intent = new Intent( "com.yammer.v1:AUTHORIZATION_INITIATE" );
 				context.sendBroadcast(intent);
 			}
 		});

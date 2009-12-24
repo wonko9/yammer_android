@@ -1,4 +1,4 @@
-package com.yammer;
+package com.yammer.v1;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -55,7 +55,7 @@ public class YammerShare extends YammerReply {
 			String message = replyEdit.getText().toString();
 			// Create an intent containing the message
 			Intent intent = new Intent();
-			intent.setAction("com.yammer:POST_MESSAGE");
+			intent.setAction("com.yammer.v1:POST_MESSAGE");
 			intent.putExtra("message", message);
 			// Post the intent to the service
 			sendBroadcast(intent);
