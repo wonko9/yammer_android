@@ -3,3 +3,4 @@ src/com/yammer/OAuthCustom.java
 .settings/*
 bin/*
 gen/*
+yammer.ks
