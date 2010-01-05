@@ -27,7 +27,7 @@ public class YammerSettings extends PreferenceActivity
   protected void onCreate(Bundle savedInstanceState) {
     if (DEBUG) Log.d(TAG_YSETTINGS, "YammerSettings.onCreate");
     super.onCreate(savedInstanceState);
-    addPreferencesFromResource(R.layout.settings);
+    addPreferencesFromResource(R.layout.settings_activity);
   }
 
   protected void onResume() {

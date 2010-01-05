@@ -22,11 +22,11 @@
 		<ListPreference
 			android:textColor="#000000"
 			android:key="key_update"
-			android:title="Updates"
-			android:summary="How often should the application check the default Yammer network for new messages?"
+			android:title="@string/pref_updates_title"
+			android:summary="@string/pref_updates_summary"
 			android:entries="@array/settings_update_entries"
 			android:entryValues="@array/settings_update_values"
-			android:dialogTitle="Choose timeout"
+			android:dialogTitle="@string/pref_updates_options_title"
 			android:defaultValue="120"
 			>
 		</ListPreference>
