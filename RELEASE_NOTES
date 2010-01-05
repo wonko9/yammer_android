@@ -1,0 +1,6 @@
+
+2010-01-04
+  Fixed Updates selector title.  (Bug: ANDROID-26)
+    
+2009-12-23
+  Changed package to com.yammer.v1 for re-release
