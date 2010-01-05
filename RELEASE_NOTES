@@ -1,5 +1,6 @@
 
 2010-01-04
+  Bumped versionCode for release
   Only clear text editor if it contains the prompt (Bug: ANDROID-29)
   Fixed Updates selector title.  (Bug: ANDROID-26)
     
