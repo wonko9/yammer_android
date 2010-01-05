@@ -4,7 +4,7 @@
 	<string name="request_authorization">Authorizing your account</string>
 	<string name="request_access">Requesting access</string>
 	<string name="reply">Reply</string>
-	<string name="what_are_you_working_on">What are you working on?</string>
+	<string name="yam_prompt">What are you working on?</string>
 	<string name="reply_label">Reply</string>
 	<string name="delete_label">Delete</string>
 	<string name="popup_title_label">Yammer</string>

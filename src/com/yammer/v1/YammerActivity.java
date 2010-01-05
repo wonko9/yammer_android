@@ -54,8 +54,6 @@ public class YammerActivity extends Activity {
 
   private static final boolean DEBUG = G.DEBUG;
 
-  private static final String TAG_Y = "Yammer";
-
   private YammerService mYammerService = null;
   private SQLiteDatabase db = null;;
   private YammerIntentReceiver yammerIntentReceiver = null;
@@ -68,7 +66,7 @@ public class YammerActivity extends Activity {
   private final Semaphore loadingRefCounterSemaphore = new Semaphore(1);
 
   private YammerService getYammerService() {
-    if (DEBUG) Log.d(TAG_Y, "Yammer.getYammerService()");
+    if (DEBUG) Log.d(getClass().getName(), "Yammer.getYammerService()");
     if ( mYammerService == null ) {
       bindService( 	new Intent(YammerActivity.this, YammerService.class), 
           mConnection, 
@@ -89,18 +87,18 @@ public class YammerActivity extends Activity {
        * Launch the browser and let the user authenticate himself
        * and activate the application.
        */
-      if (DEBUG) Log.d(TAG_Y, "Intent received: " + intent.getAction());
+      if (DEBUG) Log.d(getClass().getName(), "Intent received: " + intent.getAction());
       if ( intent.getAction().equals("com.yammer.v1:PUBLIC_TIMELINE_UPDATED") ) {
         // Only allow updating the listview if it has been initialized
         if ( listViewInitialized ) {
           updateListView();
         }
       } else if ( intent.getAction().equals("com.yammer.v1:TIMELINE_INITIALIZE") ) {				
-        if (DEBUG) Log.d(TAG_Y, "Initializing timeline");
+        if (DEBUG) Log.d(getClass().getName(), "Initializing timeline");
 
         final TweetListView tweetListView = (TweetListView) findViewById(R.id.tweet_list);
         db = getYammerService().yammerData.getReadableDatabase();
-        if (DEBUG) Log.d(TAG_Y, "Querying for known messages in network");
+        if (DEBUG) Log.d(getClass().getName(), "Querying for known messages in network");
 
         // remove logic here looking for users you are following or your id since call to /messages/following will already do this        
 
@@ -112,20 +110,20 @@ public class YammerActivity extends Activity {
         Cursor cursor = db.rawQuery(sql, null);
         cursor.moveToFirst();
 
-        if (DEBUG) Log.d(TAG_Y, "Creating new TweetListAdapter");
+        if (DEBUG) Log.d(getClass().getName(), "Creating new TweetListAdapter");
         TweetListAdapter tweetListAdapter = new TweetListAdapter(YammerActivity.this, R.layout.list_row, cursor, PROJECTION, new int[] {R.id.message} );
-        if (DEBUG) Log.d(TAG_Y, "Binding adapter to list: " + tweetListView);
+        if (DEBUG) Log.d(getClass().getName(), "Binding adapter to list: " + tweetListView);
         tweetListView.setAdapter(tweetListAdapter);
         startManagingCursor(cursor);                	
 
         // Register tweetlistview for context menu clicks
-        if (DEBUG) Log.d(TAG_Y, "Registering tweet list view to receive context menu events");
+        if (DEBUG) Log.d(getClass().getName(), "Registering tweet list view to receive context menu events");
         registerForContextMenu(tweetListView);
         // Attach an onclick listener to the listview
         tweetListView.setOnItemClickListener( new OnItemClickListener() {
           public void onItemClick(AdapterView<?> adapterView, View view, int id, long row) {
             if ( YammerSettings.getMessageClickBehaviour(YammerActivity.this).equals("reply") ) {
-              if (DEBUG) Log.d(TAG_Y, "Replying to message");
+              if (DEBUG) Log.d(getClass().getName(), "Replying to message");
               long rowId = row;
               String sql = "select _id, message_id from messages where " + _ID + "=" + rowId;
               SQLiteDatabase db = getYammerService().yammerData.getReadableDatabase();
@@ -135,13 +133,13 @@ public class YammerActivity extends Activity {
               Intent i = new Intent(YammerActivity.this, YammerReply.class);
               // Post the message ID being replied upon along with the intent
               int columnIndex = c.getColumnIndex(YammerDataConstants.MESSAGE_ID);
-              if (DEBUG) Log.d(TAG_Y, "columnIndex: " + columnIndex);
+              if (DEBUG) Log.d(getClass().getName(), "columnIndex: " + columnIndex);
               long messageId = c.getLong(columnIndex);
               i.putExtra("messageId", messageId);
               startActivityForResult(i, YAMMER_REPLY_CREATE);
               c.close();    							
             } else {
-              if (DEBUG) Log.d(TAG_Y, "Viewing message");    							
+              if (DEBUG) Log.d(getClass().getName(), "Viewing message");    							
               // Create activity YammerSettings
               Intent i = new Intent(YammerActivity.this, YammerMessage.class);
               // We use startActivityForResult because we want to know when
@@ -158,10 +156,10 @@ public class YammerActivity extends Activity {
         createLoaderWheelView();
         // Should loader wheel display (i.e. a loading operation is in progress)
         displayLoaderWheel();                
-        if (DEBUG) Log.d(TAG_Y, "ListViewInitialized");
+        if (DEBUG) Log.d(getClass().getName(), "ListViewInitialized");
         listViewInitialized = true;
       } else if ( intent.getAction().equals("com.yammer.v1:MUST_AUTHENTICATE_DIALOG") ) {
-        if ( DEBUG ) Log.d(TAG_Y, "com.yammer.v1.MUST_AUTHENTICATE_DIALOG");
+        if ( DEBUG ) Log.d(getClass().getName(), "com.yammer.v1.MUST_AUTHENTICATE_DIALOG");
         try {
           removeDialog(ID_DIALOG_LOADING);
         } catch (Exception e) {
@@ -169,17 +167,17 @@ public class YammerActivity extends Activity {
         }
         showDialog(ID_DIALOG_MUST_AUTHENTICATE);
       } else if ( intent.getAction().equals("com.yammer.v1:AUTHORIZATION_INITIATE") ) {
-        if ( DEBUG ) Log.d(TAG_Y, "com.yammer.v1:AUTHORIZATION_INITIATE");
+        if ( DEBUG ) Log.d(getClass().getName(), "com.yammer.v1:AUTHORIZATION_INITIATE");
         // Hide the authenticate dialog
         removeDialog(ID_DIALOG_MUST_AUTHENTICATE);
         // Start the authorization
         getYammerService().initiateAuthorization();
       } else if ( intent.getAction().equals("com.yammer.v1:AUTHORIZATION_START") ) {
-        if ( DEBUG ) Log.d(TAG_Y, "com.yammer.v1:AUTHORIZATION_START");
+        if ( DEBUG ) Log.d(getClass().getName(), "com.yammer.v1:AUTHORIZATION_START");
         // Show progress dialog
         showDialog(ID_DIALOG_LOADING);
       } else if ( intent.getAction().equals("com.yammer.v1:AUTHORIZATION_DONE") ) {
-        if ( DEBUG ) Log.d(TAG_Y, "com.yammer.v1:AUTHORIZATION_DONE");
+        if ( DEBUG ) Log.d(getClass().getName(), "com.yammer.v1:AUTHORIZATION_DONE");
         new Thread(
             new Runnable() {
               public void run() {
@@ -206,17 +204,17 @@ public class YammerActivity extends Activity {
                   // TODO Auto-generated catch block
                   e.printStackTrace();
                 } finally {
-                  //if ( DEBUG ) Log.d(TAG_Y, "REMOVE DIALOG LOADING");									
+                  //if ( DEBUG ) Log.d(getClass().getName(), "REMOVE DIALOG LOADING");									
                   showLoadingAnimation(false);
                 }
               }
             }).start();
       } else if ( intent.getAction().equals("com.yammer.v1:AUTHORIZATION_BROWSER") ) {
-        if ( DEBUG ) Log.d(TAG_Y, "com.yammer.v1:AUTHORIZATION_BROWSER");
+        if ( DEBUG ) Log.d(getClass().getName(), "com.yammer.v1:AUTHORIZATION_BROWSER");
         if ( getYammerService() != null && YammerService.isAuthenticating == true ) {
-          if ( DEBUG ) Log.d(TAG_Y, "REMOVE DIALOG LOADING");
+          if ( DEBUG ) Log.d(getClass().getName(), "REMOVE DIALOG LOADING");
           removeDialog(ID_DIALOG_LOADING);
-          if ( DEBUG ) Log.d(TAG_Y, "Starting browser");
+          if ( DEBUG ) Log.d(getClass().getName(), "Starting browser");
           // Fetch responseUrl from intent extras
           Bundle bundle = intent.getExtras();
           String responseUrl = bundle.getString("responseUrl");
@@ -227,16 +225,16 @@ public class YammerActivity extends Activity {
           browserIntent.putExtra("responseUrl", responseUrl);
           startActivityForResult(browserIntent, YAMMER_BROWSER_CREATE);
         } else {
-          if ( DEBUG ) Log.d(TAG_Y, "Browser not starting - authentication not in progress");        			
+          if ( DEBUG ) Log.d(getClass().getName(), "Browser not starting - authentication not in progress");        			
         }
       } else if ( intent.getAction().equals("com.yammer.v1:NETWORK_ERROR_MINOR") ) {
         /**
          * A minor error occurred (connection lost or similar - can be retried later)
          * no need to notify the user.
          */
-        if ( DEBUG ) Log.d(TAG_Y, "com.yammer.v1:NETWORK_ERROR_MINOR");
+        if ( DEBUG ) Log.d(getClass().getName(), "com.yammer.v1:NETWORK_ERROR_MINOR");
       } else if ( intent.getAction().equals("com.yammer.v1:NETWORK_ERROR_FATAL") ) {
-        if ( DEBUG ) Log.d(TAG_Y, "com.yammer.v1:NETWORK_ERROR_FATAL");
+        if ( DEBUG ) Log.d(getClass().getName(), "com.yammer.v1:NETWORK_ERROR_FATAL");
         try {
           dismissDialog(ID_DIALOG_LOADING);
         } catch (Exception e) {
@@ -291,17 +289,17 @@ public class YammerActivity extends Activity {
     if ( view == null ) return;
     // Is something loading?
     if ( loadingRefCounter > 0 ) {
-      if (DEBUG) Log.d(TAG_Y, "Showing loader wheel: " + view);
+      if (DEBUG) Log.d(getClass().getName(), "Showing loader wheel: " + view);
       // Something must be loading, so show the view
       view.setVisibility(View.VISIBLE);
     } else {
-      Log.d(TAG_Y, "view.isShown: " + view.isShown());
+      Log.d(getClass().getName(), "view.isShown: " + view.isShown());
       if ( view.isShown() ) {
-        if (DEBUG) Log.d(TAG_Y, "Hiding loader wheel: " + view);
+        if (DEBUG) Log.d(getClass().getName(), "Hiding loader wheel: " + view);
         // Nothing is loading, so remove the view
         view.setVisibility(View.INVISIBLE);				
       } else {
-        if (DEBUG) Log.d(TAG_Y, "Hiding new loader wheel (thread transit): " + cVire);
+        if (DEBUG) Log.d(getClass().getName(), "Hiding new loader wheel (thread transit): " + cVire);
         if (cVire != null) cVire.setVisibility(View.INVISIBLE);				
       }
     }		
@@ -324,7 +322,7 @@ public class YammerActivity extends Activity {
           } else {
             loadingRefCounter --;
           }
-          if (DEBUG) Log.d(TAG_Y, "loadingRefCounter: " + loadingRefCounter);
+          if (DEBUG) Log.d(getClass().getName(), "loadingRefCounter: " + loadingRefCounter);
           displayLoaderWheel();
         } finally {
           // Release mutex
@@ -335,10 +333,10 @@ public class YammerActivity extends Activity {
   }
 
   protected View createLoaderWheelView() {
-    if (DEBUG) Log.d(TAG_Y, "Yammer.createLoaderWheelView");
+    if (DEBUG) Log.d(getClass().getName(), "Yammer.createLoaderWheelView");
     View loaderWheelView = (ImageView)findViewById(R.id.loader_animation_overlay); 
     if ( loaderWheelView == null /*Loader wheel view not shown yet*/ ) {
-      if (DEBUG) Log.d(TAG_Y, "loaderWheelView doesn't exist, so creating it.");
+      if (DEBUG) Log.d(getClass().getName(), "loaderWheelView doesn't exist, so creating it.");
       // Get root view
       LayoutInflater factory = LayoutInflater.from(this);
       View v = factory.inflate(R.layout.loader_animation, null);
@@ -359,7 +357,7 @@ public class YammerActivity extends Activity {
 
   @Override
   protected Dialog onCreateDialog(int id) {
-    if (DEBUG) Log.d(TAG_Y, "Yammer.onCreateDialog("+id+")");
+    if (DEBUG) Log.d(getClass().getName(), "Yammer.onCreateDialog("+id+")");
     if ( id == ID_DIALOG_MUST_AUTHENTICATE ) {
       // Show "Start Yammer Authentication" dialog
       AuthenticateDialog authDialog = new AuthenticateDialog(YammerActivity.this);
@@ -415,7 +413,7 @@ public class YammerActivity extends Activity {
         new DialogInterface.OnClickListener() {
       public void onClick(DialogInterface _dialog, int _button) {
         String feed = feeds[_button];
-        if (DEBUG) Log.d(TAG_Y, "Feed '" + feed + "' selected" );                  
+        if (DEBUG) Log.d(getClass().getName(), "Feed '" + feed + "' selected" );                  
         YammerSettings.setFeed(YammerActivity.this, feed);
         showHeaderForFeed(feed);
         yd.clearMessages();
@@ -436,7 +434,7 @@ public class YammerActivity extends Activity {
   }
 
   public void updateListView() {
-    if (DEBUG) Log.d(TAG_Y, "Yammer.updateListView");
+    if (DEBUG) Log.d(getClass().getName(), "Yammer.updateListView");
     try {
       // Reconfigure the list view
       TweetListView tweetListView = (TweetListView) findViewById(R.id.tweet_list);
@@ -446,18 +444,18 @@ public class YammerActivity extends Activity {
       tweetListAdapter.notifyDataSetChanged();
       // If we are at the top of the screen, then show the newest item
       if ( tweetListView.getFirstVisiblePosition() == 0 ) {
-        if (DEBUG) Log.d(TAG_Y, "Scrolling view to top");
+        if (DEBUG) Log.d(getClass().getName(), "Scrolling view to top");
         // Scroll to top
         tweetListView.setSelectionFromTop(0, 0);
       } else {
         // If looking at messages further down, show a notification                	
-        //if (DEBUG) Log.d(TAG_Y, "Notifying user of new message");
+        //if (DEBUG) Log.d(getClass().getName(), "Notifying user of new message");
         //Toast.makeText(Yammer.this, "New message", Toast.LENGTH_LONG).show();
       }
     } catch (Exception e) {
       // Caught the cursor at the wrong time
       e.printStackTrace();
-      if (DEBUG) Log.d(TAG_Y, "Whoops.. Cursor or view wasn't valid. Makes no sense to continue.");        	
+      if (DEBUG) Log.d(getClass().getName(), "Whoops.. Cursor or view wasn't valid. Makes no sense to continue.");        	
       return;        	
     }
   }
@@ -467,15 +465,15 @@ public class YammerActivity extends Activity {
     // Which item was selected
     switch ( item.getItemId() ) {
     case MENU_RELOAD:
-      if (DEBUG) Log.d(TAG_Y, "MENU_RELOAD selected");
+      if (DEBUG) Log.d(getClass().getName(), "MENU_RELOAD selected");
       reload();
       break;
     case MENU_SETTINGS:
-      if (DEBUG) Log.d(TAG_Y, "MENU_SETTINGS selected");
+      if (DEBUG) Log.d(getClass().getName(), "MENU_SETTINGS selected");
       startActivityForResult(new Intent(this, YammerSettings.class), YAMMER_SETTINGS_CREATE);        
       break;
     case MENU_FEEDS:
-      if (DEBUG) Log.d(TAG_Y, "MENU_FEEDS selected");
+      if (DEBUG) Log.d(getClass().getName(), "MENU_FEEDS selected");
       // Create activity YammerSettings
       showDialog(ID_DIALOG_FEEDS);
       break;
@@ -509,7 +507,7 @@ public class YammerActivity extends Activity {
   }
 
   public void onCreateContextMenu(ContextMenu menu, View view, ContextMenuInfo menuInfo) {
-    if (DEBUG) Log.d(TAG_Y, "Create context menu");
+    if (DEBUG) Log.d(getClass().getName(), "Create context menu");
     // Get the row ID
     AdapterContextMenuInfo info = (AdapterContextMenuInfo)menuInfo;
     long rowId = info.id;
@@ -561,7 +559,7 @@ public class YammerActivity extends Activity {
 
     // Submenu for URLs
     //Menu urlSubMenu = null;
-    if (DEBUG) Log.d(TAG_Y, "c.getCount(): " + c.getCount());
+    if (DEBUG) Log.d(getClass().getName(), "c.getCount(): " + c.getCount());
     // Add any URL's that may have been enclosed in the message
     columnIndex = c.getColumnIndex(YammerDataConstants.FIELD_URLS_URL);
     for ( int i=0; i<c.getCount(); i++) {
@@ -574,7 +572,7 @@ public class YammerActivity extends Activity {
       //if ( i == 0 ) {
       //	urlSubMenu = menu.addSubMenu("URLs");            	
       //}
-      if (DEBUG) Log.d(TAG_Y, "URL: " + url);
+      if (DEBUG) Log.d(getClass().getName(), "URL: " + url);
       Intent browserLaunchUrlIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
       menu.add(0, MENU_URL, ContextMenu.NONE, getResources().getString(R.string.url_icon)+url)
       .setIntent(browserLaunchUrlIntent);        	
@@ -602,7 +600,7 @@ public class YammerActivity extends Activity {
       c.moveToFirst();	
       // Retrieve the message ID og the message clicked on
       int columnIndex = c.getColumnIndex(YammerDataConstants.MESSAGE_ID);
-      if (DEBUG) Log.d(TAG_Y, "columnIndex: " + columnIndex);
+      if (DEBUG) Log.d(getClass().getName(), "columnIndex: " + columnIndex);
       final long messageId = c.getLong(columnIndex);
       columnIndex = c.getColumnIndex(YammerDataConstants.USER_ID);
       final long userId = c.getLong(columnIndex);
@@ -610,27 +608,27 @@ public class YammerActivity extends Activity {
       switch ( item.getItemId() ) {
 
       case MENU_VIEW_MESSAGE:
-        if (DEBUG) Log.d(TAG_Y, "MENU_VIEW_MESSAGE selected");
+        if (DEBUG) Log.d(getClass().getName(), "MENU_VIEW_MESSAGE selected");
         break;
       case MENU_VIEW_THREAD:
-        if (DEBUG) Log.d(TAG_Y, "MENU_VIEW_THREAD selected");				
+        if (DEBUG) Log.d(getClass().getName(), "MENU_VIEW_THREAD selected");				
         break;
       case MENU_REPLY:
-        if (DEBUG) Log.d(TAG_Y, "MENU_REPLY selected");				
+        if (DEBUG) Log.d(getClass().getName(), "MENU_REPLY selected");				
         // Start the reply activity
         Intent i = new Intent(this, YammerReply.class);
         i.putExtra("messageId", messageId);
         startActivityForResult(i, YAMMER_REPLY_CREATE);        
         break;
       case MENU_DELETE:
-        if (DEBUG) Log.d(TAG_Y, "MENU_DELETE selected");
+        if (DEBUG) Log.d(getClass().getName(), "MENU_DELETE selected");
         // Delete the item from the database
         // Send delete request to the database
         new Thread(
             new Runnable() {
               public void run() {
                 // Delete it from the server
-                if (DEBUG) Log.d(TAG_Y, "Deleting message with ID " + messageId);
+                if (DEBUG) Log.d(getClass().getName(), "Deleting message with ID " + messageId);
                 try {
                   showLoadingAnimation(true);
                   getYammerService().deleteMessage(messageId);
@@ -643,17 +641,17 @@ public class YammerActivity extends Activity {
                 } finally {
                   showLoadingAnimation(false);									
                 }
-                if (DEBUG) Log.d(TAG_Y, "Message with ID " + messageId + " deleted!");
+                if (DEBUG) Log.d(getClass().getName(), "Message with ID " + messageId + " deleted!");
               }
             }).start();
         break;
       case MENU_FOLLOW:
-        if (DEBUG) Log.d(TAG_Y, "MENU_FOLLOW selected");
+        if (DEBUG) Log.d(getClass().getName(), "MENU_FOLLOW selected");
         new Thread(
             new Runnable() {
               public void run() {
                 // Delete it from the server
-                if (DEBUG) Log.d(TAG_Y, "Following user with ID " + userId);
+                if (DEBUG) Log.d(getClass().getName(), "Following user with ID " + userId);
                 try {
                   showLoadingAnimation(true);
                   getYammerService().followUser(userId);
@@ -666,17 +664,17 @@ public class YammerActivity extends Activity {
                 } finally {
                   showLoadingAnimation(false);									
                 }
-                if (DEBUG) Log.d(TAG_Y, "User with ID " + userId + " followed!");
+                if (DEBUG) Log.d(getClass().getName(), "User with ID " + userId + " followed!");
               }
             }).start();
         break;
       case MENU_UNFOLLOW:
-        if (DEBUG) Log.d(TAG_Y, "MENU_UNFOLLOW selected");
+        if (DEBUG) Log.d(getClass().getName(), "MENU_UNFOLLOW selected");
         new Thread(
             new Runnable() {
               public void run() {
                 // Delete it from the server
-                if (DEBUG) Log.d(TAG_Y, "Unfollowing user with ID " + userId);
+                if (DEBUG) Log.d(getClass().getName(), "Unfollowing user with ID " + userId);
                 try {
                   showLoadingAnimation(true);
                   getYammerService().unfollowUser(userId);
@@ -689,7 +687,7 @@ public class YammerActivity extends Activity {
                 } finally {
                   showLoadingAnimation(false);									
                 }
-                if (DEBUG) Log.d(TAG_Y, "User with ID " + userId + " unfollowed!");
+                if (DEBUG) Log.d(getClass().getName(), "User with ID " + userId + " unfollowed!");
               }
             }).start();
         break;
@@ -719,11 +717,11 @@ public class YammerActivity extends Activity {
   }
 
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    if (DEBUG) Log.d(TAG_Y, "Yammer.onActivityResult");
+    if (DEBUG) Log.d(getClass().getName(), "Yammer.onActivityResult");
     switch(requestCode) {
     case YAMMER_REPLY_CREATE:
       if ( resultCode == 0 ) {
-        if (DEBUG) Log.d(TAG_Y, "YAMMER_REPLY_CREATE");
+        if (DEBUG) Log.d(getClass().getName(), "YAMMER_REPLY_CREATE");
         Bundle bundle = data.getExtras();
         final String reply = bundle.getString("reply");
         // Get the message ID we replied upon
@@ -753,14 +751,14 @@ public class YammerActivity extends Activity {
       }
       break;
     case YAMMER_SETTINGS_CREATE:
-      if (DEBUG) Log.d(TAG_Y, "YAMMER_SETTINGS_CREATE: result = " + resultCode);
+      if (DEBUG) Log.d(getClass().getName(), "YAMMER_SETTINGS_CREATE: result = " + resultCode);
       if ( resultCode == 0 ) {
       }
       break;
     case YAMMER_BROWSER_CREATE:
-      if (DEBUG) Log.d(TAG_Y, "YAMMER_BROWSER_CREATE: result = " + resultCode);
+      if (DEBUG) Log.d(getClass().getName(), "YAMMER_BROWSER_CREATE: result = " + resultCode);
       if ( resultCode == -1 ) {
-        if (DEBUG) Log.d(TAG_Y, "Authentication in browser was canceled");
+        if (DEBUG) Log.d(getClass().getName(), "Authentication in browser was canceled");
         if ( getYammerService() != null ) {
           YammerService.isAuthenticating = false;
           getYammerService().cancelAuthorization();
@@ -788,35 +786,35 @@ public class YammerActivity extends Activity {
 
   private ServiceConnection mConnection = new ServiceConnection() {
     public void onServiceConnected(ComponentName className, IBinder service) {
-      if (DEBUG) Log.d(TAG_Y, "ServiceConnection.onServiceConnected");
+      if (DEBUG) Log.d(getClass().getName(), "ServiceConnection.onServiceConnected");
       mYammerService = ((YammerService.YammerBinder)service).getService();
       if (mYammerService == null) return;
       updateAuthenticationUI();
     }
 
     public void onServiceDisconnected(ComponentName className) {
-      if (DEBUG) Log.d(TAG_Y, "ServiceConnection.onServiceDisconnected");
+      if (DEBUG) Log.d(getClass().getName(), "ServiceConnection.onServiceDisconnected");
       mYammerService = null;
     }
   };
 
   public Object onRetainNonConfigurationInstance() {
-    if (DEBUG) Log.d(TAG_Y, "Yammer.onRetainNonConfigurationInstance");
+    if (DEBUG) Log.d(getClass().getName(), "Yammer.onRetainNonConfigurationInstance");
     return super.onRetainNonConfigurationInstance();
   }
 
   /** Called when the activity is first created. */
   @Override
   public void onCreate(Bundle savedInstanceState) {
-    if (DEBUG) Log.d(TAG_Y, "Yammer.onCreate");
+    if (DEBUG) Log.d(getClass().getName(), "Yammer.onCreate");
     super.onCreate(savedInstanceState);
-    if (DEBUG) Log.d(TAG_Y, "onCreate.savedInstance: " + savedInstanceState);
+    if (DEBUG) Log.d(getClass().getName(), "onCreate.savedInstance: " + savedInstanceState);
 
     //setTheme(android.R.style.Theme_Black_NoTitleBar);
     setContentView(R.layout.yammer_activity);
 
     // Register supported intents
-    if (DEBUG) Log.d(TAG_Y, "Registering intents for Yammer");
+    if (DEBUG) Log.d(getClass().getName(), "Registering intents for Yammer");
     IntentFilter filter = new IntentFilter();
     filter.addAction("com.yammer.v1:PUBLIC_TIMELINE_UPDATED");
     filter.addAction("com.yammer.v1:TIMELINE_INITIALIZE");
@@ -838,7 +836,7 @@ public class YammerActivity extends Activity {
           // We only want to post the message, when key is released
           if ( event.getAction() == KeyEvent.ACTION_UP ) {
             final String message = getEditorText();
-            if (DEBUG) Log.d(TAG_Y, "POST MESSAGE: " + message);
+            if (DEBUG) Log.d(getClass().getName(), "POST MESSAGE: " + message);
             // Post the message to the network
             new Thread(
                 new Runnable() {
@@ -860,19 +858,26 @@ public class YammerActivity extends Activity {
                     }
                   }
                 }).start();
+            
             setEditorText(null);
+            
           }
           return true;
         }
         return false;
       }
+
     });
 
     // Set key listener used to display "what are you working on" overlay
     tweetEditor.setOnTouchListener(new View.OnTouchListener() {
       public boolean onTouch(View _view, MotionEvent _event) {
-        if (DEBUG) Log.d(TAG_Y, "tweetEditor.onTouch");
-        setEditorText("");
+        if (DEBUG) Log.d(getClass().getName(), "tweetEditor.onTouch");
+        
+        if(null == getEditorText()) {
+          setEditorText("");
+        }
+
         return false;
       }
     });
@@ -906,7 +911,7 @@ public class YammerActivity extends Activity {
   private void setEditorText(String _text) {
     EditText editor = getEditor();
 
-    String prompt = getString(R.string.what_are_you_working_on);
+    final String prompt = getString(R.string.yam_prompt);
     if(null == _text) _text = prompt;
 
     editor.setText(_text);
@@ -920,7 +925,7 @@ public class YammerActivity extends Activity {
 
   private String getEditorText() {
     String text = getEditor().getText().toString();
-    if(getString(R.string.what_are_you_working_on).equals(text)) {
+    if(getString(R.string.yam_prompt).equals(text)) {
       text = null;
     }
     return text;
@@ -928,29 +933,29 @@ public class YammerActivity extends Activity {
 
   public void onStart() {
     super.onStart();
-    if (DEBUG) Log.d(TAG_Y, "Yammer.onStart");
+    if (DEBUG) Log.d(getClass().getName(), "Yammer.onStart");
     bindService(new Intent(YammerActivity.this, YammerService.class), mConnection, Context.BIND_AUTO_CREATE);
   }
 
   public void onResume() {
-    if (DEBUG) Log.d(TAG_Y, "Yammer.onResume");
+    if (DEBUG) Log.d(getClass().getName(), "Yammer.onResume");
     super.onResume();
     if (getYammerService() != null) {
       getYammerService().resetMessageCount();
     } else {
-      if (DEBUG) Log.d(TAG_Y, "mYammerService was null - could not do onResume tasks for YammerService");
+      if (DEBUG) Log.d(getClass().getName(), "mYammerService was null - could not do onResume tasks for YammerService");
     }
   }
 
   public void onDestroy() {
-    if (DEBUG) Log.d(TAG_Y, "Yammer.onDestroy");
+    if (DEBUG) Log.d(getClass().getName(), "Yammer.onDestroy");
     if ( yammerIntentReceiver != null ) {
-      if (DEBUG) Log.d(TAG_Y, "Unregistering receiver");
+      if (DEBUG) Log.d(getClass().getName(), "Unregistering receiver");
       unregisterReceiver(yammerIntentReceiver);
       yammerIntentReceiver = null;
     }    	
     if ( isFinishing() ){
-      if (DEBUG) Log.i(TAG_Y, "Activity is finishing");
+      if (DEBUG) Log.i(getClass().getName(), "Activity is finishing");
     }
     //Debug.stopMethodTracing();
     super.onDestroy();
@@ -963,9 +968,9 @@ public class YammerActivity extends Activity {
       // Reset the message count - we probably saw any new message
       getYammerService().resetMessageCount();
     }
-    if (DEBUG) Log.d(TAG_Y, "Yammer.onStop");
+    if (DEBUG) Log.d(getClass().getName(), "Yammer.onStop");
     // Need to unbind the service
-    if (DEBUG) Log.d(TAG_Y, "Unbinding ServiceConnection");    	
+    if (DEBUG) Log.d(getClass().getName(), "Unbinding ServiceConnection");    	
     unbindService(mConnection);
     // TODO: Unregister receiver
     // Make sure intent receiver was registered before unregistering it
