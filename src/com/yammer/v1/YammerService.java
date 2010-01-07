@@ -39,7 +39,6 @@ public class YammerService extends Service {
 
   private static final boolean DEBUG = G.DEBUG;
 
-  private static final String TAG_YSERVICE = "YammerService";
   private static final String PREFS_NAME = "YammerPrefs";
 
   /** Client states **/
@@ -98,11 +97,11 @@ public class YammerService extends Service {
     }
     @Override
     public void onReceive(Context context, Intent intent) {
-      if (DEBUG) Log.d(TAG_YSERVICE, "Intent received: " + intent.getAction());
+      if (DEBUG) Log.d(getClass().getName(), "Intent received: " + intent.getAction());
       if ( intent.getAction().equals("com.yammer.v1:RESET_ACCOUNT") ) {
         // Acquire sempahore to disallow updates
         if ( !jsonUpdateSemaphore.tryAcquire() ) {
-          if (DEBUG) Log.d(TAG_YSERVICE, "Could not acquire permit to update semaphore - aborting");
+          if (DEBUG) Log.d(getClass().getName(), "Could not acquire permit to update semaphore - aborting");
           return;
         }
         // Remove all data from the database
@@ -143,11 +142,11 @@ public class YammerService extends Service {
 
   @Override
   public void onCreate() {
-    if (DEBUG) Log.d(TAG_YSERVICE, "YammerService.onCreate");
+    if (DEBUG) Log.d(getClass().getName(), "YammerService.onCreate");
     yammerData = new YammerData(this);
     super.onCreate();
     PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-    wakelock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG_YSERVICE);
+    wakelock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, getClass().getName());
   }
 
   /**
@@ -162,7 +161,6 @@ public class YammerService extends Service {
   }
 
   class YammerAuthorizeThread extends Thread {
-    private static final String TAG_YSERVICETHREAD = "YammerServiceThread";
 
     YammerService service = null;
 
@@ -171,14 +169,14 @@ public class YammerService extends Service {
     }
 
     public void run() {
-      if (DEBUG) Log.d(TAG_YSERVICETHREAD, "Requesting request token");
+      if (DEBUG) Log.d(getClass().getName(), "Requesting request token");
       try {
         // Only continue if not already authenticating
         if ( isAuthenticating == true ) {
           return;
         }
         isAuthenticating = true;
-        if ( DEBUG ) Log.d(TAG_YSERVICE, "YammerService bound to Yammer: " + bound);
+        if ( DEBUG ) Log.d(getClass().getName(), "YammerService bound to Yammer: " + bound);
         // Yes, bound.. So Have the Yammer activity show a progress bar
         Intent intent = new Intent( "com.yammer.v1:AUTHORIZATION_START" );
         sendBroadcast(intent);
@@ -187,18 +185,18 @@ public class YammerService extends Service {
         getYammer().getRequestToken();	
         // Make sure that a request token and a secret token was received
         String responseUrl = getYammer().authorizeUser();
-        if ( DEBUG ) Log.d(TAG_YSERVICE, "Response URL received: " + responseUrl);
+        if ( DEBUG ) Log.d(getClass().getName(), "Response URL received: " + responseUrl);
         // Send an intent that will start the browser
         intent = new Intent( "com.yammer.v1:AUTHORIZATION_BROWSER" );
         intent.putExtra("responseUrl", responseUrl);
         sendBroadcast(intent);
         // Wait for user to finish authorization
-        if (DEBUG) Log.d(TAG_YSERVICETHREAD, "Waiting for user to finish authorization");
+        if (DEBUG) Log.d(getClass().getName(), "Waiting for user to finish authorization");
         while ( YammerService.isAuthorized() == false ) {
           // Sleep 10 ms
           Thread.sleep(10);
         }
-        if (DEBUG) Log.d(TAG_YSERVICETHREAD, "User done with authorization");
+        if (DEBUG) Log.d(getClass().getName(), "User done with authorization");
         getYammer().enableApplication(YammerService.authenticationToken);
         // We need to update the current user data
         updateCurrentUserData();
@@ -223,7 +221,7 @@ public class YammerService extends Service {
         Intent intent = new Intent( "com.yammer.v1:NETWORK_ERROR_FATAL" );
         sendBroadcast(intent);        		
       } catch ( Exception e ) {
-        Log.d(TAG_YSERVICETHREAD, "An exception occured: " + e.toString());
+        Log.d(getClass().getName(), "An exception occured: " + e.toString());
         e.printStackTrace();
       } finally {
         isAuthenticating = false;
@@ -236,7 +234,7 @@ public class YammerService extends Service {
    * Start the authorization
    */
   public void initiateAuthorization() {
-    if ( DEBUG ) Log.d(TAG_YSERVICE, "YammerService.initiateAuthorization");
+    if ( DEBUG ) Log.d(getClass().getName(), "YammerService.initiateAuthorization");
     authThread = new YammerAuthorizeThread(this);
     authThread.start();
   }
@@ -245,7 +243,7 @@ public class YammerService extends Service {
    * Stop authorization
    */
   public void cancelAuthorization() {
-    if ( DEBUG ) Log.d(TAG_YSERVICE, "YammerService.cancelAuthorization: authThread = " + authThread);
+    if ( DEBUG ) Log.d(getClass().getName(), "YammerService.cancelAuthorization: authThread = " + authThread);
     if (authThread != null) {
       try {
         isAuthenticating = false;
@@ -259,19 +257,19 @@ public class YammerService extends Service {
   @Override
   public void onStart(Intent intent, int startId) {
     super.onStart(intent, startId);				
-    if (DEBUG) Log.d(TAG_YSERVICE, "YammerService.onStart");
-    if (DEBUG) Log.d(TAG_YSERVICE, "Client state: " + YammerService.CLIENT_STATE);
+    if (DEBUG) Log.d(getClass().getName(), "YammerService.onStart");
+    if (DEBUG) Log.d(getClass().getName(), "Client state: " + YammerService.CLIENT_STATE);
     // Was the service already started?
     if ( YammerService.CLIENT_STATE != STATE_RAW ) {
-      if (DEBUG) Log.d(TAG_YSERVICE, "YammerService already started once, so just return");
+      if (DEBUG) Log.d(getClass().getName(), "YammerService already started once, so just return");
       // Just return
       return;
     } else {
-      if (DEBUG) Log.i(TAG_YSERVICE, "Yammer service is initializing");
+      if (DEBUG) Log.i(getClass().getName(), "Yammer service is initializing");
       // Service has been started once and considered initialized
       YammerService.CLIENT_STATE = STATE_INITIALIZED;
       // Start authorization with Yammer
-      if (DEBUG) Log.d(TAG_YSERVICE, "Fetching request token from Yammer");
+      if (DEBUG) Log.d(getClass().getName(), "Fetching request token from Yammer");
       // Try to load the access token from the shared preferences
       SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
       currentUserId = settings.getLong("DefaultUserId", 0);	        	        
@@ -319,22 +317,22 @@ public class YammerService extends Service {
                 Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
                 // How long to wait
                 long updateTimeout = YammerSettings.getUpdateTimeout(YammerService.this);
-                //if (DEBUG) Log.d(TAG_YSERVICE, "updateTimeout: " + (lastUpdateTime + updateTimeout) + ", currentTime: " + System.currentTimeMillis());
+                //if (DEBUG) Log.d(getClass().getName(), "updateTimeout: " + (lastUpdateTime + updateTimeout) + ", currentTime: " + System.currentTimeMillis());
                 // Is it time to update?
                 if ( updateTimeout != 0 && 
                     (System.currentTimeMillis() > lastUpdateTime + updateTimeout) ) {
-                  if (DEBUG) Log.d(TAG_YSERVICE, "Acquiring wakelock");
+                  if (DEBUG) Log.d(getClass().getName(), "Acquiring wakelock");
                   wakelock.acquire();
                   // Time to update
                   updatePublicMessages();
                   lastUpdateTime = System.currentTimeMillis();		        					
                 } 
               } catch (Exception e) {
-                if (DEBUG) Log.d(TAG_YSERVICE, "An exception occured during updatePublicMessage()");
+                if (DEBUG) Log.d(getClass().getName(), "An exception occured during updatePublicMessage()");
                 e.printStackTrace();
               } finally {
                 wakelock.release();
-                if (DEBUG) Log.d(TAG_YSERVICE, "Wakelock released");
+                if (DEBUG) Log.d(getClass().getName(), "Wakelock released");
               }
             }
           }, 0, GLOBAL_UPDATE_INTERVAL
@@ -349,7 +347,7 @@ public class YammerService extends Service {
                 // Check for new versions of the application
                 checkForApplicationUpdate();
               } catch (Exception e) {
-                if (DEBUG) Log.d(TAG_YSERVICE, "An exception occured during checkForApplicationUpdate()");
+                if (DEBUG) Log.d(getClass().getName(), "An exception occured during checkForApplicationUpdate()");
                 e.printStackTrace();
               }
             }
@@ -366,7 +364,7 @@ public class YammerService extends Service {
    * Reset counter holding number of new messages
    */
   public void resetMessageCount() {
-    if (DEBUG) Log.d(TAG_YSERVICE, "YammerService.resetMessageCount");
+    if (DEBUG) Log.d(getClass().getName(), "YammerService.resetMessageCount");
     newMessageCount = 0;
   }
 
@@ -425,7 +423,7 @@ public class YammerService extends Service {
        );
     }
 
-    if (DEBUG) Log.d(TAG_YSERVICE, "Displaying notification - " + newMessageCount + " new messages!");
+    if (DEBUG) Log.d(getClass().getName(), "Displaying notification - " + newMessageCount + " new messages!");
     nm.notify(R.string.app_name, notification);
   }
 
@@ -437,12 +435,8 @@ public class YammerService extends Service {
    * @throws YammerProxy.ConnectionProblem 
    */
   public void postMessage(final String message, final long messageId) throws YammerProxy.AccessDeniedException, YammerProxy.ConnectionProblem {
-    if (DEBUG) Log.d(TAG_YSERVICE, "YammerService.postMessage");
-    // URL POST: https://www.yammer.com/api/v1/messages/
-    // replied_to_id - If this is a reply
-    // body - Body of message
-    // Start deletion on network in thread
-    if (DEBUG) Log.d(TAG_YSERVICE, "Posting message");
+    if (DEBUG) Log.d(getClass().getName(), "YammerService.postMessage");
+    if (DEBUG) Log.d(getClass().getName(), "Posting message");
     getYammer().postResource(getURLBase() + "/api/v1/messages/", message, messageId);
     Intent intent = new Intent( "com.yammer.v1:PUBLIC_TIMELINE_UPDATED" );
     sendBroadcast(intent);
@@ -455,32 +449,32 @@ public class YammerService extends Service {
    * @throws YammerProxy.ConnectionProblem 
    */
   public void deleteMessage(final long messageId) throws YammerProxy.AccessDeniedException, YammerProxy.ConnectionProblem {
-    if (DEBUG) Log.d(TAG_YSERVICE, "YammerService.deleteMessage");
+    if (DEBUG) Log.d(getClass().getName(), "YammerService.deleteMessage");
     // Start deletion on network in thread
     getYammer().deleteResource(getURLBase() + "/api/v1/messages/"+messageId);		
     // Delete it from the database
     SQLiteDatabase dbDelete = yammerData.getWritableDatabase();
     int count = dbDelete.delete(YammerDataConstants.TABLE_MESSAGES, YammerDataConstants.MESSAGE_ID+"="+messageId, null);
-    if (DEBUG) Log.d(TAG_YSERVICE, "Items deleted: " + count);
+    if (DEBUG) Log.d(getClass().getName(), "Items deleted: " + count);
     // It seems we were able to delete the message send an intent to update the timeline
     Intent intent = new Intent( "com.yammer.v1:PUBLIC_TIMELINE_UPDATED" );
     sendBroadcast(intent);
   }
 
   public void followUser(final long userId) throws YammerProxy.AccessDeniedException, YammerProxy.ConnectionProblem {
-    if (DEBUG) Log.d(TAG_YSERVICE, "YammerService.followUser");
+    if (DEBUG) Log.d(getClass().getName(), "YammerService.followUser");
     // GET https://yammer.com/api/v1/subscriptions/to_user/<id>.json
-    if (DEBUG) Log.d(TAG_YSERVICE, "Following user");
+    if (DEBUG) Log.d(getClass().getName(), "Following user");
     getYammer().followUser(userId);
-    if (DEBUG) Log.d(TAG_YSERVICE, "User followed!");
+    if (DEBUG) Log.d(getClass().getName(), "User followed!");
   }
 
   public void unfollowUser(final long userId) throws YammerProxy.AccessDeniedException, YammerProxy.ConnectionProblem {
-    if (DEBUG) Log.d(TAG_YSERVICE, "YammerService.followUser");
+    if (DEBUG) Log.d(getClass().getName(), "YammerService.followUser");
     // DELETE https://yammer.com/api/v1/subscriptions/
-    if (DEBUG) Log.d(TAG_YSERVICE, "Following user");
+    if (DEBUG) Log.d(getClass().getName(), "Following user");
     getYammer().unfollowUser(userId);
-    if (DEBUG) Log.d(TAG_YSERVICE, "User followed!");
+    if (DEBUG) Log.d(getClass().getName(), "User followed!");
   }
 
   public long getCurrentUserId() {
@@ -508,22 +502,22 @@ public class YammerService extends Service {
       JSONObject jsonUserData = new JSONObject(userData);
       
       currentUserId = jsonUserData.getLong("id");
-      if (DEBUG) Log.d(TAG_YSERVICE, "Current user ID: " + currentUserId);
+      if (DEBUG) Log.d(getClass().getName(), "Current user ID: " + currentUserId);
       
       currentNetworkId = jsonUserData.getLong("network_id");
-      if (DEBUG) Log.d(TAG_YSERVICE, "Current network ID: " + currentNetworkId);
+      if (DEBUG) Log.d(getClass().getName(), "Current network ID: " + currentNetworkId);
 
-      if (DEBUG) Log.d(TAG_YSERVICE, "Updating follow status from references");
+      if (DEBUG) Log.d(getClass().getName(), "Updating follow status from references");
       
       // Populate feeds table
       JSONArray jsonArray = jsonUserData.getJSONObject("web_preferences").getJSONArray("home_tabs");
-      if (DEBUG) Log.d(TAG_YSERVICE, "Found " + jsonArray.length() + " feeds");    		
+      if (DEBUG) Log.d(getClass().getName(), "Found " + jsonArray.length() + " feeds");    		
       yammerData.clearFeeds();
       for( int ii=0; ii < jsonArray.length(); ii++ ) {
         try {
           yammerData.addFeed(jsonArray.getJSONObject(ii));
         } catch( YammerData.YammerDataException e ) {
-          if (DEBUG) Log.w(TAG_YSERVICE, e.getMessage());
+          if (DEBUG) Log.w(getClass().getName(), e.getMessage());
           e.printStackTrace();
         }
       }
@@ -536,35 +530,35 @@ public class YammerService extends Service {
   protected void checkForApplicationUpdate() {
     String url = getURLBase() + "/application_support/android/updates";
     try {
-      if (DEBUG) Log.d(TAG_YSERVICE, "Querying URL "+url+" for new updates");
+      if (DEBUG) Log.d(getClass().getName(), "Querying URL "+url+" for new updates");
       DefaultHttpClient httpClient = new DefaultHttpClient(); 
       HttpGet httpGet = new HttpGet(url);
       HttpResponse httpResponse = httpClient.execute(httpGet);
       String response = EntityUtils.toString(httpResponse.getEntity());
-      if (DEBUG) Log.d(TAG_YSERVICE, "Read HTTP respone: " + response);
+      if (DEBUG) Log.d(getClass().getName(), "Read HTTP respone: " + response);
       // Parse the respone
       String[] responseSplit = response.split(":");
       int versionCode = Integer.parseInt(responseSplit[1].trim());
-      if (DEBUG) Log.d(TAG_YSERVICE, "Version code read: " + versionCode);
+      if (DEBUG) Log.d(getClass().getName(), "Version code read: " + versionCode);
       // Get the versioncode from manifest
       PackageManager pm = getPackageManager();
       PackageInfo pi = pm.getPackageInfo(this.getPackageName(), 0);
       if ( versionCode > pi.versionCode ) {
         // Notify user about new version
-        if (DEBUG) Log.d(TAG_YSERVICE, "New version is available. Notifying user.");
+        if (DEBUG) Log.d(getClass().getName(), "New version is available. Notifying user.");
         notifyUser(R.string.application_update_title, NOTIFICATION_APPLICATION_UPDATE);
       }
     } catch (Exception e) {
-      if (DEBUG) Log.d(TAG_YSERVICE, "Error while checking for application updates");
+      if (DEBUG) Log.d(getClass().getName(), "Error while checking for application updates");
       e.printStackTrace();
     }
   }
 
   public void updatePublicMessages() throws YammerProxy.AccessDeniedException, YammerProxy.ConnectionProblem {
-    if (DEBUG) Log.i(TAG_YSERVICE, "Updating public timeline");
+    if (DEBUG) Log.i(getClass().getName(), "Updating public timeline");
     
     if ( isAuthorized() == false ) {
-      if (DEBUG) Log.i(TAG_YSERVICE, "User not authorized - skipping update");
+      if (DEBUG) Log.i(getClass().getName(), "User not authorized - skipping update");
       return;
     }
     // Only when a message from another user is detected in the network
@@ -574,19 +568,19 @@ public class YammerService extends Service {
     boolean timelineUpdated = false; 
     try {
       if ( !jsonUpdateSemaphore.tryAcquire() ) {
-        if (DEBUG) Log.d(TAG_YSERVICE, "Could not acquire permit to update semaphore - aborting");
+        if (DEBUG) Log.d(getClass().getName(), "Could not acquire permit to update semaphore - aborting");
         return;
       }
       
       // Fetch the public timeline
       String messages = getNewerMessages();
 
-      if (DEBUG) Log.d(TAG_YSERVICE, "Messages JSON: " + messages);
+      if (DEBUG) Log.d(getClass().getName(), "Messages JSON: " + messages);
       // If json public timeline doesn't exist, create it
       jsonMessages = new JSONObject(messages);
 
       try {
-        if (DEBUG) Log.d(TAG_YSERVICE, "Updating users from references");
+        if (DEBUG) Log.d(getClass().getName(), "Updating users from references");
         // Retrieve all references to users
         JSONArray references = jsonMessages.getJSONArray("references");
         // Add all fetched messages tp the database
@@ -597,12 +591,12 @@ public class YammerService extends Service {
             if ( !reference.getString("type").equals("user") ) {
               continue;
             }
-            //Log.d(TAG_YSERVICE, reference.getString("type") + ":" + reference.toString());
+            //Log.d(getClass().getName(), reference.getString("type") + ":" + reference.toString());
             // TODO: Skip parsing after last "user" type
             // Add the user reference to the database
             yammerData.addUser(reference);
           } catch( Exception e ) {
-            if (DEBUG) Log.w(TAG_YSERVICE, e.getMessage());
+            if (DEBUG) Log.w(getClass().getName(), e.getMessage());
           }
         }
       } catch (Exception e) {
@@ -611,7 +605,7 @@ public class YammerService extends Service {
       }			
 
       try {
-        if (DEBUG) Log.d(TAG_YSERVICE, "Updating messages");
+        if (DEBUG) Log.d(getClass().getName(), "Updating messages");
         // Retrieve all messages
         JSONArray jsonArray = jsonMessages.getJSONArray("messages");
         // Add all fetched messages tp the database
@@ -624,7 +618,7 @@ public class YammerService extends Service {
           // the previous messages had notification requirement
           if (false == notificationRequired) {
             notificationRequired = !ownMessage;
-            if (DEBUG) Log.d(TAG_YSERVICE, "Notification required: " + notificationRequired);
+            if (DEBUG) Log.d(getClass().getName(), "Notification required: " + notificationRequired);
           }
           // Only increment message counter if this is not one of our own messages
           if ( !ownMessage ) {
@@ -641,7 +635,7 @@ public class YammerService extends Service {
       }			
 
     } catch (Exception e) {
-      if (DEBUG) Log.e(TAG_YSERVICE, "An error occured while parsing JSON: " + e.getStackTrace());
+      if (DEBUG) Log.e(getClass().getName(), "An error occured while parsing JSON: " + e.getStackTrace());
       return;
     } finally {
       // Release the semaphore
@@ -677,7 +671,7 @@ public class YammerService extends Service {
 
   @Override
   public void onDestroy() {
-    if (DEBUG) Log.d(TAG_YSERVICE, "YammerService.onDestroy");
+    if (DEBUG) Log.d(getClass().getName(), "YammerService.onDestroy");
     super.onDestroy();
     // It seems we were destroyed for some reason, so set the state to raw
     YammerService.CLIENT_STATE = STATE_RAW;
@@ -686,14 +680,14 @@ public class YammerService extends Service {
 
   @Override
   public IBinder onBind(Intent intent) {
-    if (DEBUG) Log.d(TAG_YSERVICE, "YammerService.onBind");
+    if (DEBUG) Log.d(getClass().getName(), "YammerService.onBind");
     this.bound = true;
     return mBinder;
   }
 
   @Override
   public boolean onUnbind(Intent intent) {
-    if (DEBUG) Log.d(TAG_YSERVICE, "YammerService.onUnbind");
+    if (DEBUG) Log.d(getClass().getName(), "YammerService.onUnbind");
     this.bound = false;
     // Don't invoke onRebind, so return false
     return false;
