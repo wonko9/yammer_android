@@ -2,8 +2,7 @@ package com.yammer.v1;
 
 import com.yammer.v1.YammerDataConstants;
 import com.yammer.v1.YammerData.YammerDataException;
-import com.yammer.v1.YammerProxy.AccessDeniedException;
-import com.yammer.v1.YammerProxy.ConnectionProblem;
+import com.yammer.v1.YammerProxy;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -126,7 +125,7 @@ public class YammerService extends Service {
         String message = bundle.getString("message");
         try {
           // message ID is 0 since this is not a reply
-          postMessage(message, 0);
+          getYammer().postMessage(message, 0);
         } catch (YammerProxy.AccessDeniedException e) {
           // TODO Auto-generated catch block
           e.printStackTrace();
@@ -178,8 +177,7 @@ public class YammerService extends Service {
         isAuthenticating = true;
         if ( DEBUG ) Log.d(getClass().getName(), "YammerService bound to Yammer: " + bound);
         // Yes, bound.. So Have the Yammer activity show a progress bar
-        Intent intent = new Intent( "com.yammer.v1:AUTHORIZATION_START" );
-        sendBroadcast(intent);
+        sendBroadcast("com.yammer.v1:AUTHORIZATION_START" );
         // Get request token
         // Fetch the request token and token secret
         getYammer().getRequestToken();	
@@ -187,7 +185,7 @@ public class YammerService extends Service {
         String responseUrl = getYammer().authorizeUser();
         if ( DEBUG ) Log.d(getClass().getName(), "Response URL received: " + responseUrl);
         // Send an intent that will start the browser
-        intent = new Intent( "com.yammer.v1:AUTHORIZATION_BROWSER" );
+        Intent intent = new Intent( "com.yammer.v1:AUTHORIZATION_BROWSER" );
         intent.putExtra("responseUrl", responseUrl);
         sendBroadcast(intent);
         // Wait for user to finish authorization
@@ -218,8 +216,7 @@ public class YammerService extends Service {
         isAuthenticating = false;				
       } catch ( YammerProxy.ConnectionProblem e ) {
         // Send an intent to the Yammer activity notifying about the error
-        Intent intent = new Intent( "com.yammer.v1:NETWORK_ERROR_FATAL" );
-        sendBroadcast(intent);        		
+        sendBroadcast("com.yammer.v1:NETWORK_ERROR_FATAL");        		
       } catch ( Exception e ) {
         Log.d(getClass().getName(), "An exception occured: " + e.toString());
         e.printStackTrace();
@@ -294,8 +291,7 @@ public class YammerService extends Service {
       if ( (accessToken == null || accessTokenSecret == null) && !isAuthenticating ) {
         // No access token present, so notify yammer activity that authentication
         // should be done first.
-        Intent authenticateIntent = new Intent( "com.yammer.v1:MUST_AUTHENTICATE_DIALOG" );
-        sendBroadcast(authenticateIntent);        		        	
+        sendBroadcast("com.yammer.v1:MUST_AUTHENTICATE_DIALOG");        		        	
       } else {
         // Store token secrets to NWOAuth to be able to authorize
         getYammer().requestToken = accessToken;
@@ -429,17 +425,15 @@ public class YammerService extends Service {
 
   /**
    * Post a message or a reply to the current Yammer Network
+   * 
    * @param message - message to post
    * @param messageId - Message being replied to
+   * 
    * @throws YammerProxy.AccessDeniedException
    * @throws YammerProxy.ConnectionProblem 
    */
-  public void postMessage(final String message, final long messageId) throws YammerProxy.AccessDeniedException, YammerProxy.ConnectionProblem {
-    if (DEBUG) Log.d(getClass().getName(), "YammerService.postMessage");
-    if (DEBUG) Log.d(getClass().getName(), "Posting message");
-    getYammer().postResource(getURLBase() + "/api/v1/messages/", message, messageId);
-    Intent intent = new Intent( "com.yammer.v1:PUBLIC_TIMELINE_UPDATED" );
-    sendBroadcast(intent);
+  public void postMessage(final String message, final long messageId) throws YammerProxy.YammerProxyException {
+    getYammer().postMessage(message, messageId);
   }
 
   /**
@@ -448,7 +442,7 @@ public class YammerService extends Service {
    * @throws YammerProxy.AccessDeniedException
    * @throws YammerProxy.ConnectionProblem 
    */
-  public void deleteMessage(final long messageId) throws YammerProxy.AccessDeniedException, YammerProxy.ConnectionProblem {
+  public void deleteMessage(final long messageId) throws YammerProxy.YammerProxyException {
     if (DEBUG) Log.d(getClass().getName(), "YammerService.deleteMessage");
     // Start deletion on network in thread
     getYammer().deleteResource(getURLBase() + "/api/v1/messages/"+messageId);		
@@ -457,11 +451,10 @@ public class YammerService extends Service {
     int count = dbDelete.delete(YammerDataConstants.TABLE_MESSAGES, YammerDataConstants.MESSAGE_ID+"="+messageId, null);
     if (DEBUG) Log.d(getClass().getName(), "Items deleted: " + count);
     // It seems we were able to delete the message send an intent to update the timeline
-    Intent intent = new Intent( "com.yammer.v1:PUBLIC_TIMELINE_UPDATED" );
-    sendBroadcast(intent);
+    sendBroadcast("com.yammer.v1:PUBLIC_TIMELINE_UPDATED");
   }
 
-  public void followUser(final long userId) throws YammerProxy.AccessDeniedException, YammerProxy.ConnectionProblem {
+  public void followUser(final long userId) throws YammerProxy.YammerProxyException {
     if (DEBUG) Log.d(getClass().getName(), "YammerService.followUser");
     // GET https://yammer.com/api/v1/subscriptions/to_user/<id>.json
     if (DEBUG) Log.d(getClass().getName(), "Following user");
@@ -469,12 +462,9 @@ public class YammerService extends Service {
     if (DEBUG) Log.d(getClass().getName(), "User followed!");
   }
 
-  public void unfollowUser(final long userId) throws YammerProxy.AccessDeniedException, YammerProxy.ConnectionProblem {
-    if (DEBUG) Log.d(getClass().getName(), "YammerService.followUser");
-    // DELETE https://yammer.com/api/v1/subscriptions/
-    if (DEBUG) Log.d(getClass().getName(), "Following user");
+  public void unfollowUser(final long userId) throws YammerProxy.YammerProxyException {
+    if (DEBUG) Log.d(getClass().getName(), ".followUser");
     getYammer().unfollowUser(userId);
-    if (DEBUG) Log.d(getClass().getName(), "User followed!");
   }
 
   public long getCurrentUserId() {
@@ -486,7 +476,7 @@ public class YammerService extends Service {
     return currentNetworkId;
   }
 
-  public void updateCurrentUserData() throws YammerProxy.AccessDeniedException {
+  public void updateCurrentUserData() throws YammerProxy.YammerProxyException {
     String url = getURLBase() + "/api/v1/users/current.json";
     // Fetch the user data JSON
     String userData = null;
@@ -526,7 +516,7 @@ public class YammerService extends Service {
     }
   }
 
-  // Check for updates
+  // TODO: remove (handled by market)
   protected void checkForApplicationUpdate() {
     String url = getURLBase() + "/application_support/android/updates";
     try {
@@ -554,7 +544,7 @@ public class YammerService extends Service {
     }
   }
 
-  public void updatePublicMessages() throws YammerProxy.AccessDeniedException, YammerProxy.ConnectionProblem {
+  public void updatePublicMessages() throws YammerProxy.YammerProxyException {
     if (DEBUG) Log.i(getClass().getName(), "Updating public timeline");
     
     if ( isAuthorized() == false ) {
@@ -648,14 +638,11 @@ public class YammerService extends Service {
         // Yep, so notify the user with a notification icon
         notifyUser(R.string.new_yammer_message, NOTIFICATION_NEW_MESSAGE);				
       }
-      // Send an intent
-      sendBroadcast(new Intent("com.yammer.v1:PUBLIC_TIMELINE_UPDATED"));
+      sendBroadcast("com.yammer.v1:PUBLIC_TIMELINE_UPDATED");
     }
   }
 
-  private String getNewerMessages()
-    throws AccessDeniedException, ConnectionProblem, YammerDataException
-  {
+  private String getNewerMessages() throws YammerProxy.YammerProxyException, YammerDataException {
     return getYammer().accessResource(getFeedURL()+".json?newer_than="+yammerData.getLastMessageId(getCurrentNetworkId()));
   }
 

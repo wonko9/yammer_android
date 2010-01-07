@@ -53,6 +53,8 @@ import android.widget.AdapterView.OnItemClickListener;
 public class YammerActivity extends Activity {
 
   private static final boolean DEBUG = G.DEBUG;
+  
+  private static final long TEMP_SLEEP = 3000;
 
   private YammerService mYammerService = null;
   private SQLiteDatabase db = null;;
@@ -197,10 +199,7 @@ public class YammerActivity extends Activity {
                       updateListView();        		    				    				
                     }
                   });
-                } catch (YammerProxy.ConnectionProblem e) {
-                  // TODO Auto-generated catch block
-                  e.printStackTrace();
-                } catch (YammerProxy.AccessDeniedException e) {
+                } catch (YammerProxy.YammerProxyException e) {
                   // TODO Auto-generated catch block
                   e.printStackTrace();
                 } finally {
@@ -485,18 +484,11 @@ public class YammerActivity extends Activity {
     new Thread(
         new Runnable() {
           public void run() {
-            // Delete it from the server
             try {
               showLoadingAnimation(true);
-              // Instruct YammerService activity to reload the timeline
               getYammerService().updatePublicMessages();
               getYammerService().updateCurrentUserData();
-              // Update the timeline view
-              sendBroadcast("com.yammer.v1:PUBLIC_TIMELINE_UPDATED");
-            } catch (YammerProxy.AccessDeniedException e) {
-              // TODO Auto-generated catch block
-              e.printStackTrace();
-            } catch (YammerProxy.ConnectionProblem e) {
+            } catch (YammerProxy.YammerProxyException e) {
               // TODO Auto-generated catch block
               e.printStackTrace();
             } finally {
@@ -632,10 +624,7 @@ public class YammerActivity extends Activity {
                 try {
                   showLoadingAnimation(true);
                   getYammerService().deleteMessage(messageId);
-                } catch (YammerProxy.AccessDeniedException e) {
-                  // TODO Auto-generated catch block
-                  e.printStackTrace();
-                } catch (YammerProxy.ConnectionProblem e) {
+                } catch (YammerProxy.YammerProxyException e) {
                   // TODO Auto-generated catch block
                   e.printStackTrace();
                 } finally {
@@ -655,10 +644,7 @@ public class YammerActivity extends Activity {
                 try {
                   showLoadingAnimation(true);
                   getYammerService().followUser(userId);
-                } catch (YammerProxy.AccessDeniedException e) {
-                  // TODO Auto-generated catch block
-                  e.printStackTrace();
-                } catch (YammerProxy.ConnectionProblem e) {
+                } catch (YammerProxy.YammerProxyException e) {
                   // TODO Auto-generated catch block
                   e.printStackTrace();
                 } finally {
@@ -678,10 +664,7 @@ public class YammerActivity extends Activity {
                 try {
                   showLoadingAnimation(true);
                   getYammerService().unfollowUser(userId);
-                } catch (YammerProxy.AccessDeniedException e) {
-                  // TODO Auto-generated catch block
-                  e.printStackTrace();
-                } catch (YammerProxy.ConnectionProblem e) {
+                } catch (YammerProxy.YammerProxyException e) {
                   // TODO Auto-generated catch block
                   e.printStackTrace();
                 } finally {
@@ -730,21 +713,16 @@ public class YammerActivity extends Activity {
         new Thread(
             new Runnable() {
               public void run() {
-                // Delete it from the server
                 try {
-                  showLoadingAnimation(true);
-                  // Post reply
                   getYammerService().postMessage(reply, messageId);
-                  // Update the messages timeline
-                  getYammerService().updatePublicMessages();
-                } catch (YammerProxy.AccessDeniedException e) {
+                  Thread.sleep(TEMP_SLEEP);                  
+                  reload();
+                } catch (YammerProxy.YammerProxyException e) {
                   // TODO Auto-generated catch block
                   e.printStackTrace();
-                } catch (YammerProxy.ConnectionProblem e) {
+                } catch (InterruptedException e) {
                   // TODO Auto-generated catch block
                   e.printStackTrace();
-                } finally {
-                  showLoadingAnimation(false);										
                 }
               }
             }).start();
@@ -842,19 +820,15 @@ public class YammerActivity extends Activity {
                 new Runnable() {
                   public void run() {
                     try {
-                      showLoadingAnimation(true);
-                      // Post new message
                       getYammerService().postMessage(message, 0);
-                      // Update the messages timeline
-                      getYammerService().updatePublicMessages();
-                    } catch (YammerProxy.AccessDeniedException e) {
+                      Thread.sleep(TEMP_SLEEP);
+                      reload();
+                    } catch (YammerProxy.YammerProxyException e) {
                       // TODO Auto-generated catch block
                       e.printStackTrace();
-                    } catch (YammerProxy.ConnectionProblem e) {
+                    } catch (InterruptedException e) {
                       // TODO Auto-generated catch block
                       e.printStackTrace();
-                    } finally {
-                      showLoadingAnimation(false);    										
                     }
                   }
                 }).start();
@@ -995,6 +969,7 @@ public class YammerActivity extends Activity {
     return new SimpleDateFormat(getString(_res)).format(_date);
   }
 
+  
   private void sendBroadcast(String _intent) {
     sendBroadcast(new Intent(_intent));
   }

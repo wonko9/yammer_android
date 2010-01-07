@@ -27,12 +27,16 @@ public class YammerProxy {
   
   public static final String DEFAULT_FEED = "My Feed";
   
-  public static class AccessDeniedException extends Exception {
-    private static final long serialVersionUID = 4940776001569856135L;
+  @SuppressWarnings("serial")
+  public static class YammerProxyException extends Exception {
   }
 
-  public static class ConnectionProblem extends Exception {
-    private static final long serialVersionUID = 4940776001569856139L;
+  @SuppressWarnings("serial")
+  public static class AccessDeniedException extends YammerProxyException {
+  }
+
+  @SuppressWarnings("serial")
+  public static class ConnectionProblem extends YammerProxyException {
   }
 
 
@@ -82,10 +86,10 @@ public class YammerProxy {
    * @throws ConnectionProblem 
    */
   public void getRequestToken() throws ConnectionProblem {    	
-    if (DEBUG) Log.d("OAuth", "YammerProxy.getRequestToken");
+    if (DEBUG) Log.d(getClass().getName(), "YammerProxy.getRequestToken");
 
     if ( accessor == null ) {
-      if ( DEBUG ) Log.e("OAuth", "accessor not available (yet!)");
+      if ( DEBUG ) Log.e(getClass().getName(), "accessor not available (yet!)");
       return;
     }   
 
@@ -106,8 +110,8 @@ public class YammerProxy {
     this.requestToken = accessor.requestToken;
     this.tokenSecret = accessor.tokenSecret;
 
-    if (DEBUG) Log.d("OAuth", "Request token: " + this.requestToken);
-    if (DEBUG) Log.d("OAuth", "Request token secret: " + this.tokenSecret);    
+    if (DEBUG) Log.d(getClass().getName(), "Request token: " + this.requestToken);
+    if (DEBUG) Log.d(getClass().getName(), "Request token secret: " + this.tokenSecret);    
   }
 
   /**
@@ -125,7 +129,7 @@ public class YammerProxy {
   }
 
   public void enableApplication(String callbackToken) throws AccessDeniedException {
-    if (DEBUG) Log.d("OAuth", "YammerProxy.enableApplication");
+    if (DEBUG) Log.d(getClass().getName(), "YammerProxy.enableApplication");
     Properties paramProps = new Properties();
     paramProps.setProperty("oauth_token", this.requestToken);
     try {
@@ -133,23 +137,23 @@ public class YammerProxy {
       // Store the access token secret
       this.requestToken =  response.getParameter("oauth_token");
       this.tokenSecret =  response.getParameter("oauth_token_secret");
-      if (DEBUG) Log.d("OAuth", "oauth_token: " + this.requestToken);
-      if (DEBUG) Log.d("OAuth", "oauth_token_secret: " + this.tokenSecret);
+      if (DEBUG) Log.d(getClass().getName(), "oauth_token: " + this.requestToken);
+      if (DEBUG) Log.d(getClass().getName(), "oauth_token_secret: " + this.tokenSecret);
     } catch (IOException e) {
       e.printStackTrace();
-      if (DEBUG) Log.d("OAuth", "IOException");
+      if (DEBUG) Log.d(getClass().getName(), "IOException");
     } catch (URISyntaxException e) {
       e.printStackTrace();
-      if (DEBUG) Log.d("OAuth", "URISyntaxException");
+      if (DEBUG) Log.d(getClass().getName(), "URISyntaxException");
     } catch (OAuthProblemException e) {
-      if (DEBUG) Log.d("OAuth", "HTTP status code: "+e.getHttpStatusCode());
+      if (DEBUG) Log.d(getClass().getName(), "HTTP status code: "+e.getHttpStatusCode());
       // Check if this is a redirect
       if (e.getHttpStatusCode() == 302) {
-        if (DEBUG) Log.d( "OAuth", (String) e.getParameters().get(HttpResponseMessage.LOCATION) );
+        if (DEBUG) Log.d( getClass().getName(), (String) e.getParameters().get(HttpResponseMessage.LOCATION) );
       }
     } catch (OAuthException e) {
       e.printStackTrace();
-      if (DEBUG) Log.d("OAuth", "OAuthException");
+      if (DEBUG) Log.d(getClass().getName(), "OAuthException");
     }
   }
 
@@ -158,7 +162,7 @@ public class YammerProxy {
    * @throws AccessDeniedException 
    */
   public String authorizeUser() throws AccessDeniedException {
-    if (DEBUG) Log.d("YammerProxy", "YammerProxy.authorizeUser");
+    if (DEBUG) Log.d(getClass().getName(), "YammerProxy.authorizeUser");
 
     assert( this.requestToken != null && this.accessor != null );
 
@@ -178,37 +182,70 @@ public class YammerProxy {
       // TODO Auto-generated catch block
       e.printStackTrace();
     } catch (OAuthProblemException e) {
-      if (DEBUG) Log.d("OAuth", "HTTP status code: "+e.getHttpStatusCode());
+      if (DEBUG) Log.d(getClass().getName(), "HTTP status code: "+e.getHttpStatusCode());
       // Try to retrieve the URL that resultet in the "error"
       // We need to do this because the OAuth library creates the URL being queried
       // with signatures and all, so we let the OAuth library create the URL, try
       // to do the request and then if it fails return the URL to let us try to 
       // request it with the browser.
       URL calledUrl = (URL)e.getParameters().get("URL");
-      if (DEBUG) Log.d("YammerProxy", "Called URL: "+calledUrl);
+      if (DEBUG) Log.d(getClass().getName(), "Called URL: "+calledUrl);
       responseUrl = calledUrl.toString();        	
       // Check if this is a redirect
       if (e.getHttpStatusCode() == 302) {
-        if (DEBUG) Log.d("YammerProxy", "302 Location: " + (String) e.getParameters().get(HttpResponseMessage.LOCATION));
+        if (DEBUG) Log.d(getClass().getName(), "302 Location: " + (String) e.getParameters().get(HttpResponseMessage.LOCATION));
       }
     } catch (OAuthException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    if (DEBUG) Log.d("YammerProxy", "authorizeUserResulting URL: "+responseUrl);
+    if (DEBUG) Log.d(getClass().getName(), "authorizeUserResulting URL: "+responseUrl);
     return responseUrl;
+  }
+
+  /**
+   * Post a message or a reply to the current Yammer Network
+   * 
+   * @param message - message to post
+   * @param messageId - Message being replied to
+   * 
+   * @throws YammerProxy.AccessDeniedException
+   * @throws YammerProxy.ConnectionProblem 
+   */
+  public void postMessage(final String message, final long messageId) throws YammerProxyException {
+    if (DEBUG) Log.d(getClass().getName(), ".postMessage");
+    Properties paramProps = new Properties();
+    paramProps.setProperty("oauth_token", this.requestToken);
+    paramProps.setProperty("body", message);
+    if( messageId != 0 ) {
+      paramProps.setProperty("replied_to_id", Long.toString(messageId));
+    }
+    try {
+      sendRequest(paramProps, this.baseURL + "/api/v1/messages/", "POST");
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+      throw new ConnectionProblem();
+    } catch (URISyntaxException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (OAuthException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }     
   }
 
   /**
    * Follow user with given user ID on Yammer
    * @param userId
+   * 
    * @return
+   * 
    * @throws AccessDeniedException
    * @throws ConnectionProblem
    */
-  public String followUser(long userId) throws AccessDeniedException, ConnectionProblem {
-    if (DEBUG) Log.d("YammerProxy", "Following user: " + userId);    	
-    String responseBody = null;
+  public void followUser(long userId) throws YammerProxyException {
+    if (DEBUG) Log.d(getClass().getName(), ".followUser: " + userId);    	
     String url = this.baseURL + "/api/v1/subscriptions/"; 
     Properties paramProps = new Properties();
     paramProps.setProperty("target_type", "user");
@@ -226,15 +263,11 @@ public class YammerProxy {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    return responseBody;
   }
 
-  public String unfollowUser(long userId) throws AccessDeniedException, ConnectionProblem {
-    if (DEBUG) Log.d("YammerProxy", "Unfollowing user: " + userId);    	
-    String responseBody = null;
-    String url = this.baseURL + "/api/v1/subscriptions/options?target_id=182108&target_type=user"; 
-    //String url = "https://www.yammer.com/api/v1/subscriptions/"; 
-    if (DEBUG) Log.d("YammerProxy", "URL: " + url);    	
+  public void unfollowUser(long userId) throws YammerProxyException {
+    if (DEBUG) Log.d(getClass().getName(), ".unfollowUser: " + userId);    	
+    String url = this.baseURL + "/api/v1/subscriptions/options"; 
     Properties paramProps = new Properties();
     paramProps.setProperty("target_type", "user");
     paramProps.setProperty("target_id", Long.toString(userId));
@@ -252,39 +285,12 @@ public class YammerProxy {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    return responseBody;
   }
 
-  public String postResource(String url, String body, long messageId) throws AccessDeniedException, ConnectionProblem {
-    if (DEBUG) Log.d("YammerProxy", "Posting resource: " + url);    	
-    //OAuthMessage response;
-    String responseBody = null;
-    Properties paramProps = new Properties();
-    paramProps.setProperty("oauth_token", this.requestToken);
-    // Body will be sent in a body parameter
-    paramProps.setProperty("body", body);
-    if ( messageId != 0 ) {
-      paramProps.setProperty("replied_to_id", Long.toString(messageId));
-    }
-    try {
-      sendRequest(paramProps, url, "POST");
-    } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-      throw new ConnectionProblem();
-    } catch (URISyntaxException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    } catch (OAuthException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }    	
-
-    return responseBody;
-  }
-
-  public String deleteResource(String url) throws AccessDeniedException, ConnectionProblem {
-    if (DEBUG) Log.d("YammerProxy", "Deleting resource: " + url);    	
+  
+  // TODO: privatize 
+  public String deleteResource(String url) throws YammerProxyException {
+    if (DEBUG) Log.d(getClass().getName(), ".deleteResource: " + url);    	
     String responseBody = null;
     Properties paramProps = new Properties();
     paramProps.setProperty("oauth_token", this.requestToken);
@@ -307,13 +313,9 @@ public class YammerProxy {
     return responseBody;
   }
 
-  /**
-   * Access protected resource
-   * @throws AccessDeniedException 
-   * @throws ConnectionProblem 
-   */
-  public String accessResource(String url) throws AccessDeniedException, ConnectionProblem {
-    if (DEBUG) Log.d("OAuth", "Accessing resource: " + url);
+  // TODO: privatize
+  public String accessResource(String url) throws YammerProxyException {
+    if (DEBUG) Log.d(getClass().getName(), "Accessing resource: " + url);
     Properties paramProps = new Properties();
     paramProps.setProperty("oauth_token", this.requestToken);
     OAuthMessage response;
@@ -321,7 +323,7 @@ public class YammerProxy {
     try {
       response = sendRequest(paramProps, url, "GET");
       responseBody = response.readBodyAsString();
-      if (DEBUG) Log.d("OAuth", responseBody);
+      if (DEBUG) Log.d(getClass().getName(), "responseBody: " + responseBody);
     } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -338,7 +340,7 @@ public class YammerProxy {
 
   @SuppressWarnings("unchecked")
   private OAuthMessage sendRequest(Map map, String url, String method) throws IOException, URISyntaxException, OAuthException, AccessDeniedException {
-    if (DEBUG) Log.d("OAuth", "YammerProxy.sendRequest");
+    if (DEBUG) Log.d(getClass().getName(), "YammerProxy.sendRequest");
 
     List<Map.Entry> params = new ArrayList<Map.Entry>();
     Iterator it = map.entrySet().iterator();
@@ -356,13 +358,13 @@ public class YammerProxy {
       } else {
         accessor.consumer.setProperty(OAuthClient.PARAMETER_STYLE, "QUERY_STRING");    			
       }
-      if (DEBUG) Log.d("YammerProxy", "Invoking: " + url + " params: "+params.toString());
+      if (DEBUG) Log.d(getClass().getName(), "Invoking: " + url + " params: "+params.toString());
       return client.invoke(accessor, method, url, params);
     } catch (OAuthProblemException e) {
       int statusCode = e.getHttpStatusCode();
-      if (DEBUG) Log.d("OAuth", "HTTP status code: "+statusCode);
+      if (DEBUG) Log.d(getClass().getName(), "HTTP status code: "+statusCode);
       if (302 == statusCode) { 
-        if (DEBUG) Log.d("OAuth", (String)e.getParameters().get(HttpResponseMessage.LOCATION));
+        if (DEBUG) Log.d(getClass().getName(), (String)e.getParameters().get(HttpResponseMessage.LOCATION));
         throw e;
       } else if (401 == statusCode) {
         throw (AccessDeniedException)new AccessDeniedException().fillInStackTrace();

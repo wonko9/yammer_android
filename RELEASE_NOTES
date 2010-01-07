@@ -1,4 +1,10 @@
 
+2010-01-06
+  Bumped versionCode for release
+  More code cleanup/refactoring.
+  Attempt to speed up posting (Bug: ANDROID-28)
+  Attempt to fix post/refresh bug on G1 (Bug: ANDROID-31)
+
 2010-01-04
   Bumped versionCode for release
   Only clear text editor if it contains the prompt (Bug: ANDROID-29)
