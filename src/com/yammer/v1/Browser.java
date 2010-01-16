@@ -1,4 +1,6 @@
 package com.yammer.v1;
+import com.yammer.v1.settings.SettingsEditor;
+
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -17,6 +19,14 @@ public class Browser extends Activity {
   private static final String TAG = "Browser";
 
   private static final String CALLBACK_TOKEN = "oauth_verifier=";
+  
+  SettingsEditor settings;
+  private SettingsEditor getSettings() {
+    if(null == this.settings) {
+      this.settings = new SettingsEditor(getApplicationContext());
+    }
+    return this.settings;
+  }
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -53,10 +63,10 @@ public class Browser extends Activity {
         } catch( Exception e ) {
           e.printStackTrace();
         }
-        if ( url.equals(YammerSettings.getUrl(getApplicationContext()) + "/users/new") ) {
+        if ( url.equals(getSettings().getUrl() + "/users/new") ) {
           if (G.DEBUG) Log.d(TAG, "REDIRECTING user to: /login");        			
           // Redirect to the login screen
-          webView.loadUrl(YammerSettings.getUrl(getApplicationContext()) + "/login");
+          webView.loadUrl(getSettings().getUrl() + "/login");
         } else if ( 0 < url.indexOf(CALLBACK_TOKEN) ) {
           if (G.DEBUG) Log.d(TAG, "Seems OK. Trying to shut down WebView");
           int callbackTokenIndex = url.indexOf(CALLBACK_TOKEN) + CALLBACK_TOKEN.length();	

@@ -2,6 +2,7 @@ package com.yammer.v1;
 
 import com.yammer.v1.YammerDataConstants;
 import com.yammer.v1.YammerData.YammerDataException;
+import com.yammer.v1.settings.SettingsEditor;
 import com.yammer.v1.YammerProxy;
 
 import java.util.Timer;
@@ -79,6 +80,14 @@ public class YammerService extends Service {
   private static String authenticationToken;
   // Wakelock
   PowerManager.WakeLock wakelock = null; 
+
+  SettingsEditor settings;
+  private SettingsEditor getSettings() {
+    if(null == this.settings) {
+      this.settings = new SettingsEditor(getApplicationContext());
+    }
+    return this.settings;
+  }
 
   /**
    * Class for clients to access.  Because we know this service always
@@ -312,7 +321,7 @@ public class YammerService extends Service {
               try {
                 Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
                 // How long to wait
-                long updateTimeout = YammerSettings.getUpdateTimeout(YammerService.this);
+                long updateTimeout = getSettings().getUpdateTimeout();
                 //if (DEBUG) Log.d(getClass().getName(), "updateTimeout: " + (lastUpdateTime + updateTimeout) + ", currentTime: " + System.currentTimeMillis());
                 // Is it time to update?
                 if ( updateTimeout != 0 && 
@@ -391,7 +400,7 @@ public class YammerService extends Service {
     notification.flags = Notification.FLAG_SHOW_LIGHTS | Notification.FLAG_AUTO_CANCEL; 
 
     // Vibrate enabled?
-    if (YammerSettings.getVibrate(this)) {
+    if(getSettings().getVibrate()) {
       notification.vibrate = new long[] {0, 100, 100, 100, 100, 100};	        	
     }
 
@@ -618,7 +627,7 @@ public class YammerService extends Service {
           timelineUpdated = true;
         }
         
-        YammerSettings.setUpdatedAt(this);
+        getSettings().setUpdatedAt();
       } catch (Exception e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
@@ -647,13 +656,13 @@ public class YammerService extends Service {
   }
 
   private String getFeedURL() throws YammerData.YammerDataException {
-    return this.yammerData.getURLForFeed(YammerSettings.getFeed(getApplicationContext()));
+    return this.yammerData.getURLForFeed(getSettings().getFeed());
   }
 
   private String getURLBase() {
     if (OAuthCustom.BASE_URL != null)
       return OAuthCustom.BASE_URL;
-    return YammerSettings.getUrl(getApplicationContext());
+    return getSettings().getUrl();
   }
 
   @Override

@@ -3,6 +3,8 @@ package com.yammer.v1;
 import static android.provider.BaseColumns._ID;
 
 import com.yammer.v1.YammerDataConstants;
+import com.yammer.v1.settings.SettingsActivity;
+import com.yammer.v1.settings.SettingsEditor;
 
 import java.text.SimpleDateFormat;
 
@@ -124,7 +126,7 @@ public class YammerActivity extends Activity {
         // Attach an onclick listener to the listview
         tweetListView.setOnItemClickListener( new OnItemClickListener() {
           public void onItemClick(AdapterView<?> adapterView, View view, int id, long row) {
-            if ( YammerSettings.getMessageClickBehaviour(YammerActivity.this).equals("reply") ) {
+            if ("reply".equals(getSettings().getMessageClickBehaviour()) ) {
               if (DEBUG) Log.d(getClass().getName(), "Replying to message");
               long rowId = row;
               String sql = "select _id, message_id from messages where " + _ID + "=" + rowId;
@@ -152,7 +154,7 @@ public class YammerActivity extends Activity {
           }                	
         });
 
-        showHeaderForFeed(YammerSettings.getFeed(YammerActivity.this));
+        showHeaderForFeed(getSettings().getFeed());
         tweetListView.setSelector(R.layout.list_row_selector);
         tweetListView.setDividerHeight(1);
         createLoaderWheelView();
@@ -332,7 +334,7 @@ public class YammerActivity extends Activity {
   }
 
   protected View createLoaderWheelView() {
-    if (DEBUG) Log.d(getClass().getName(), "Yammer.createLoaderWheelView");
+    if (DEBUG) Log.d(getClass().getName(), "createLoaderWheelView");
     View loaderWheelView = (ImageView)findViewById(R.id.loader_animation_overlay); 
     if ( loaderWheelView == null /*Loader wheel view not shown yet*/ ) {
       if (DEBUG) Log.d(getClass().getName(), "loaderWheelView doesn't exist, so creating it.");
@@ -356,7 +358,7 @@ public class YammerActivity extends Activity {
 
   @Override
   protected Dialog onCreateDialog(int id) {
-    if (DEBUG) Log.d(getClass().getName(), "Yammer.onCreateDialog("+id+")");
+    if (DEBUG) Log.d(getClass().getName(), ".onCreateDialog("+id+")");
     if ( id == ID_DIALOG_MUST_AUTHENTICATE ) {
       // Show "Start Yammer Authentication" dialog
       AuthenticateDialog authDialog = new AuthenticateDialog(YammerActivity.this);
@@ -402,7 +404,7 @@ public class YammerActivity extends Activity {
   private Dialog createFeedDialog() {
     final YammerData yd = new YammerData(this);
     final String[] feeds = yd.getFeedNames();
-    int selected = Arrays.asList(feeds).indexOf(YammerSettings.getFeed(this));
+    int selected = Arrays.asList(feeds).indexOf(getSettings().getFeed());
     if (selected < 0) selected = 0;
 
     return new AlertDialog.Builder(YammerActivity.this)
@@ -413,7 +415,7 @@ public class YammerActivity extends Activity {
       public void onClick(DialogInterface _dialog, int _button) {
         String feed = feeds[_button];
         if (DEBUG) Log.d(getClass().getName(), "Feed '" + feed + "' selected" );                  
-        YammerSettings.setFeed(YammerActivity.this, feed);
+        getSettings().setFeed(feed);
         showHeaderForFeed(feed);
         yd.clearMessages();
         reload();
@@ -469,7 +471,7 @@ public class YammerActivity extends Activity {
       break;
     case MENU_SETTINGS:
       if (DEBUG) Log.d(getClass().getName(), "MENU_SETTINGS selected");
-      startActivityForResult(new Intent(this, YammerSettings.class), YAMMER_SETTINGS_CREATE);        
+      startActivityForResult(new Intent(this, SettingsActivity.class), YAMMER_SETTINGS_CREATE);        
       break;
     case MENU_FEEDS:
       if (DEBUG) Log.d(getClass().getName(), "MENU_FEEDS selected");
@@ -961,7 +963,7 @@ public class YammerActivity extends Activity {
     }
 
     getUpdatedAtHeader().setText(
-        formatTimestamp(R.string.updated_at_header, YammerSettings.getUpdatedAt(this))
+        formatTimestamp(R.string.updated_at_header, getSettings().getUpdatedAt())
     );
   }
 
@@ -969,6 +971,13 @@ public class YammerActivity extends Activity {
     return new SimpleDateFormat(getString(_res)).format(_date);
   }
 
+  SettingsEditor settings;
+  private SettingsEditor getSettings() {
+    if(null == this.settings) {
+      this.settings = new SettingsEditor(getApplicationContext());
+    }
+    return this.settings;
+  }
   
   private void sendBroadcast(String _intent) {
     sendBroadcast(new Intent(_intent));

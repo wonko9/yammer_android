@@ -1,5 +1,7 @@
 package com.yammer.v1;
 
+import com.yammer.v1.settings.SettingsEditor;
+
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -16,8 +18,9 @@ public class YammerServiceManager extends BroadcastReceiver {
 	public void onReceive(Context context, Intent intent) {
 		// just make sure we are getting the right intent (better safe than sorry)
 		if( "android.intent.action.BOOT_COMPLETED".equals(intent.getAction())) {
-			if (DEBUG) Log.d(TAG, "Received intent: android.intent.action.BOOT_COMPLETED");			
-			if ( !YammerSettings.startServiceAtBoot(context) ) {
+			if (DEBUG) Log.d(TAG, "Received intent: android.intent.action.BOOT_COMPLETED");
+			
+			if ( !new SettingsEditor(context).startServiceAtBoot() ) {
 				if (DEBUG) Log.d(TAG, "Yammer configured not to start at boot");
 				return;
 			}

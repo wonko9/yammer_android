@@ -84,7 +84,7 @@
     				
         <activity 	android:name=".YammerMessage" />
         
-        <activity 	android:name=".YammerSettings" 
+        <activity 	android:name=".settings.SettingsActivity" 
     				android:theme="@style/Yammer.Theme.Light.NoTitleBar"
         			/>
     </application>

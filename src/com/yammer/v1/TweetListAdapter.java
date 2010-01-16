@@ -13,6 +13,8 @@ import static com.yammer.v1.YammerDataConstants.TIMESTAMP;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import com.yammer.v1.settings.SettingsEditor;
+
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -181,7 +183,7 @@ public class TweetListAdapter extends SimpleCursorAdapter {
     String replyeeFullName = c.getString(replyeeColumnIndex);
 
     // Convert full name to first name only
-    if (YammerSettings.getDisplayName(this.context).equals("firstname")) {
+    if ("firstname".equals(getSettings().getDisplayName())) {
       if (0 < fullName.indexOf(' ')) {
         // Display firstname - i.e. text up until first space or EOF$
         fullName = fullName.substring(0, fullName.indexOf(' '));
@@ -189,7 +191,7 @@ public class TweetListAdapter extends SimpleCursorAdapter {
       if (null != replyeeFullName && 0 < replyeeFullName.indexOf(' ')) {
         replyeeFullName = replyeeFullName.substring(0, replyeeFullName.indexOf(' '));				
       }
-    } else if (YammerSettings.getDisplayName(this.context).equals("email_only")) {
+    } else if ("email_only".equals(getSettings().getDisplayName())) {
       fullName = c.getString(emailColumnIndex);
       if (replyeeFullName != null ) {
         replyeeFullName = c.getString(replyeeEmailColumnIndex);
@@ -255,5 +257,13 @@ public class TweetListAdapter extends SimpleCursorAdapter {
     );
 
     return convertView;
+  }
+  
+  SettingsEditor settings;
+  private SettingsEditor getSettings() {
+    if(null == this.settings) {
+      this.settings = new SettingsEditor(context);
+    }
+    return this.settings;
   }
 }
