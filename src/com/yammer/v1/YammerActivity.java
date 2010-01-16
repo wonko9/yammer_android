@@ -126,7 +126,8 @@ public class YammerActivity extends Activity {
         // Attach an onclick listener to the listview
         tweetListView.setOnItemClickListener( new OnItemClickListener() {
           public void onItemClick(AdapterView<?> adapterView, View view, int id, long row) {
-            if ("reply".equals(getSettings().getMessageClickBehaviour()) ) {
+            
+            if(getSettings().isMessageClickReply()) {
               if (DEBUG) Log.d(getClass().getName(), "Replying to message");
               long rowId = row;
               String sql = "select _id, message_id from messages where " + _ID + "=" + rowId;
@@ -141,7 +142,11 @@ public class YammerActivity extends Activity {
               long messageId = c.getLong(columnIndex);
               i.putExtra("messageId", messageId);
               startActivityForResult(i, YAMMER_REPLY_CREATE);
-              c.close();    							
+              c.close();
+              
+            } else if(getSettings().isMessageClickMenu()) {
+              openContextMenu(view);
+              
             } else {
               if (DEBUG) Log.d(getClass().getName(), "Viewing message");    							
               // Create activity YammerSettings

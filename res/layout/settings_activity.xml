@@ -41,17 +41,17 @@
 			android:defaultValue="my_messages"
 			>
 		</ListPreference-->
-		<!-- ListPreference
+		<ListPreference
 			android:textColor="#000000"
-			android:key="key_replies"
-			android:title="Message replies"
-			android:summary="What should happen when a message is clicked"
-			android:entries="@array/settings_reply_entries"
-			android:entryValues="@array/settings_reply_values"
-			android:dialogTitle="Choose timeout"
+			android:key="key_message_click"
+			android:title="@string/pref_message_click_title"
+			android:summary="@string/pref_message_click_summary"
+			android:entries="@array/pref_message_click_entries"
+			android:entryValues="@array/pref_message_click_values"
+			android:dialogTitle="@string/pref_message_click_dialog_title"
 			android:defaultValue="reply"
 			>
-		</ListPreference-->
+		</ListPreference>
 		<ListPreference
 			android:textColor="#000000"
 			android:key="key_names"

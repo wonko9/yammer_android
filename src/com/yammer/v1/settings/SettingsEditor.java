@@ -74,8 +74,16 @@ public class SettingsEditor {
     return ret;
   }
 
-  public String getMessageClickBehaviour() {
-    String ret = getPreferences().getString("key_replies", "reply");
+  public boolean isMessageClickReply() {
+    return "reply".equals(getMessageClick());
+  }
+  
+  public boolean isMessageClickMenu() {
+    return "menu".equals(getMessageClick());
+  }
+  
+  private String getMessageClick() {
+    String ret = getPreferences().getString("key_message_click", "reply");
     if(DEBUG) Log.d(SettingsActivity.class.getName(), "getMessageClickBehavior: " + ret);
     return ret;
   }

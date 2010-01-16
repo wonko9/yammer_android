@@ -20,13 +20,13 @@
 		<item>300</item>
 		<item>600</item>
 	</string-array>
-	<string-array name="settings_reply_entries">
+	<string-array name="pref_message_click_entries">
 		<item>Reply to message</item>
-		<item>Open message view</item>
+		<item>Show menu</item>
 	</string-array>
-	<string-array name="settings_reply_values">
+	<string-array name="pref_message_click_values">
 		<item>reply</item>
-		<item>message</item>
+		<item>menu</item>
 	</string-array>
 	<string-array name="settings_feed_entries">
 		<item>All Messages</item>

@@ -49,6 +49,11 @@
 	<string name="check_this_out">Check this out:</string>
 	<string name="in_reply_to">in reply to</string>
 	
+	<string name="pref_message_click_title">Message Click</string>
+	<string name="pref_message_click_summary">What should happen when a message is clicked.</string>
+	<string name="pref_message_click_dialog_title">Message Click Action</string>
+	
+	
 	<string name="pref_updates_title">Updates</string>
 	<string name="pref_updates_summary">How often should the application check Yammer for new messages?</string>
 	<string name="pref_updates_options_title">Update Frequency</string>
