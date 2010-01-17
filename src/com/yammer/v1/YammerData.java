@@ -363,7 +363,7 @@ public class YammerData extends SQLiteOpenHelper implements YammerDataConstants 
       // Extract relevant strings from JSON object
       long userId = userReference.getLong("id");
       String mugshotUrl = userReference.getString("mugshot_url");
-      String mugshotMd5 = MD5Gen.md5(mugshotUrl);
+      String mugshotMd5 = Utils.md5(mugshotUrl);
       String fullName = userReference.getString("full_name");
       String name = userReference.getString("name");
       // TODO: Extract primary email

@@ -3,7 +3,7 @@ package com.yammer.v1;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public class MD5Gen {
+public class Utils {
    
     public static String md5(String input){
         String res = "";
