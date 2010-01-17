@@ -2,7 +2,9 @@ package com.yammer.v1;
 
 import static android.provider.BaseColumns._ID;
 
-import com.yammer.v1.YammerDataConstants;
+import com.yammer.v1.models.Message;
+import com.yammer.v1.models.URL;
+import com.yammer.v1.models.User;
 import com.yammer.v1.settings.SettingsActivity;
 import com.yammer.v1.settings.SettingsEditor;
 
@@ -62,7 +64,7 @@ public class YammerActivity extends Activity {
   private SQLiteDatabase db = null;;
   private YammerIntentReceiver yammerIntentReceiver = null;
   boolean listViewInitialized = false;
-  private static final String[] PROJECTION = new String[] {YammerDataConstants.MESSAGE};
+  private static final String[] PROJECTION = new String[] {Message.FIELD_MESSAGE};
   // Whenever something starts to load, this will be increased 
   // by 1 - when loading stops, the counter is decreased and 
   // if it reaches zero, the loading animation disappears.
@@ -137,7 +139,7 @@ public class YammerActivity extends Activity {
               // Just show the reply activity 
               Intent i = new Intent(YammerActivity.this, YammerReply.class);
               // Post the message ID being replied upon along with the intent
-              int columnIndex = c.getColumnIndex(YammerDataConstants.MESSAGE_ID);
+              int columnIndex = c.getColumnIndex(Message.FIELD_MESSAGE_ID);
               if (DEBUG) Log.d(getClass().getName(), "columnIndex: " + columnIndex);
               long messageId = c.getLong(columnIndex);
               i.putExtra("messageId", messageId);
@@ -493,6 +495,7 @@ public class YammerActivity extends Activity {
           public void run() {
             try {
               showLoadingAnimation(true);
+              getYammerService().clearMessages();
               getYammerService().updatePublicMessages();
               getYammerService().updateCurrentUserData();
             } catch (YammerProxy.YammerProxyException e) {
@@ -516,16 +519,16 @@ public class YammerActivity extends Activity {
     Cursor c = db.rawQuery(sql, null);
     c.moveToFirst();
     // Get the user ID of the user who  posted the message
-    int columnIndex = c.getColumnIndex(YammerDataConstants.USER_ID);
+    int columnIndex = c.getColumnIndex(User.FIELD_USER_ID);
     long userId = c.getLong(columnIndex);
     // Get the message posted
-    columnIndex = c.getColumnIndex(YammerDataConstants.MESSAGE);
+    columnIndex = c.getColumnIndex(Message.FIELD_MESSAGE);
     String message = c.getString(columnIndex);
     // Get the full name of the user who posted the message
-    columnIndex = c.getColumnIndex(YammerDataConstants.FULL_NAME);
+    columnIndex = c.getColumnIndex(User.FIELD_FULL_NAME);
     String fullName = c.getString(columnIndex);
     // Get the full name of the user who posted the message
-    columnIndex = c.getColumnIndex(YammerDataConstants.IS_FOLLOWING);
+    columnIndex = c.getColumnIndex(User.FIELD_IS_FOLLOWING);
     int isFollowing = c.getInt(columnIndex);
     //menu.setHeaderTitle(R.string.popup_title_label);
     // Is this my own message?
@@ -560,7 +563,7 @@ public class YammerActivity extends Activity {
     //Menu urlSubMenu = null;
     if (DEBUG) Log.d(getClass().getName(), "c.getCount(): " + c.getCount());
     // Add any URL's that may have been enclosed in the message
-    columnIndex = c.getColumnIndex(YammerDataConstants.FIELD_URLS_URL);
+    columnIndex = c.getColumnIndex(URL.FIELD_URL);
     for ( int i=0; i<c.getCount(); i++) {
       String url = c.getString(columnIndex);
       // No URLs in this post, so break	
@@ -598,10 +601,10 @@ public class YammerActivity extends Activity {
       Cursor c = db.rawQuery(sql, null);
       c.moveToFirst();	
       // Retrieve the message ID og the message clicked on
-      int columnIndex = c.getColumnIndex(YammerDataConstants.MESSAGE_ID);
+      int columnIndex = c.getColumnIndex(Message.FIELD_MESSAGE_ID);
       if (DEBUG) Log.d(getClass().getName(), "columnIndex: " + columnIndex);
       final long messageId = c.getLong(columnIndex);
-      columnIndex = c.getColumnIndex(YammerDataConstants.USER_ID);
+      columnIndex = c.getColumnIndex(User.FIELD_USER_ID);
       final long userId = c.getLong(columnIndex);
       // Which item was selected
       switch ( item.getItemId() ) {
@@ -626,7 +629,6 @@ public class YammerActivity extends Activity {
         new Thread(
             new Runnable() {
               public void run() {
-                // Delete it from the server
                 if (DEBUG) Log.d(getClass().getName(), "Deleting message with ID " + messageId);
                 try {
                   showLoadingAnimation(true);

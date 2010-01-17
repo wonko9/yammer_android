@@ -1,14 +1,7 @@
 package com.yammer.v1;
 
-import static com.yammer.v1.YammerDataConstants.EMAIL;
-
-import static com.yammer.v1.YammerDataConstants.FULL_NAME;
-import static com.yammer.v1.YammerDataConstants.MESSAGE;
-import static com.yammer.v1.YammerDataConstants.MUGSHOT_MD5;
-import static com.yammer.v1.YammerDataConstants.MUGSHOT_URL;
-import static com.yammer.v1.YammerDataConstants.REPLYEE_EMAIL;
-import static com.yammer.v1.YammerDataConstants.REPLYEE_FULL_NAME;
-import static com.yammer.v1.YammerDataConstants.TIMESTAMP;
+import com.yammer.v1.models.Message;
+import com.yammer.v1.models.User;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -86,20 +79,21 @@ public class TweetListAdapter extends SimpleCursorAdapter {
     about_an_hour_ago = context.getResources().getString(R.string.about_an_hour_ago);
     hours_ago = context.getResources().getString(R.string.hours_ago);
     days_ago = context.getResources().getString(R.string.days_ago);
-    // Prefetch column indexes
-    columnIndex = c.getColumnIndex(MESSAGE);
-    emailColumnIndex = c.getColumnIndex(EMAIL);
-    replyeeEmailColumnIndex = c.getColumnIndex(REPLYEE_EMAIL);
-    fullNameColumnIndex = c.getColumnIndex(FULL_NAME);
-    replyeeColumnIndex = c.getColumnIndex(REPLYEE_FULL_NAME);
-    createdColumnIndex = c.getColumnIndex(TIMESTAMP);
-    mugshotUrlColumnIndex = c.getColumnIndex(MUGSHOT_URL);		
-    mugshotMd5ColumnIndex = c.getColumnIndex(MUGSHOT_MD5);		
-    // Prefetch cursor
+    
+    // Cache column indexes
+    columnIndex = c.getColumnIndex(Message.FIELD_MESSAGE);
+    createdColumnIndex = c.getColumnIndex(Message.FIELD_TIMESTAMP);
+    emailColumnIndex = c.getColumnIndex(User.FIELD_EMAIL);
+    replyeeEmailColumnIndex = c.getColumnIndex(User.FIELD_REPLYEE_EMAIL);
+    fullNameColumnIndex = c.getColumnIndex(User.FIELD_FULL_NAME);
+    replyeeColumnIndex = c.getColumnIndex(User.FIELD_REPLYEE_FULL_NAME);
+    mugshotUrlColumnIndex = c.getColumnIndex(User.FIELD_MUGSHOT_URL);		
+    mugshotMd5ColumnIndex = c.getColumnIndex(User.FIELD_MUGSHOT_MD5);
+    
     this.c = c;
-    // Prefetch formatter
+    
+    // Cache formatter
     formatter = new SimpleDateFormat("MMMMM dd yyyy, HH:mm:ss");
-
   }
 
   /**

@@ -3,6 +3,8 @@ package com.yammer.v1;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -373,4 +375,16 @@ public class YammerProxy {
     // It seems an error occured
     return null;
   }
+
+  private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss ZZZZZ");
+
+  public static long parseTime(String _date) {
+    try {
+      return dateFormat.parse(_date).getTime();
+    } catch (ParseException e) {
+      if(DEBUG) Log.e(YammerProxy.class.getName(), "Could not parse date", e);
+    }     
+    return System.currentTimeMillis();
+  }
+
 }

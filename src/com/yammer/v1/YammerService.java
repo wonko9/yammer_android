@@ -1,7 +1,8 @@
 package com.yammer.v1;
 
-import com.yammer.v1.YammerDataConstants;
 import com.yammer.v1.YammerData.YammerDataException;
+import com.yammer.v1.models.Message;
+import com.yammer.v1.models.Network;
 import com.yammer.v1.settings.SettingsEditor;
 import com.yammer.v1.YammerProxy;
 
@@ -26,7 +27,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
@@ -280,31 +280,25 @@ public class YammerService extends Service {
       SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
       currentUserId = settings.getLong("DefaultUserId", 0);	        	        
       currentNetworkId = settings.getLong("DefaultNetworkId", 0);
-      // Get the default feed ID
-      // In the following if userId and networkId are 0, it should result in null for accessToken and accessTokenSecret
-      // which should again trigger the authentication process
-      String accessToken = null;
-      String accessTokenSecret = null;
-      try {
-        accessToken = yammerData.getAccessToken(getCurrentNetworkId(), getCurrentUserId());
-        accessTokenSecret = yammerData.getAccessTokenSecret(getCurrentNetworkId(), getCurrentUserId());
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-      // Retrieve the last message ID for the current network
+      
+      Network network = yammerData.getNetwork(getCurrentNetworkId());
+      
       if (DEBUG) Log.d("Yammer", "DB (currentUserId): " + currentUserId);
       if (DEBUG) Log.d("Yammer", "DB (currentNetworkId): " + currentNetworkId);
-      if (DEBUG) Log.d("Yammer", "DB (accessToken): " + accessToken);
-      if (DEBUG) Log.d("Yammer", "DB (accessTokenSecret): " + accessTokenSecret);
+      if (DEBUG) Log.d("Yammer", "DB (accessToken): " + network.accessToken);
+      if (DEBUG) Log.d("Yammer", "DB (accessTokenSecret): " + network.accessTokenSecret);
+      
       // Check if a valid access token was stored at some point
-      if ( (accessToken == null || accessTokenSecret == null) && !isAuthenticating ) {
+      if ((null == network.accessToken || null == network.accessTokenSecret) && !isAuthenticating ) {
         // No access token present, so notify yammer activity that authentication
         // should be done first.
         sendBroadcast("com.yammer.v1:MUST_AUTHENTICATE_DIALOG");        		        	
       } else {
+        
         // Store token secrets to NWOAuth to be able to authorize
-        getYammer().requestToken = accessToken;
-        getYammer().tokenSecret = accessTokenSecret;
+        getYammer().requestToken = network.accessToken;
+        getYammer().tokenSecret = network.accessTokenSecret;
+        
         // There is already an access token available, so we are authorized
         setAuthorized(true);
       }
@@ -452,14 +446,11 @@ public class YammerService extends Service {
    * @throws YammerProxy.ConnectionProblem 
    */
   public void deleteMessage(final long messageId) throws YammerProxy.YammerProxyException {
-    if (DEBUG) Log.d(getClass().getName(), "YammerService.deleteMessage");
-    // Start deletion on network in thread
+    if (DEBUG) Log.d(getClass().getName(), ".deleteMessage");
+    // TODO: change to getYammer().deleteMessage(messageId);
     getYammer().deleteResource(getURLBase() + "/api/v1/messages/"+messageId);		
-    // Delete it from the database
-    SQLiteDatabase dbDelete = yammerData.getWritableDatabase();
-    int count = dbDelete.delete(YammerDataConstants.TABLE_MESSAGES, YammerDataConstants.MESSAGE_ID+"="+messageId, null);
-    if (DEBUG) Log.d(getClass().getName(), "Items deleted: " + count);
-    // It seems we were able to delete the message send an intent to update the timeline
+    yammerData.deleteMessage(messageId);
+    // TODO: sendBroadcast(ACTION_MESSAGE_DELETED, messageId);
     sendBroadcast("com.yammer.v1:PUBLIC_TIMELINE_UPDATED");
   }
 
@@ -553,6 +544,10 @@ public class YammerService extends Service {
     }
   }
 
+  public void clearMessages() {
+    yammerData.clearMessages();
+  }
+  
   public void updatePublicMessages() throws YammerProxy.YammerProxyException {
     if (DEBUG) Log.i(getClass().getName(), "Updating public timeline");
     
@@ -560,40 +555,30 @@ public class YammerService extends Service {
       if (DEBUG) Log.i(getClass().getName(), "User not authorized - skipping update");
       return;
     }
-    // Only when a message from another user is detected in the network
-    // the notifcation should be shown.
+    
     boolean notificationRequired = false;
-    // Sets to true if new messages found
-    boolean timelineUpdated = false; 
+    boolean messagesFound = false;
+    
     try {
       if ( !jsonUpdateSemaphore.tryAcquire() ) {
         if (DEBUG) Log.d(getClass().getName(), "Could not acquire permit to update semaphore - aborting");
         return;
       }
       
-      // Fetch the public timeline
       String messages = getNewerMessages();
 
       if (DEBUG) Log.d(getClass().getName(), "Messages JSON: " + messages);
-      // If json public timeline doesn't exist, create it
       jsonMessages = new JSONObject(messages);
 
       try {
         if (DEBUG) Log.d(getClass().getName(), "Updating users from references");
-        // Retrieve all references to users
         JSONArray references = jsonMessages.getJSONArray("references");
-        // Add all fetched messages tp the database
         for( int ii=0; ii < references.length(); ii++ ) {
           try {
             JSONObject reference = references.getJSONObject(ii);
-            // Check that we are looking at a user object
-            if ( !reference.getString("type").equals("user") ) {
-              continue;
+            if(reference.getString("type").equals("user")) {
+              yammerData.addUser(reference);
             }
-            //Log.d(getClass().getName(), reference.getString("type") + ":" + reference.toString());
-            // TODO: Skip parsing after last "user" type
-            // Add the user reference to the database
-            yammerData.addUser(reference);
           } catch( Exception e ) {
             if (DEBUG) Log.w(getClass().getName(), e.getMessage());
           }
@@ -610,9 +595,9 @@ public class YammerService extends Service {
         // Add all fetched messages tp the database
         for( int ii=0; ii < jsonArray.length(); ii++ ) {
           // Add the message reference to the database
-          long messageId = yammerData.addMessage(getCurrentNetworkId(), jsonArray.getJSONObject(ii));
+          Message message = yammerData.addMessage(jsonArray.getJSONObject(ii), getCurrentNetworkId());
           // Is this my own message?
-          boolean ownMessage = yammerData.isMessageFromUser(messageId, getCurrentUserId());
+          boolean ownMessage = getCurrentUserId() == message.userId;
           // Only ask if notification is required if none of
           // the previous messages had notification requirement
           if (false == notificationRequired) {
@@ -624,7 +609,7 @@ public class YammerService extends Service {
             // If we reach this point, a new message has been received - increment new message counter
             newMessageCount ++;	        				
           }
-          timelineUpdated = true;
+          messagesFound = true;
         }
         
         getSettings().setUpdatedAt();
@@ -641,7 +626,7 @@ public class YammerService extends Service {
       jsonUpdateSemaphore.release();
     }
 
-    if (timelineUpdated) {
+    if (messagesFound) {
       // Is notification required?
       if (notificationRequired) {
         // Yep, so notify the user with a notification icon
