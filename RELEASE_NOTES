@@ -1,9 +1,12 @@
 
+2010-01-17
+  Bumped versionCode for release (18)
   Added message click preference (ANDROID-21)
   More code cleanup/refactoring.
+    Users will probably have to re-authenticate after upgrade.
 
 2010-01-06
-  Bumped versionCode for release
+  Bumped versionCode for release (17)
   More code cleanup/refactoring.
   Attempt to speed up posting (Bug: ANDROID-28)
   Attempt to fix post/refresh bug on G1 (Bug: ANDROID-31)
