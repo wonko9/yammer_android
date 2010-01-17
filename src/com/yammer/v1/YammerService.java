@@ -24,7 +24,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -38,8 +37,6 @@ import android.util.Log;
 public class YammerService extends Service {
 
   private static final boolean DEBUG = G.DEBUG;
-
-  private static final String PREFS_NAME = "YammerPrefs";
 
   /** Client states **/
   private static int STATE_RAW = -1;
@@ -112,16 +109,9 @@ public class YammerService extends Service {
           if (DEBUG) Log.d(getClass().getName(), "Could not acquire permit to update semaphore - aborting");
           return;
         }
-        // Remove all data from the database
-        yammerData.resetData(getCurrentNetworkId());
-        // Reset the account related preferences
-        SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);				
-        SharedPreferences.Editor editor = settings.edit();
-        editor.putLong("DefaultUserId", 0);
-        editor.putLong("DefaultNetworkId", 0);
-        editor.commit();
-        resetYammer();
-        YammerService.setAuthorized(false);
+        
+        reset();
+        
         // Allow updates again (if authorized)
         jsonUpdateSemaphore.release();
         sendBroadcast("com.yammer.v1:MUST_AUTHENTICATE_DIALOG");
@@ -134,7 +124,7 @@ public class YammerService extends Service {
         String message = bundle.getString("message");
         try {
           // message ID is 0 since this is not a reply
-          getYammer().postMessage(message, 0);
+          getYammerProxy().postMessage(message, 0);
         } catch (YammerProxy.AccessDeniedException e) {
           // TODO Auto-generated catch block
           e.printStackTrace();
@@ -145,6 +135,14 @@ public class YammerService extends Service {
           e.printStackTrace();
         }
       }
+    }
+    
+    private void reset() {
+      yammerData.resetData(getCurrentNetworkId());
+      getSettings().setDefaultUserId(0L);
+      getSettings().setDefaultNetworkId(0L);
+      resetYammerProxy();
+      YammerService.setAuthorized(false);
     }
   };
 
@@ -189,9 +187,9 @@ public class YammerService extends Service {
         sendBroadcast("com.yammer.v1:AUTHORIZATION_START" );
         // Get request token
         // Fetch the request token and token secret
-        getYammer().getRequestToken();	
+        getYammerProxy().getRequestToken();	
         // Make sure that a request token and a secret token was received
-        String responseUrl = getYammer().authorizeUser();
+        String responseUrl = getYammerProxy().authorizeUser();
         if ( DEBUG ) Log.d(getClass().getName(), "Response URL received: " + responseUrl);
         // Send an intent that will start the browser
         Intent intent = new Intent( "com.yammer.v1:AUTHORIZATION_BROWSER" );
@@ -204,18 +202,16 @@ public class YammerService extends Service {
           Thread.sleep(10);
         }
         if (DEBUG) Log.d(getClass().getName(), "User done with authorization");
-        getYammer().enableApplication(YammerService.authenticationToken);
+        getYammerProxy().enableApplication(YammerService.authenticationToken);
         // We need to update the current user data
         updateCurrentUserData();
-        // Set this user and network ID as the default user/network
-        SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);				
-        SharedPreferences.Editor editor = settings.edit();
-        editor.putLong("DefaultUserId", currentUserId);
-        editor.putLong("DefaultNetworkId", currentNetworkId);
-        editor.commit();
-        // TODO: Who am I following?
+        
+        // Save user and network ID as the default user/network
+        getSettings().setDefaultUserId(currentUserId);
+        getSettings().setDefaultNetworkId(currentNetworkId);
+        
         // It seems authorization was a success, so store the token and secret
-        yammerData.createNetwork(getCurrentNetworkId(), getCurrentUserId(), getYammer().requestToken, getYammer().tokenSecret);				
+        yammerData.createNetwork(getCurrentNetworkId(), getCurrentUserId(), getYammerProxy().requestToken, getYammerProxy().tokenSecret);				
         // Authorization done, so the progress bar can be removed
         sendBroadcast(new Intent("com.yammer.v1:AUTHORIZATION_DONE"));
         // Authorized done, so network requests towards the
@@ -276,28 +272,25 @@ public class YammerService extends Service {
       YammerService.CLIENT_STATE = STATE_INITIALIZED;
       // Start authorization with Yammer
       if (DEBUG) Log.d(getClass().getName(), "Fetching request token from Yammer");
+      
       // Try to load the access token from the shared preferences
-      SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-      currentUserId = settings.getLong("DefaultUserId", 0);	        	        
-      currentNetworkId = settings.getLong("DefaultNetworkId", 0);
+      currentUserId = getSettings().getDefaultUserId();	        	        
+      if (DEBUG) Log.d("Yammer", "DB (currentUserId): " + currentUserId);
+      currentNetworkId = getSettings().getDefaultNetworkId();
+      if (DEBUG) Log.d("Yammer", "DB (currentNetworkId): " + currentNetworkId);
       
       Network network = yammerData.getNetwork(getCurrentNetworkId());
       
-      if (DEBUG) Log.d("Yammer", "DB (currentUserId): " + currentUserId);
-      if (DEBUG) Log.d("Yammer", "DB (currentNetworkId): " + currentNetworkId);
-      if (DEBUG) Log.d("Yammer", "DB (accessToken): " + network.accessToken);
-      if (DEBUG) Log.d("Yammer", "DB (accessTokenSecret): " + network.accessTokenSecret);
-      
       // Check if a valid access token was stored at some point
-      if ((null == network.accessToken || null == network.accessTokenSecret) && !isAuthenticating ) {
-        // No access token present, so notify yammer activity that authentication
-        // should be done first.
+      if ((null == network || null == network.accessToken || null == network.accessTokenSecret) && !isAuthenticating ) {
         sendBroadcast("com.yammer.v1:MUST_AUTHENTICATE_DIALOG");        		        	
       } else {
+        if (DEBUG) Log.d("Yammer", "DB (accessToken): " + network.accessToken);
+        if (DEBUG) Log.d("Yammer", "DB (accessTokenSecret): " + network.accessTokenSecret);
         
         // Store token secrets to NWOAuth to be able to authorize
-        getYammer().requestToken = network.accessToken;
-        getYammer().tokenSecret = network.accessTokenSecret;
+        getYammerProxy().requestToken = network.accessToken;
+        getYammerProxy().tokenSecret = network.accessTokenSecret;
         
         // There is already an access token available, so we are authorized
         setAuthorized(true);
@@ -436,7 +429,7 @@ public class YammerService extends Service {
    * @throws YammerProxy.ConnectionProblem 
    */
   public void postMessage(final String message, final long messageId) throws YammerProxy.YammerProxyException {
-    getYammer().postMessage(message, messageId);
+    getYammerProxy().postMessage(message, messageId);
   }
 
   /**
@@ -448,7 +441,7 @@ public class YammerService extends Service {
   public void deleteMessage(final long messageId) throws YammerProxy.YammerProxyException {
     if (DEBUG) Log.d(getClass().getName(), ".deleteMessage");
     // TODO: change to getYammer().deleteMessage(messageId);
-    getYammer().deleteResource(getURLBase() + "/api/v1/messages/"+messageId);		
+    getYammerProxy().deleteResource(getURLBase() + "/api/v1/messages/"+messageId);		
     yammerData.deleteMessage(messageId);
     // TODO: sendBroadcast(ACTION_MESSAGE_DELETED, messageId);
     sendBroadcast("com.yammer.v1:PUBLIC_TIMELINE_UPDATED");
@@ -458,13 +451,13 @@ public class YammerService extends Service {
     if (DEBUG) Log.d(getClass().getName(), "YammerService.followUser");
     // GET https://yammer.com/api/v1/subscriptions/to_user/<id>.json
     if (DEBUG) Log.d(getClass().getName(), "Following user");
-    getYammer().followUser(userId);
+    getYammerProxy().followUser(userId);
     if (DEBUG) Log.d(getClass().getName(), "User followed!");
   }
 
   public void unfollowUser(final long userId) throws YammerProxy.YammerProxyException {
     if (DEBUG) Log.d(getClass().getName(), ".followUser");
-    getYammer().unfollowUser(userId);
+    getYammerProxy().unfollowUser(userId);
   }
 
   public long getCurrentUserId() {
@@ -481,7 +474,7 @@ public class YammerService extends Service {
     // Fetch the user data JSON
     String userData = null;
     try {
-      userData = getYammer().accessResource(url);
+      userData = getYammerProxy().accessResource(url);
     } catch (YammerProxy.ConnectionProblem e1) {
       // TODO Auto-generated catch block
       e1.printStackTrace();
@@ -637,7 +630,7 @@ public class YammerService extends Service {
   }
 
   private String getNewerMessages() throws YammerProxy.YammerProxyException, YammerDataException {
-    return getYammer().accessResource(getFeedURL()+".json?newer_than="+yammerData.getLastMessageId(getCurrentNetworkId()));
+    return getYammerProxy().accessResource(getFeedURL()+".json?newer_than="+yammerData.getLastMessageId(getCurrentNetworkId()));
   }
 
   private String getFeedURL() throws YammerData.YammerDataException {
@@ -675,16 +668,16 @@ public class YammerService extends Service {
   }
 
 
-  private YammerProxy yammer;
+  private YammerProxy yammerProxy;
 
-  private void resetYammer() {
-    this.yammer = null;
+  private void resetYammerProxy() {
+    this.yammerProxy = null;
   }
-  private YammerProxy getYammer() {
-    if (null == this.yammer) {
-      this.yammer = new YammerProxy(getURLBase());
+  private YammerProxy getYammerProxy() {
+    if (null == this.yammerProxy) {
+      this.yammerProxy = new YammerProxy(getURLBase());
     }
-    return this.yammer;
+    return this.yammerProxy;
   }
 
   public static void setAuthorized(boolean authorized) {
