@@ -199,7 +199,7 @@ public class YammerActivity extends Activity {
                   // Delete it from the server
                   showLoadingAnimation(true);
                   // Update the messages timeline
-                  getYammerService().updatePublicMessages();
+                  getYammerService().updatePublicMessages(false);
                   getYammerService().updateCurrentUserData();
                   // Initialize the tweets view
                   sendBroadcast("com.yammer.v1:TIMELINE_INITIALIZE");
@@ -496,7 +496,7 @@ public class YammerActivity extends Activity {
             try {
               showLoadingAnimation(true);
               getYammerService().clearMessages();
-              getYammerService().updatePublicMessages();
+              getYammerService().updatePublicMessages(true);
               getYammerService().updateCurrentUserData();
             } catch (YammerProxy.YammerProxyException e) {
               // TODO Auto-generated catch block

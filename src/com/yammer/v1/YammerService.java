@@ -316,7 +316,7 @@ public class YammerService extends Service {
                   if (DEBUG) Log.d(getClass().getName(), "Acquiring wakelock");
                   wakelock.acquire();
                   // Time to update
-                  updatePublicMessages();
+                  updatePublicMessages(false);
                   lastUpdateTime = System.currentTimeMillis();		        					
                 } 
               } catch (Exception e) {
@@ -541,7 +541,7 @@ public class YammerService extends Service {
     yammerData.clearMessages();
   }
   
-  public void updatePublicMessages() throws YammerProxy.YammerProxyException {
+  public void updatePublicMessages(boolean reloading) throws YammerProxy.YammerProxyException {
     if (DEBUG) Log.i(getClass().getName(), "Updating public timeline");
     
     if ( isAuthorized() == false ) {
@@ -621,7 +621,7 @@ public class YammerService extends Service {
 
     if (messagesFound) {
       // Is notification required?
-      if (notificationRequired) {
+      if (notificationRequired && !reloading) {
         // Yep, so notify the user with a notification icon
         notifyUser(R.string.new_yammer_message, NOTIFICATION_NEW_MESSAGE);				
       }

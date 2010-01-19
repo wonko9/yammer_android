@@ -1,4 +1,8 @@
 
+2010-01-18
+  Bumped versionCode for release (19)
+  Fixed problem with notifications on reload
+
 2010-01-17
   Bumped versionCode for release (18)
   Added message click preference (ANDROID-21)
