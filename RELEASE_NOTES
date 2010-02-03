@@ -1,4 +1,10 @@
 
+2010-02-02
+  Bumped versionCode for release (20)
+  Added UpdateOnResume option (ANDROID-25)
+  Changed update timeouts (ANDROID-26)
+  More code cleanup
+
 2010-01-18
   Bumped versionCode for release (19)
   Fixed problem with notifications on reload
