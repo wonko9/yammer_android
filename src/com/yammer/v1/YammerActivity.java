@@ -925,6 +925,11 @@ public class YammerActivity extends Activity {
     super.onResume();
     if (getYammerService() != null) {
       getYammerService().resetMessageCount();
+      
+      if(getSettings().updateOnResume()) {
+        getYammerService().updatePublicMessages(true);
+      }
+      
     } else {
       if (DEBUG) Log.d(getClass().getName(), "mYammerService was null - could not do onResume tasks for YammerService");
     }

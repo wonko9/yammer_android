@@ -17,8 +17,13 @@
 			android:summary="Clear account data and reauthenticate with Yammer."
 			/>
 	</PreferenceCategory>
-	<PreferenceCategory
-		android:title="Messages">
+	<PreferenceCategory android:title="Messages">
+		<CheckBoxPreference
+			android:key="key_update_on_resume"
+			android:title="@string/pref_update_on_resume_title"
+			android:summary="@string/pref_update_on_resume_summary"
+			android:defaultValue="true"
+			/>	
 		<ListPreference
 			android:textColor="#000000"
 			android:key="key_update"

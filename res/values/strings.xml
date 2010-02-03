@@ -48,6 +48,9 @@
 	<string name="url_icon">&#x2192;</string>
 	<string name="check_this_out">Check this out:</string>
 	<string name="in_reply_to">in reply to</string>
+
+	<string name="pref_update_on_resume_title">Update on Resume</string>
+	<string name="pref_update_on_resume_summary">Should Yammer update messages when you switch to it?</string>
 	
 	<string name="pref_message_click_title">Message Click</string>
 	<string name="pref_message_click_summary">What should happen when a message is clicked.</string>

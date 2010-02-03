@@ -57,6 +57,11 @@ public class SettingsEditor {
     if(DEBUG) Log.d(getClass().getName(), ".startServiceAtBoot");
     return getPreferences().getBoolean("key_background", true);
   }
+  
+  public boolean updateOnResume() {
+    if(DEBUG) Log.d(getClass().getName(), ".updateOnResume");
+    return getPreferences().getBoolean("key_update_on_resume", true);
+  }
 
   public void setFeed(String feedName) {
     if(DEBUG) Log.d(getClass().getName(), ".setFeed: " + feedName);
