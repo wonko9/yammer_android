@@ -11,10 +11,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Semaphore;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,8 +23,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
@@ -56,7 +51,6 @@ public class YammerService extends Service {
   private final long GLOBAL_UPDATE_INTERVAL = 10500;
   private static long lastUpdateTime = 0;
   // Check for application updates once a day
-  private static long APPLICATION_UPDATE_INTERVAL = 1000*60*60*24;
   private Timer timer = new Timer();
   // Maintained JSON objects
   JSONObject jsonMessages = null;
@@ -332,25 +326,6 @@ public class YammerService extends Service {
           }, 0, GLOBAL_UPDATE_INTERVAL
       );
 
-      // Start timer to check for application updates
-      // Start the update timer
-      timer.scheduleAtFixedRate(
-          new TimerTask() {
-            public void run() {
-              try {
-                // Check for new versions of the application
-                checkForApplicationUpdate();
-              } catch (Exception e) {
-                if (DEBUG) Log.d(getClass().getName(), "An exception occured during checkForApplicationUpdate()");
-                e.printStackTrace();
-              }
-            }
-          }, 0, APPLICATION_UPDATE_INTERVAL
-      );
-      // If this is a beta, then check for updates every hour
-      if (G.IS_BETA) {
-        APPLICATION_UPDATE_INTERVAL = 1000*60*60*1;
-      }
     }
   }
 
@@ -507,34 +482,6 @@ public class YammerService extends Service {
         }
       }
     } catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
-
-  // TODO: remove (handled by market)
-  protected void checkForApplicationUpdate() {
-    String url = getURLBase() + "/application_support/android/updates";
-    try {
-      if (DEBUG) Log.d(getClass().getName(), "Querying URL "+url+" for new updates");
-      DefaultHttpClient httpClient = new DefaultHttpClient(); 
-      HttpGet httpGet = new HttpGet(url);
-      HttpResponse httpResponse = httpClient.execute(httpGet);
-      String response = EntityUtils.toString(httpResponse.getEntity());
-      if (DEBUG) Log.d(getClass().getName(), "Read HTTP respone: " + response);
-      // Parse the respone
-      String[] responseSplit = response.split(":");
-      int versionCode = Integer.parseInt(responseSplit[1].trim());
-      if (DEBUG) Log.d(getClass().getName(), "Version code read: " + versionCode);
-      // Get the versioncode from manifest
-      PackageManager pm = getPackageManager();
-      PackageInfo pi = pm.getPackageInfo(this.getPackageName(), 0);
-      if ( versionCode > pi.versionCode ) {
-        // Notify user about new version
-        if (DEBUG) Log.d(getClass().getName(), "New version is available. Notifying user.");
-        notifyUser(R.string.application_update_title, NOTIFICATION_APPLICATION_UPDATE);
-      }
-    } catch (Exception e) {
-      if (DEBUG) Log.d(getClass().getName(), "Error while checking for application updates");
       e.printStackTrace();
     }
   }
