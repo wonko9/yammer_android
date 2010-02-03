@@ -1,6 +1,7 @@
 package com.yammer.v1;
 
 import com.yammer.v1.YammerData.YammerDataException;
+import com.yammer.v1.YammerProxy.YammerProxyException;
 import com.yammer.v1.models.Message;
 import com.yammer.v1.models.Network;
 import com.yammer.v1.settings.SettingsEditor;
@@ -15,6 +16,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -541,7 +543,7 @@ public class YammerService extends Service {
     yammerData.clearMessages();
   }
   
-  public void updatePublicMessages(boolean reloading) throws YammerProxy.YammerProxyException {
+  public void updatePublicMessages(boolean reloading) {
     if (DEBUG) Log.i(getClass().getName(), "Updating public timeline");
     
     if ( isAuthorized() == false ) {
@@ -572,13 +574,14 @@ public class YammerService extends Service {
             if(reference.getString("type").equals("user")) {
               yammerData.addUser(reference);
             }
-          } catch( Exception e ) {
+          } catch( JSONException e ) {
             if (DEBUG) Log.w(getClass().getName(), e.getMessage());
           }
         }
-      } catch (Exception e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+      } catch (JSONException e) {
+        if (DEBUG) Log.w(getClass().getName(), e.getMessage());
+      } catch (YammerDataException e) {
+        if (DEBUG) Log.w(getClass().getName(), e.getMessage());
       }			
 
       try {
@@ -606,13 +609,18 @@ public class YammerService extends Service {
         }
         
         getSettings().setUpdatedAt();
-      } catch (Exception e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+      } catch (JSONException e) {
+        if (DEBUG) Log.w(getClass().getName(), e.getMessage());
       }			
 
-    } catch (Exception e) {
-      if (DEBUG) Log.e(getClass().getName(), "An error occured while parsing JSON: " + e.getStackTrace());
+    } catch (YammerProxyException e) {
+      if (DEBUG) Log.w(getClass().getName(), e.getMessage());
+      return;
+    } catch (JSONException e) {
+      if (DEBUG) Log.w(getClass().getName(), e.getMessage());
+      return;
+    } catch (YammerDataException e) {
+      if (DEBUG) Log.w(getClass().getName(), e.getMessage());
       return;
     } finally {
       // Release the semaphore
