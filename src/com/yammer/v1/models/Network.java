@@ -81,6 +81,7 @@ public class Network extends Base {
   public static Network findByNetworkId(SQLiteDatabase _db, long _networkId) {
     Cursor cur = _db.query(TABLE_NAME, columns, equalClause(FIELD_NETWORK_ID, _networkId), null, null, null, null, "1");
     try { 
+      if(0 == cur.getCount()) return null;
       cur.moveToFirst();
       return new Network(cur);
     } finally {

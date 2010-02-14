@@ -69,12 +69,7 @@ public class YammerData extends SQLiteOpenHelper {
   }
 
   public Network getNetwork(long networkId) {
-    try {
-      return Network.findByNetworkId(getReadableDatabase(), networkId);
-    } catch (Exception e) {
-      if (DEBUG) Log.d(getClass().getName(), "Cannot get network - returning null");
-    }
-    return null;
+    return Network.findByNetworkId(getReadableDatabase(), networkId);
   }
 
 

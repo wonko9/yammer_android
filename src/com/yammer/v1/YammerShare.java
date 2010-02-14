@@ -10,7 +10,6 @@ import android.widget.EditText;
 
 public class YammerShare extends YammerReply {
 
-	private static String TAG = "TAG_YAMMERSEND";
 	private CharSequence url = null;	
 	
 	/**
@@ -19,7 +18,7 @@ public class YammerShare extends YammerReply {
 	@Override
 	public void onCreate(Bundle bundle) {
 		super.onCreate(bundle);
-		if (G.DEBUG) Log.d(TAG, "YammerShare::onCreate");
+		if (G.DEBUG) Log.d(getClass().getName(), ".onCreate");
 		// Listen to the reply button
 		Button replyButton = (Button)findViewById(R.id.reply_post);
 		replyButton.setOnClickListener(onReplyListener);
@@ -28,11 +27,11 @@ public class YammerShare extends YammerReply {
 		Intent intent = getIntent();
 		String action = intent.getAction();
 		Bundle extras = intent.getExtras();
-		if (G.DEBUG) Log.d(TAG, "Received intent "+action+" ("+intent.getType()+")");
+		if (G.DEBUG) Log.d(getClass().getName(), "Received intent "+action+" ("+intent.getType()+")");
 		// Determine content type to get an idea what we should do
 		if ( intent.getType().equals("text/plain") ) {
 			url = extras.getCharSequence("android.intent.extra.TEXT");
-			if (G.DEBUG) Log.d(TAG, "URL: " + url);
+			if (G.DEBUG) Log.d(getClass().getName(), "URL: " + url);
 			// Create the default message
 			String checkThisOut = getResources().getString(R.string.check_this_out);
 			// Dump the url to the edit text view
@@ -49,14 +48,14 @@ public class YammerShare extends YammerReply {
 	 */
 	protected OnClickListener onReplyListener = new OnClickListener() {
 		public void onClick(View v) {
-			if (G.DEBUG) Log.d(TAG, "YammerReply::onClick");
+			if (G.DEBUG) Log.d(getClass().getName(), ".onClick");
 			// Get the reply from the edit box
 			EditText replyEdit = (EditText)findViewById(R.id.reply_edit);
 			String message = replyEdit.getText().toString();
 			// Create an intent containing the message
 			Intent intent = new Intent();
-			intent.setAction("com.yammer.v1:POST_MESSAGE");
-			intent.putExtra("message", message);
+			intent.setAction(YammerService.INTENT_POST_MESSAGE);
+			intent.putExtra(YammerService.EXTRA_MESSAGE, message);
 			// Post the intent to the service
 			sendBroadcast(intent);
 			// Shut down the activity

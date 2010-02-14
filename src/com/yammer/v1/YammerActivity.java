@@ -56,6 +56,17 @@ import android.widget.AdapterView.OnItemClickListener;
 
 public class YammerActivity extends Activity {
 
+  //TODO: Move to YammerService
+  public static final String INTENT_TIMELINE_INITIALIZE = "com.yammer.v1:TIMELINE_INITIALIZE";
+  public static final String INTENT_MUST_AUTHENTICATE_DIALOG = "com.yammer.v1:MUST_AUTHENTICATE_DIALOG";
+  public static final String INTENT_PUBLIC_TIMELINE_UPDATED = "com.yammer.v1:PUBLIC_TIMELINE_UPDATED";
+  public static final String INTENT_AUTHORIZATION_BROWSER = "com.yammer.v1:AUTHORIZATION_BROWSER";
+  public static final String INTENT_NETWORK_ERROR_FATAL = "com.yammer.v1:NETWORK_ERROR_FATAL";
+  public static final String INTENT_NETWORK_ERROR_MINOR = "com.yammer.v1:NETWORK_ERROR_MINOR";
+  public static final String INTENT_AUTHORIZATION_DONE = "com.yammer.v1:AUTHORIZATION_DONE";
+  public static final String INTENT_AUTHORIZATION_START = "com.yammer.v1:AUTHORIZATION_START";
+  public static final String INTENT_AUTHORIZATION_INITIATE = "com.yammer.v1:AUTHORIZATION_INITIATE";
+
   private static final boolean DEBUG = G.DEBUG;
   
   private static final long TEMP_SLEEP = 3000;
@@ -82,6 +93,7 @@ public class YammerActivity extends Activity {
   }
 
   class YammerIntentReceiver extends BroadcastReceiver {
+
     public YammerIntentReceiver() {
     }
 
@@ -94,12 +106,12 @@ public class YammerActivity extends Activity {
        * and activate the application.
        */
       if (DEBUG) Log.d(getClass().getName(), "Intent received: " + intent.getAction());
-      if ( intent.getAction().equals("com.yammer.v1:PUBLIC_TIMELINE_UPDATED") ) {
+      if ( INTENT_PUBLIC_TIMELINE_UPDATED.equals(intent.getAction()) ) {
         // Only allow updating the listview if it has been initialized
         if ( listViewInitialized ) {
           updateListView();
         }
-      } else if ( intent.getAction().equals("com.yammer.v1:TIMELINE_INITIALIZE") ) {				
+      } else if ( INTENT_TIMELINE_INITIALIZE.equals(intent.getAction()) ) {				
         if (DEBUG) Log.d(getClass().getName(), "Initializing timeline");
 
         final TweetListView tweetListView = (TweetListView) findViewById(R.id.tweet_list);
@@ -169,26 +181,22 @@ public class YammerActivity extends Activity {
         displayLoaderWheel();                
         if (DEBUG) Log.d(getClass().getName(), "ListViewInitialized");
         listViewInitialized = true;
-      } else if ( intent.getAction().equals("com.yammer.v1:MUST_AUTHENTICATE_DIALOG") ) {
-        if ( DEBUG ) Log.d(getClass().getName(), "com.yammer.v1.MUST_AUTHENTICATE_DIALOG");
+      } else if ( INTENT_MUST_AUTHENTICATE_DIALOG.equals(intent.getAction()) ) {
         try {
           removeDialog(ID_DIALOG_LOADING);
         } catch (Exception e) {
           e.printStackTrace();
         }
         showDialog(ID_DIALOG_MUST_AUTHENTICATE);
-      } else if ( intent.getAction().equals("com.yammer.v1:AUTHORIZATION_INITIATE") ) {
-        if ( DEBUG ) Log.d(getClass().getName(), "com.yammer.v1:AUTHORIZATION_INITIATE");
+      } else if ( INTENT_AUTHORIZATION_INITIATE.equals(intent.getAction()) ) {
         // Hide the authenticate dialog
         removeDialog(ID_DIALOG_MUST_AUTHENTICATE);
         // Start the authorization
         getYammerService().initiateAuthorization();
-      } else if ( intent.getAction().equals("com.yammer.v1:AUTHORIZATION_START") ) {
-        if ( DEBUG ) Log.d(getClass().getName(), "com.yammer.v1:AUTHORIZATION_START");
+      } else if ( INTENT_AUTHORIZATION_START.equals(intent.getAction()) ) {
         // Show progress dialog
         showDialog(ID_DIALOG_LOADING);
-      } else if ( intent.getAction().equals("com.yammer.v1:AUTHORIZATION_DONE") ) {
-        if ( DEBUG ) Log.d(getClass().getName(), "com.yammer.v1:AUTHORIZATION_DONE");
+      } else if ( INTENT_AUTHORIZATION_DONE.equals(intent.getAction()) ) {
         new Thread(
             new Runnable() {
               public void run() {
@@ -199,26 +207,22 @@ public class YammerActivity extends Activity {
                   // Delete it from the server
                   showLoadingAnimation(true);
                   // Update the messages timeline
-                  getYammerService().updatePublicMessages(false);
                   getYammerService().updateCurrentUserData();
+                  getYammerService().updatePublicMessages(false);
                   // Initialize the tweets view
-                  sendBroadcast("com.yammer.v1:TIMELINE_INITIALIZE");
+                  sendBroadcast(INTENT_TIMELINE_INITIALIZE);
                   runOnUiThread( new Runnable() {
                     public void run() {
                       updateListView();        		    				    				
                     }
                   });
-                } catch (YammerProxy.YammerProxyException e) {
-                  // TODO Auto-generated catch block
-                  e.printStackTrace();
                 } finally {
                   //if ( DEBUG ) Log.d(getClass().getName(), "REMOVE DIALOG LOADING");									
                   showLoadingAnimation(false);
                 }
               }
             }).start();
-      } else if ( intent.getAction().equals("com.yammer.v1:AUTHORIZATION_BROWSER") ) {
-        if ( DEBUG ) Log.d(getClass().getName(), "com.yammer.v1:AUTHORIZATION_BROWSER");
+      } else if ( INTENT_AUTHORIZATION_BROWSER.equals(intent.getAction()) ) {
         if ( getYammerService() != null && YammerService.isAuthenticating == true ) {
           if ( DEBUG ) Log.d(getClass().getName(), "REMOVE DIALOG LOADING");
           removeDialog(ID_DIALOG_LOADING);
@@ -228,21 +232,19 @@ public class YammerActivity extends Activity {
           String responseUrl = bundle.getString("responseUrl");
           // Create new intent to launch the browser
           Intent browserIntent = new Intent();
-          browserIntent.setClassName("com.yammer.v1", "com.yammer.v1.Browser");
+          browserIntent.setClassName(Browser.class.getPackage().getName(), Browser.class.getName());
           // Put the reponseUrl into the intent
           browserIntent.putExtra("responseUrl", responseUrl);
           startActivityForResult(browserIntent, YAMMER_BROWSER_CREATE);
         } else {
           if ( DEBUG ) Log.d(getClass().getName(), "Browser not starting - authentication not in progress");        			
         }
-      } else if ( intent.getAction().equals("com.yammer.v1:NETWORK_ERROR_MINOR") ) {
+      } else if ( INTENT_NETWORK_ERROR_MINOR.equals(intent.getAction()) ) {
         /**
          * A minor error occurred (connection lost or similar - can be retried later)
          * no need to notify the user.
          */
-        if ( DEBUG ) Log.d(getClass().getName(), "com.yammer.v1:NETWORK_ERROR_MINOR");
-      } else if ( intent.getAction().equals("com.yammer.v1:NETWORK_ERROR_FATAL") ) {
-        if ( DEBUG ) Log.d(getClass().getName(), "com.yammer.v1:NETWORK_ERROR_FATAL");
+      } else if ( INTENT_NETWORK_ERROR_FATAL.equals(intent.getAction()) ) {
         try {
           dismissDialog(ID_DIALOG_LOADING);
         } catch (Exception e) {
@@ -394,7 +396,7 @@ public class YammerActivity extends Activity {
             // Don't reset if already authorized
             if ( !YammerService.isAuthorized() ) {
               // Clear all account information
-              sendBroadcast("com.yammer.v1:RESET_ACCOUNT");
+              sendBroadcast(YammerService.INTENT_RESET_ACCOUNT);
             }
           }
         }
@@ -498,9 +500,6 @@ public class YammerActivity extends Activity {
               getYammerService().clearMessages();
               getYammerService().updatePublicMessages(true);
               getYammerService().updateCurrentUserData();
-            } catch (YammerProxy.YammerProxyException e) {
-              // TODO Auto-generated catch block
-              e.printStackTrace();
             } finally {
               showLoadingAnimation(false);									
             }
@@ -764,10 +763,10 @@ public class YammerActivity extends Activity {
       return;
     } else if ( YammerService.isAuthorized() == false ) {
       // We must authenticate
-      sendBroadcast("com.yammer.v1:MUST_AUTHENTICATE_DIALOG");
+      sendBroadcast(INTENT_MUST_AUTHENTICATE_DIALOG);
     } else { 
       // Initialize the tweets view
-      sendBroadcast("com.yammer.v1:TIMELINE_INITIALIZE");
+      sendBroadcast(INTENT_TIMELINE_INITIALIZE);
     }		
   }
 
@@ -803,15 +802,15 @@ public class YammerActivity extends Activity {
     // Register supported intents
     if (DEBUG) Log.d(getClass().getName(), "Registering intents for Yammer");
     IntentFilter filter = new IntentFilter();
-    filter.addAction("com.yammer.v1:PUBLIC_TIMELINE_UPDATED");
-    filter.addAction("com.yammer.v1:TIMELINE_INITIALIZE");
-    filter.addAction("com.yammer.v1:AUTHORIZATION_INITIATE");
-    filter.addAction("com.yammer.v1:AUTHORIZATION_START");
-    filter.addAction("com.yammer.v1:AUTHORIZATION_DONE");
-    filter.addAction("com.yammer.v1:AUTHORIZATION_BROWSER");
-    filter.addAction("com.yammer.v1:MUST_AUTHENTICATE_DIALOG");
-    filter.addAction("com.yammer.v1:NETWORK_ERROR_MINOR");
-    filter.addAction("com.yammer.v1:NETWORK_ERROR_FATAL");
+    filter.addAction(INTENT_PUBLIC_TIMELINE_UPDATED);
+    filter.addAction(INTENT_TIMELINE_INITIALIZE);
+    filter.addAction(INTENT_AUTHORIZATION_INITIATE);
+    filter.addAction(INTENT_AUTHORIZATION_START);
+    filter.addAction(INTENT_AUTHORIZATION_DONE);
+    filter.addAction(INTENT_AUTHORIZATION_BROWSER);
+    filter.addAction(INTENT_MUST_AUTHENTICATE_DIALOG);
+    filter.addAction(INTENT_NETWORK_ERROR_MINOR);
+    filter.addAction(INTENT_NETWORK_ERROR_FATAL);
     yammerIntentReceiver = new YammerIntentReceiver();        
     registerReceiver(yammerIntentReceiver, filter);
 
@@ -926,7 +925,7 @@ public class YammerActivity extends Activity {
     if (getYammerService() != null) {
       getYammerService().resetMessageCount();
       
-      if(getSettings().updateOnResume()) {
+      if(getSettings().updateOnResume() && getYammerService().isAuthorized()) {
         getYammerService().updatePublicMessages(true);
       }
       

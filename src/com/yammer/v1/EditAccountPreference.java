@@ -40,7 +40,7 @@ public class EditAccountPreference extends DialogPreference {
         if(positiveResult){
         	if (G.DEBUG) Log.d(TAG, "Instructed to clear account - sending intent");
         	// Clear all account information
-    		context.sendBroadcast(new Intent( "com.yammer.v1:RESET_ACCOUNT"));
+    		context.sendBroadcast(new Intent(YammerService.INTENT_RESET_ACCOUNT));
         } 
     } 	
 }

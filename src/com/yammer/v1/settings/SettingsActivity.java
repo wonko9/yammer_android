@@ -7,6 +7,7 @@ package com.yammer.v1.settings;
 import com.yammer.v1.AboutActivity;
 import com.yammer.v1.G;
 import com.yammer.v1.R;
+import com.yammer.v1.YammerService;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -67,7 +68,7 @@ public class SettingsActivity extends PreferenceActivity
   public void onSharedPreferenceChanged(SharedPreferences _prefs, String _key) {
     if(DEBUG) Log.d(getClass().getName(), "onSharedPreferenceChange: " + _key);
     if("key_url".equals(_key)) {
-      getApplicationContext().sendBroadcast(new Intent("com.yammer.v1:RESET_ACCOUNT"));
+      getApplicationContext().sendBroadcast(new Intent(YammerService.INTENT_RESET_ACCOUNT));
     }
   }
 
