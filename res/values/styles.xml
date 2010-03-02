@@ -7,6 +7,12 @@
 		<item name="android:paddingRight">4dip</item>
 	</style>
 	
+	<style name="notice">
+		<item name="android:textSize">14sp</item>
+		<item name="android:textStyle">bold</item>
+		<item name="android:textColor">#ff0000</item>
+	</style>
+	
 	<style name="TextAppearance" parent="android:TextAppearance">
 	</style>
 	
@@ -15,7 +21,7 @@
 		<item name="android:textStyle">bold</item>
 	</style>
 	
-    <style name="Yammer.Theme.Light.NoTitleBar" parent="android:Theme.Light">  
+    <style name="Yammer.Theme.Light.NoTitleBar" parent="android:Theme.Light">
         <item name="android:textColorPrimary">@android:color/primary_text_light</item>
         <item name="android:textColorSecondary">@android:color/secondary_text_light</item>
         <item name="android:textColorTertiary">@android:color/tertiary_text_light</item>
@@ -25,13 +31,13 @@
 		<item name="android:windowNoTitle">true</item>
 		<item name="android:preferenceCategoryStyle">@style/Yammer.Preference.Category</item>
     </style>
-    
+
     <style name="Yammer.Preference.Category" parent="android:Preference.Category">
     	<item name="android:layout">@layout/preference_category</item>
     </style>
-    
+
  	<style name="Yammer.Widget.TextView.ListSeparator" parent="android:Widget.TextView.ListSeparator">
 		<item name="android:background">@drawable/preference_category_background</item>
 		<item name="android:textColor">#ffffffff</item>	
- 	</style>    
+ 	</style>
 </resources>

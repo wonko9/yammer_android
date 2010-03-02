@@ -77,11 +77,6 @@
     				android:theme="@android:style/Theme.Dialog"
         			/>
         
-        <activity 	android:name=".Browser"
-    				android:theme="@android:style/Theme.Black.NoTitleBar"
-    				android:launchMode="singleTop"
-    				/>
-    				
         <activity 	android:name=".YammerMessage" />
         
         <activity 	android:name=".settings.SettingsActivity" 

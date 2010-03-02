@@ -1,6 +1,8 @@
 package com.yammer.v1;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.ParseException;
@@ -11,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import com.yammer.v1.settings.SettingsEditor;
+
 import net.oauth.OAuth;
 import net.oauth.OAuthAccessor;
 import net.oauth.OAuthConsumer;
@@ -20,15 +24,18 @@ import net.oauth.OAuthProblemException;
 import net.oauth.OAuthServiceProvider;
 import net.oauth.client.OAuthClient;
 import net.oauth.client.httpclient4.HttpClient4;
+import net.oauth.http.HttpClient;
+import net.oauth.http.HttpMessage;
 import net.oauth.http.HttpResponseMessage;
+import android.content.Context;
 import android.util.Log;
 
 public class YammerProxy {
-  
+
   private static final boolean DEBUG = G.DEBUG;
-  
+
   public static final String DEFAULT_FEED = "My Feed";
-  
+
   @SuppressWarnings("serial")
   public static class YammerProxyException extends Exception {
   }
@@ -41,10 +48,54 @@ public class YammerProxy {
   public static class ConnectionProblem extends YammerProxyException {
   }
 
+  static class WRAPResponse extends OAuthMessage {
+    private final HttpMessage http;
+
+    WRAPResponse(HttpResponseMessage http) throws IOException {
+        super(http.method, http.url.toExternalForm(), null);
+        this.http = http;
+        getHeaders().addAll(http.headers);
+        for (Map.Entry<String, String> header : http.headers) {
+            if ("WWW-Authenticate".equalsIgnoreCase(header.getKey())) {
+                for (OAuth.Parameter parameter : decodeAuthorization(header.getValue())) {
+                    if (!"realm".equalsIgnoreCase(parameter.getKey())) {
+                        addParameter(parameter);
+                    }
+                }
+            }
+        }
+    }
+
+
+    @Override
+    public InputStream getBodyAsStream() throws IOException {
+      return http.getBody();
+    }
+
+    @Override
+    public String getBodyEncoding() {
+      return http.getContentCharset();
+    }
+
+    @Override
+    protected void completeParameters() throws IOException {
+      super.completeParameters();
+      String body = readBodyAsString();
+      if (body != null) {
+        addParameters(OAuth.decodeForm(body.trim()));
+      }
+    }
+
+    @Override
+    protected void dump(Map<String, Object> into) throws IOException {
+      super.dump(into);
+      http.dump(into);
+    }
+  }
 
   /**
    * Properties for service we are trying to authenticate against.
-   * 
+   *
    * Yammer properties:
    */
   String baseURL = null;
@@ -57,18 +108,37 @@ public class YammerProxy {
   String requestToken = null;
   String tokenSecret = null;
 
+  private static final String URL_LOGIN = "/oauth_wrap/access_token";
+
   /**
-   * These are the properties that should be set by the values 
-   * returned by the server.	 
+   * These are the properties that should be set by the values
+   * returned by the server.
    */
   private OAuthAccessor accessor = null;
-  private OAuthConsumer consumer = null; 
+  private OAuthConsumer consumer = null;
   private OAuthClient client = null;
   private OAuthServiceProvider provider = null;
+
+  private static YammerProxy proxy;
+  public static YammerProxy getYammerProxy(Context _ctx) {
+    if(null == proxy) {
+      proxy = new YammerProxy(new SettingsEditor(_ctx).getUrl());
+    }
+    return proxy;
+  }
 
   public YammerProxy(String _baseURL) {
     this.baseURL = _baseURL;
     reset();
+  }
+
+  HttpClient httpClient;
+
+  private HttpClient getHttpClient() {
+    if(null == httpClient) {
+      this.httpClient = new HttpClient4();
+    }
+    return this.httpClient;
   }
 
   /**
@@ -76,29 +146,62 @@ public class YammerProxy {
    */
   public void reset() {
     this.provider = new OAuthServiceProvider(baseURL+reqPath, baseURL+authzPath, baseURL+accessPath);
-    this.consumer = new OAuthConsumer(baseURL+callbackPath, OAuthCustom.KEY, OAuthCustom.SECRET, provider);        
+    this.consumer = new OAuthConsumer(baseURL+callbackPath, OAuthCustom.KEY, OAuthCustom.SECRET, provider);
     this.accessor = new OAuthAccessor(consumer);
-    this.client = new OAuthClient(new HttpClient4());
+    this.client = new OAuthClient(getHttpClient());
     this.requestToken = null;
     this.tokenSecret = null;
   }
 
   /**
-   * Request a OAuth "Request Token".
-   * @throws ConnectionProblem 
+   * Login via OAuth+WRAP.
+   *
+   * @return return code
+   * 200: Ok
+   *  Login was successful
+   * 400: Unauthorized
+   *  The email or password is invalid or the network is disabled.
+   * 403: Forbidden
+   *  This is special and not officially part of WRAP. Some of our networks are using Single-Sign-On and have disabled password based authentication for their users. They of course want their users to be able to use our clients and they want the same or better experience as non-SSO users get.
+   * 500: Internal Server Error
+   *  Try again later. Chances are whatever caused the 500 will be resolved.
    */
-  public void getRequestToken() throws ConnectionProblem {    	
+  public int login(String _email, String _password) {
+
+      try {
+        URL url = new URL(baseURL + URL_LOGIN + "?wrap_username=" + _email + "&wrap_password=" + _password + "&wrap_client_id=" + OAuthCustom.KEY);
+        HttpMessage request = new HttpMessage(OAuthMessage.GET, url);
+        HttpResponseMessage response = getHttpClient().execute(request);
+        if(200 == response.getStatusCode()) {
+          WRAPResponse wrap = new WRAPResponse(response);
+          this.requestToken = wrap.getParameter("wrap_access_token");
+          this.tokenSecret = wrap.getParameter("wrap_refresh_token");
+        }
+        return response.getStatusCode();
+      } catch (MalformedURLException e1) {
+        e1.printStackTrace();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+      return 500;
+  }
+
+  /**
+   * Request a OAuth "Request Token".
+   * @throws ConnectionProblem
+   */
+  public void getRequestToken() throws ConnectionProblem {
     if (DEBUG) Log.d(getClass().getName(), "YammerProxy.getRequestToken");
 
     if ( accessor == null ) {
       if ( DEBUG ) Log.e(getClass().getName(), "accessor not available (yet!)");
       return;
-    }   
+    }
 
     try {
       client.getRequestToken(accessor);
     } catch (java.io.IOException e) {
-      if (DEBUG) Log.e("yammerApp", "IOException: " + e.toString());    	
+      if (DEBUG) Log.e("yammerApp", "IOException: " + e.toString());
       throw new ConnectionProblem();
     } catch (OAuthException e) {
       if (DEBUG) Log.e("yammerApp", "OAuthException: " + e.toString());
@@ -113,20 +216,18 @@ public class YammerProxy {
     this.tokenSecret = accessor.tokenSecret;
 
     if (DEBUG) Log.d(getClass().getName(), "Request token: " + this.requestToken);
-    if (DEBUG) Log.d(getClass().getName(), "Request token secret: " + this.tokenSecret);    
+    if (DEBUG) Log.d(getClass().getName(), "Request token secret: " + this.tokenSecret);
   }
 
   /**
    * Validate the request token and the token secret.
-   * 
+   *
    * @return true if request token and token secret was fetched, false if a problem occured
    */
   public Boolean isRequestTokenValid() {
     if ( this.requestToken == null || this.tokenSecret == null ) {
-      // Something's wrong
       return false;
     }
-    // A OK
     return true;
   }
 
@@ -161,7 +262,7 @@ public class YammerProxy {
 
   /**
    * Request "Access Token".
-   * @throws AccessDeniedException 
+   * @throws AccessDeniedException
    */
   public String authorizeUser() throws AccessDeniedException {
     if (DEBUG) Log.d(getClass().getName(), "YammerProxy.authorizeUser");
@@ -188,11 +289,11 @@ public class YammerProxy {
       // Try to retrieve the URL that resultet in the "error"
       // We need to do this because the OAuth library creates the URL being queried
       // with signatures and all, so we let the OAuth library create the URL, try
-      // to do the request and then if it fails return the URL to let us try to 
+      // to do the request and then if it fails return the URL to let us try to
       // request it with the browser.
       URL calledUrl = (URL)e.getParameters().get("URL");
       if (DEBUG) Log.d(getClass().getName(), "Called URL: "+calledUrl);
-      responseUrl = calledUrl.toString();        	
+      responseUrl = calledUrl.toString();
       // Check if this is a redirect
       if (e.getHttpStatusCode() == 302) {
         if (DEBUG) Log.d(getClass().getName(), "302 Location: " + (String) e.getParameters().get(HttpResponseMessage.LOCATION));
@@ -207,12 +308,12 @@ public class YammerProxy {
 
   /**
    * Post a message or a reply to the current Yammer Network
-   * 
+   *
    * @param message - message to post
    * @param messageId - Message being replied to
-   * 
+   *
    * @throws YammerProxy.AccessDeniedException
-   * @throws YammerProxy.ConnectionProblem 
+   * @throws YammerProxy.ConnectionProblem
    */
   public void postMessage(final String message, final long messageId) throws YammerProxyException {
     if (DEBUG) Log.d(getClass().getName(), ".postMessage");
@@ -223,7 +324,7 @@ public class YammerProxy {
       paramProps.setProperty("replied_to_id", Long.toString(messageId));
     }
     try {
-      sendRequest(paramProps, this.baseURL + "/api/v1/messages/", "POST");
+      sendRequest(paramProps, this.baseURL + "/api/v1/messages/", OAuthMessage.POST);
     } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -234,26 +335,26 @@ public class YammerProxy {
     } catch (OAuthException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
-    }     
+    }
   }
 
   /**
    * Follow user with given user ID on Yammer
    * @param userId
-   * 
+   *
    * @return
-   * 
+   *
    * @throws AccessDeniedException
    * @throws ConnectionProblem
    */
   public void followUser(long userId) throws YammerProxyException {
-    if (DEBUG) Log.d(getClass().getName(), ".followUser: " + userId);    	
-    String url = this.baseURL + "/api/v1/subscriptions/"; 
+    if (DEBUG) Log.d(getClass().getName(), ".followUser: " + userId);
+    String url = this.baseURL + "/api/v1/subscriptions/";
     Properties paramProps = new Properties();
     paramProps.setProperty("target_type", "user");
     paramProps.setProperty("target_id", Long.toString(userId));
     try {
-      sendRequest(paramProps, url, "POST");
+      sendRequest(paramProps, url, OAuthMessage.POST);
     } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -268,8 +369,8 @@ public class YammerProxy {
   }
 
   public void unfollowUser(long userId) throws YammerProxyException {
-    if (DEBUG) Log.d(getClass().getName(), ".unfollowUser: " + userId);    	
-    String url = this.baseURL + "/api/v1/subscriptions/options"; 
+    if (DEBUG) Log.d(getClass().getName(), ".unfollowUser: " + userId);
+    String url = this.baseURL + "/api/v1/subscriptions/options";
     Properties paramProps = new Properties();
     paramProps.setProperty("target_type", "user");
     paramProps.setProperty("target_id", Long.toString(userId));
@@ -289,15 +390,15 @@ public class YammerProxy {
     }
   }
 
-  
-  // TODO: privatize 
+
+  // TODO: privatize
   public String deleteResource(String url) throws YammerProxyException {
-    if (DEBUG) Log.d(getClass().getName(), ".deleteResource: " + url);    	
+    if (DEBUG) Log.d(getClass().getName(), ".deleteResource: " + url);
     String responseBody = null;
     Properties paramProps = new Properties();
     paramProps.setProperty("oauth_token", this.requestToken);
     try {
-      OAuthMessage response = null;		
+      OAuthMessage response = null;
       response = sendRequest(paramProps, url, "DELETE");
       responseBody = response.readBodyAsString();
     } catch (IOException e) {
@@ -310,7 +411,7 @@ public class YammerProxy {
     } catch (OAuthException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
-    }    	
+    }
 
     return responseBody;
   }
@@ -351,21 +452,21 @@ public class YammerProxy {
       params.add(new OAuth.Parameter((String)p.getKey(), (String)p.getValue()));
     }
 
-    try {        
+    try {
       accessor.tokenSecret = this.tokenSecret;
 
       // It seems that we need to send the auth header for Yammer at least, when submitting POST requests
-      if ( method == "POST" ) {
-        accessor.consumer.setProperty(OAuthClient.PARAMETER_STYLE, "AUTHORIZATION_HEADER");    			
+      if ( method == OAuthMessage.POST ) {
+        accessor.consumer.setProperty(OAuthClient.PARAMETER_STYLE, "AUTHORIZATION_HEADER");
       } else {
-        accessor.consumer.setProperty(OAuthClient.PARAMETER_STYLE, "QUERY_STRING");    			
+        accessor.consumer.setProperty(OAuthClient.PARAMETER_STYLE, "QUERY_STRING");
       }
       if (DEBUG) Log.d(getClass().getName(), "Invoking: " + url + " params: "+params.toString());
       return client.invoke(accessor, method, url, params);
     } catch (OAuthProblemException e) {
       int statusCode = e.getHttpStatusCode();
       if (DEBUG) Log.d(getClass().getName(), "HTTP status code: "+statusCode);
-      if (302 == statusCode) { 
+      if (302 == statusCode) {
         if (DEBUG) Log.d(getClass().getName(), (String)e.getParameters().get(HttpResponseMessage.LOCATION));
         throw e;
       } else if (401 == statusCode) {
@@ -383,7 +484,7 @@ public class YammerProxy {
       return dateFormat.parse(_date).getTime();
     } catch (ParseException e) {
       if(DEBUG) Log.e(YammerProxy.class.getName(), "Could not parse date", e);
-    }     
+    }
     return System.currentTimeMillis();
   }
 

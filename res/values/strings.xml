@@ -49,6 +49,15 @@
 	<string name="check_this_out">Check this out:</string>
 	<string name="in_reply_to">in reply to</string>
 
+	<string name="auth_welcome_text">Welcome! Please enter your login credentials.</string>
+	<string name="auth_email_label_text">Email</string>
+	<string name="auth_password_label_text">Password</string>
+	<string name="auth_login_button_text">Login</string>
+	<string name="auth_login_button_text_alt">Logging in...</string>
+	<string name="auth_error_401_text">The username or password is invalid or the network is disabled.</string>
+	<string name="auth_error_403_text">Your network uses single-sign-on.  Please speak with someone in your IT department.</string>
+	<string name="auth_error_500_text">Server error, please try again later.</string>
+
 	<string name="pref_update_on_resume_title">Update on Resume</string>
 	<string name="pref_update_on_resume_summary">Should Yammer update messages when you switch to it?</string>
 	

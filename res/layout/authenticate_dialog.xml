@@ -1,31 +1,64 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="300dip"
-    android:layout_height="wrap_content"
-	android:background="#ffffff"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+	android:background="#888888"
     >
 	<ImageView
 		android:id="@+id/welcome_logo"
+		android:src="@drawable/yammer_logo_large"
 		android:layout_height="wrap_content" 
 		android:layout_width="wrap_content" 
 		android:padding="5px"
-		android:src="@drawable/yammer_logo_large"
-		/>
+	/>
 	<TextView
-		android:id="@+id/loader_status_view"
-		android:padding="5px"
-		android:text="Welcome! You will now be taken to the Yammer website to authorize this application for use with your account."
+		android:id="@+id/welcome_text"
+		android:text="@string/auth_welcome_text"
+		android:textColor="#ffffff"
 		android:layout_height="wrap_content" 
 		android:layout_width="wrap_content"
-		android:textColor="#000000"
+		android:padding="5px"
 		android:layout_toRightOf="@id/welcome_logo"
-		/>
+	/>
+	<TextView
+		android:id="@+id/email_label"
+		android:layout_width='wrap_content'
+		android:layout_height='wrap_content'
+		android:text="@string/auth_email_label_text"
+		android:textAppearance="@style/TextAppearance.info_label"
+		android:layout_below="@id/welcome_logo"
+		android:layout_alignBaseline="@+id/email_field"
+	/>
+    <EditText
+    	android:id="@id/email_field"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_toRightOf="@id/email_label"
+		android:layout_below="@id/welcome_logo"
+   />
+	<TextView
+		android:id="@+id/password_label"
+		android:layout_width='wrap_content'
+		android:layout_height='wrap_content'
+		android:text="@string/auth_password_label_text"
+		android:textAppearance="@style/TextAppearance.info_label"
+		android:layout_below="@id/email_field"
+		android:layout_alignBaseline="@+id/password_field"
+	/>
+    <EditText
+    	android:id="@id/password_field"
+    	android:password="true"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+    	android:layout_toRightOf="@id/password_label"
+    	android:layout_below="@id/email_field"
+    />
 	<Button
-		android:id="@+id/ok_button"
+		android:id="@+id/login_button"
 		android:layout_centerHorizontal="true"
 		android:layout_width="290dip"
 		android:layout_height="wrap_content"
-		android:text="OK"
-		android:layout_below="@id/welcome_logo"
+		android:text="@string/auth_login_button_text"
+		android:layout_below="@id/password_field"
 		/>
 </RelativeLayout>

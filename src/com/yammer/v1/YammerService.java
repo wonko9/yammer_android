@@ -1,7 +1,6 @@
 package com.yammer.v1;
 
 import com.yammer.v1.YammerData.YammerDataException;
-import com.yammer.v1.YammerProxy.AccessDeniedException;
 import com.yammer.v1.YammerProxy.YammerProxyException;
 import com.yammer.v1.models.Message;
 import com.yammer.v1.models.Network;
@@ -75,10 +74,7 @@ public class YammerService extends Service {
   private final Semaphore jsonUpdateSemaphore = new Semaphore(1);
   private Boolean bound = false;
   private final IBinder mBinder = new YammerBinder();
-  // Authorization thread
-  YammerAuthorizeThread authThread = null;
-  // Set to true, when authentication is in progress
-  public static boolean isAuthenticating = false;
+  
   // Wakelock
   PowerManager.WakeLock wakelock = null; 
 
@@ -138,27 +134,17 @@ public class YammerService extends Service {
           e.printStackTrace();
         }
       } else if(INTENT_AUTHENTICATION_COMPLETE.equals(intent.getAction())) {
-          authenticationComplete(intent.getExtras().getString(EXTRA_TOKEN));
+          updateCurrentUserData();
+          authenticationComplete();
       }
     }
 
-    private void authenticationComplete(String _token) {
+    private void authenticationComplete() {
       if (DEBUG) Log.d(getClass().getName(), ".authenticationComplete");
-      
       YammerProxy proxy = getYammerProxy();
-      try { 
-        proxy.enableApplication(_token);
-      
-        setAuthorized(true);
-        isAuthenticating = false;
-      
-        yammerData.createNetwork(getCurrentNetworkId(), getCurrentUserId(), proxy.requestToken, proxy.tokenSecret);
-
-        // TODO: Move YammerService code into here
-        sendBroadcast(new Intent(YammerActivity.INTENT_AUTHORIZATION_DONE));
-      } catch(AccessDeniedException ex) {
-        Toast.makeText(YammerService.this, "Access Denied", Toast.LENGTH_LONG);
-      }
+      setAuthorized(true);
+      yammerData.createNetwork(getCurrentNetworkId(), getCurrentUserId(), proxy.requestToken, proxy.tokenSecret);
+      sendBroadcast(new Intent(YammerActivity.INTENT_AUTHORIZATION_DONE));
    }
 
     
@@ -191,72 +177,6 @@ public class YammerService extends Service {
     // Invoke...
   }
 
-  class YammerAuthorizeThread extends Thread {
-
-    YammerService service = null;
-
-    YammerAuthorizeThread(YammerService service) {
-      this.service = service;
-    }
-
-    public void run() {
-      if (DEBUG) Log.d(getClass().getName(), "Requesting request token");
-      try {
-        // Only continue if not already authenticating
-        if ( isAuthenticating == true ) {
-          return;
-        }
-        isAuthenticating = true;
-        if ( DEBUG ) Log.d(getClass().getName(), "YammerService bound to Yammer: " + bound);
-        // Yes, bound.. So Have the Yammer activity show a progress bar
-        sendBroadcast(YammerActivity.INTENT_AUTHORIZATION_START);
-        // Get request token
-        // Fetch the request token and token secret
-        getYammerProxy().getRequestToken();	
-        // Make sure that a request token and a secret token was received
-        String responseUrl = getYammerProxy().authorizeUser();
-        if ( DEBUG ) Log.d(getClass().getName(), "Response URL received: " + responseUrl);
-        // Send an intent that will start the browser
-        Intent intent = new Intent(YammerActivity.INTENT_AUTHORIZATION_BROWSER);
-        intent.putExtra("responseUrl", responseUrl);
-        sendBroadcast(intent);
-        
-      } catch ( YammerProxy.ConnectionProblem e ) {
-        // Send an intent to the Yammer activity notifying about the error
-        sendBroadcast(YammerActivity.INTENT_NETWORK_ERROR_FATAL);        		
-      } catch ( Exception e ) {
-        Log.d(getClass().getName(), "An exception occured: " + e.toString());
-        e.printStackTrace();
-      } finally {
-        isAuthenticating = false;
-      }			
-    }
-  }
-
-
-  /**
-   * Start the authorization
-   */
-  public void initiateAuthorization() {
-    if ( DEBUG ) Log.d(getClass().getName(), "YammerService.initiateAuthorization");
-    authThread = new YammerAuthorizeThread(this);
-    authThread.start();
-  }
-
-  /**
-   * Stop authorization
-   */
-  public void cancelAuthorization() {
-    if ( DEBUG ) Log.d(getClass().getName(), "YammerService.cancelAuthorization: authThread = " + authThread);
-    if (authThread != null) {
-      try {
-        isAuthenticating = false;
-        authThread.interrupt();
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    }
-  }
 
   @Override
   public void onStart(Intent intent, int startId) {
@@ -284,7 +204,7 @@ public class YammerService extends Service {
       Network network = yammerData.getNetwork(getCurrentNetworkId());
       
       // Check if a valid access token was stored at some point
-      if ((null == network || null == network.accessToken || null == network.accessTokenSecret) && !isAuthenticating ) {
+      if (null == network || null == network.accessToken || null == network.accessTokenSecret) {
         sendBroadcast(YammerActivity.INTENT_MUST_AUTHENTICATE_DIALOG);        		        	
       } else {
         if (DEBUG) Log.d("Yammer", "DB (accessToken): " + network.accessToken);
@@ -458,14 +378,12 @@ public class YammerService extends Service {
   }
 
   public void updateCurrentUserData() {
-    String url = getURLBase() + "/api/v1/users/current.json";
-    // Fetch the user data JSON
     String userData = null;
     try {
-      userData = getYammerProxy().accessResource(url);
+      userData = getYammerProxy().accessResource(getURLBase() + "/api/v1/users/current.json");
     } catch (YammerProxy.YammerProxyException e) {
-      Toast.makeText(this, "Unable to get user data", Toast.LENGTH_LONG);
       e.printStackTrace();
+      Toast.makeText(this, "Unable to get user data", Toast.LENGTH_LONG);
       return;
     }
     // If json public timeline doesn't exist, create it
@@ -510,7 +428,7 @@ public class YammerService extends Service {
   public void updatePublicMessages(boolean reloading) {
     if (DEBUG) Log.i(getClass().getName(), "Updating public timeline");
     
-    if ( isAuthorized() == false ) {
+    if ( ! isAuthorized() ) {
       if (DEBUG) Log.i(getClass().getName(), "User not authorized - skipping update");
       return;
     }
@@ -652,7 +570,7 @@ public class YammerService extends Service {
   }
   private YammerProxy getYammerProxy() {
     if (null == this.yammerProxy) {
-      this.yammerProxy = new YammerProxy(getURLBase());
+      this.yammerProxy = YammerProxy.getYammerProxy(getApplicationContext());
     }
     return this.yammerProxy;
   }

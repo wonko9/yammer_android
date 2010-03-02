@@ -1,4 +1,7 @@
 
+2010-03-01
+  First pass at Oauth+WRAP authentication
+
 2010-02-02
   Bumped versionCode for release (20)
   Added UpdateOnResume option (ANDROID-25)
