@@ -50,8 +50,6 @@ public class YammerService extends Service {
 
   /** Notification types **/
   private static int NOTIFICATION_NEW_MESSAGE = 0;
-  //private static int NOTIFICATION_ERROR = 1;
-  private static int NOTIFICATION_APPLICATION_UPDATE = 2;
 
   // Are we authorized?
   private static boolean authorized = false;
@@ -280,9 +278,6 @@ public class YammerService extends Service {
     NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
     // Default icon
     int icon = R.drawable.yammer_notification_icon;
-    if ( type == NOTIFICATION_APPLICATION_UPDATE ) {
-      icon = R.drawable.yammer_logo_small;			
-    }
 
     Notification notification = new Notification(icon,
         getResources().getString(_message_id), 
@@ -313,14 +308,6 @@ public class YammerService extends Service {
           pendingIntent
       );
       
-    } else if ( type == NOTIFICATION_APPLICATION_UPDATE ) {
-      Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://search?q=pname:"+getPackageName()));
-      PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
-      notification.setLatestEventInfo(this,
-          getResources().getString(R.string.application_update_title),
-          getResources().getString(R.string.application_update_text),
-          pendingIntent
-       );
     }
 
     if (DEBUG) Log.d(getClass().getName(), "Displaying notification - " + newMessageCount + " new messages!");
