@@ -23,7 +23,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -42,6 +41,9 @@ public class YammerService extends Service {
   
   public static final String INTENT_AUTHENTICATION_COMPLETE = "com.yammer.v1:AUTHENTICATION_COMPLETE";
   public static final String EXTRA_TOKEN = "token";
+  
+  public static final String INTENT_ENABLE_NOTIFICATION = "com.yammer.v1:ENABLE_NOTIFICATION";
+  public static final String INTENT_DISABLE_NOTIFICATION = "com.yammer.v1:DISABLE_NOTIFICATION";
 
   /** Client states **/
   private static int STATE_RAW = -1;
@@ -53,7 +55,7 @@ public class YammerService extends Service {
 
   // Are we authorized?
   private static boolean authorized = false;
-  // Check if an update should be made every 35 seconds
+  // Check if an update should be made every 10.5 seconds
   private final long GLOBAL_UPDATE_INTERVAL = 10500;
   private static long lastUpdateTime = 0;
   // Check for application updates once a day
@@ -70,8 +72,9 @@ public class YammerService extends Service {
   public YammerData yammerData = null;
   // Semaphone to control write access to json objects above
   private final Semaphore jsonUpdateSemaphore = new Semaphore(1);
-  private Boolean bound = false;
   private final IBinder mBinder = new YammerBinder();
+  
+  private boolean notificationEnabled;
   
   // Wakelock
   PowerManager.WakeLock wakelock = null; 
@@ -134,6 +137,13 @@ public class YammerService extends Service {
       } else if(INTENT_AUTHENTICATION_COMPLETE.equals(intent.getAction())) {
           updateCurrentUserData();
           authenticationComplete();
+          
+      } else if(INTENT_ENABLE_NOTIFICATION.equals(intent.getAction())) {
+          YammerService.this.notificationEnabled = true;
+          
+      } else if(INTENT_DISABLE_NOTIFICATION.equals(intent.getAction())) {
+        YammerService.this.notificationEnabled = false;
+        
       }
     }
 
@@ -228,8 +238,7 @@ public class YammerService extends Service {
                 long updateTimeout = getSettings().getUpdateTimeout();
                 //if (DEBUG) Log.d(getClass().getName(), "updateTimeout: " + (lastUpdateTime + updateTimeout) + ", currentTime: " + System.currentTimeMillis());
                 // Is it time to update?
-                if ( updateTimeout != 0 && 
-                    (System.currentTimeMillis() > lastUpdateTime + updateTimeout) ) {
+                if (updateTimeout != 0 && (System.currentTimeMillis() > lastUpdateTime + updateTimeout) ) {
                   if (DEBUG) Log.d(getClass().getName(), "Acquiring wakelock");
                   wakelock.acquire();
                   // Time to update
@@ -255,6 +264,8 @@ public class YammerService extends Service {
     filter.addAction(INTENT_RESET_ACCOUNT);
     filter.addAction(INTENT_POST_MESSAGE);
     filter.addAction(INTENT_AUTHENTICATION_COMPLETE);
+    filter.addAction(INTENT_ENABLE_NOTIFICATION);
+    filter.addAction(INTENT_DISABLE_NOTIFICATION);
     registerReceiver(new YammerIntentReceiver(), filter);
   }
 
@@ -271,7 +282,7 @@ public class YammerService extends Service {
    */
   public void notifyUser(int _message_id, int type) {
     // Only notify when we are not bound to the activity
-    if ( type == NOTIFICATION_NEW_MESSAGE && bound == true ) {
+    if(NOTIFICATION_NEW_MESSAGE == type && !notificationEnabled) {
       return;
     }
 
@@ -294,7 +305,7 @@ public class YammerService extends Service {
       notification.vibrate = new long[] {0, 100, 100, 100, 100, 100};	        	
     }
 
-    if ( type == NOTIFICATION_NEW_MESSAGE ) {
+    if(NOTIFICATION_NEW_MESSAGE == type) {
       // Intent of this notification - launch yammer activity
       Intent intent = new Intent(this, YammerActivity.class);
       PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
@@ -465,7 +476,7 @@ public class YammerService extends Service {
           boolean ownMessage = getCurrentUserId() == message.userId;
           // Only ask if notification is required if none of
           // the previous messages had notification requirement
-          if (false == notificationRequired) {
+          if(!notificationRequired) {
             notificationRequired = !ownMessage;
             if (DEBUG) Log.d(getClass().getName(), "Notification required: " + notificationRequired);
           }
@@ -499,9 +510,7 @@ public class YammerService extends Service {
     }
 
     if (messagesFound) {
-      // Is notification required?
       if (notificationRequired && !reloading) {
-        // Yep, so notify the user with a notification icon
         notifyUser(R.string.new_yammer_message, NOTIFICATION_NEW_MESSAGE);				
       }
       sendBroadcast(YammerActivity.INTENT_PUBLIC_TIMELINE_UPDATED);
@@ -534,14 +543,12 @@ public class YammerService extends Service {
   @Override
   public IBinder onBind(Intent intent) {
     if (DEBUG) Log.d(getClass().getName(), "YammerService.onBind");
-    this.bound = true;
     return mBinder;
   }
 
   @Override
   public boolean onUnbind(Intent intent) {
     if (DEBUG) Log.d(getClass().getName(), "YammerService.onUnbind");
-    this.bound = false;
     // Don't invoke onRebind, so return false
     return false;
   }

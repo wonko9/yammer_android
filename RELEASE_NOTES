@@ -1,4 +1,7 @@
 
+2010-03-09
+  Fixed notifications (ANDROID-50)
+
 2010-03-01
   First pass at Oauth+WRAP authentication
 

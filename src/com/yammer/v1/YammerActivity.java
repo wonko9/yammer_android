@@ -876,6 +876,9 @@ public class YammerActivity extends Activity {
   public void onResume() {
     if (DEBUG) Log.d(getClass().getName(), "Yammer.onResume");
     super.onResume();
+    
+    sendBroadcast(YammerService.INTENT_DISABLE_NOTIFICATION);
+    
     if (getYammerService() != null) {
       getYammerService().resetMessageCount();
       
@@ -888,33 +891,37 @@ public class YammerActivity extends Activity {
     }
   }
 
-  public void onDestroy() {
-    if (DEBUG) Log.d(getClass().getName(), "Yammer.onDestroy");
-    if ( yammerIntentReceiver != null ) {
-      if (DEBUG) Log.d(getClass().getName(), "Unregistering receiver");
-      unregisterReceiver(yammerIntentReceiver);
-      yammerIntentReceiver = null;
-    }    	
-    if ( isFinishing() ){
-      if (DEBUG) Log.i(getClass().getName(), "Activity is finishing");
-    }
-    //Debug.stopMethodTracing();
-    super.onDestroy();
+  public void onPause() {
+    super.onPause();
+    sendBroadcast(YammerService.INTENT_ENABLE_NOTIFICATION);
   }
-
+  
   public void onStop() {
+    if (DEBUG) Log.d(getClass().getName(), "Yammer.onStop");
     super.onStop();
     // mYammerService may be null here if keyboard is opened, closed very fast
     if ( getYammerService() != null ) {
       // Reset the message count - we probably saw any new message
       getYammerService().resetMessageCount();
     }
-    if (DEBUG) Log.d(getClass().getName(), "Yammer.onStop");
-    // Need to unbind the service
-    if (DEBUG) Log.d(getClass().getName(), "Unbinding ServiceConnection");    	
+    if (DEBUG) Log.d(getClass().getName(), "Unbinding ServiceConnection");
     unbindService(mConnection);
     // TODO: Unregister receiver
     // Make sure intent receiver was registered before unregistering it
+  }
+
+  public void onDestroy() {
+    if (DEBUG) Log.d(getClass().getName(), "Yammer.onDestroy");
+    if ( yammerIntentReceiver != null ) {
+      if (DEBUG) Log.d(getClass().getName(), "Unregistering receiver");
+      unregisterReceiver(yammerIntentReceiver);
+      yammerIntentReceiver = null;
+    }     
+    if ( isFinishing() ){
+      if (DEBUG) Log.i(getClass().getName(), "Activity is finishing");
+    }
+    //Debug.stopMethodTracing();
+    super.onDestroy();
   }
 
   public void showHeaderForFeed(String _feed) {
