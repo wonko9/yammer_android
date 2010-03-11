@@ -74,7 +74,7 @@ public class YammerService extends Service {
   private final Semaphore jsonUpdateSemaphore = new Semaphore(1);
   private final IBinder mBinder = new YammerBinder();
   
-  private boolean notificationEnabled;
+  private boolean notificationEnabled = true;
   
   // Wakelock
   PowerManager.WakeLock wakelock = null; 
