@@ -29,7 +29,7 @@ public class YammerData extends SQLiteOpenHelper {
   }
 
   private static final String DATABASE_NAME = "yammer.db";
-  private static final int DATABASE_VERSION = 19;
+  private static final int DATABASE_VERSION = 29;
 
   public YammerData(Context ctx) {
     super(ctx, DATABASE_NAME, null, DATABASE_VERSION);
@@ -57,6 +57,7 @@ public class YammerData extends SQLiteOpenHelper {
     if (DEBUG) Log.d(getClass().getName(), "YammerData.resetData for network");
     SQLiteDatabase db = this.getWritableDatabase();
     Message.deleteByNetworkId(db, networkId);
+    Feed.deleteByNetworkId(db, networkId);
     Network.delete(db, networkId);
     clearFeeds();
   }
@@ -64,14 +65,23 @@ public class YammerData extends SQLiteOpenHelper {
   public static int ID_TARGET_USER = 0;
   public static int ID_TARGET_TAG = 1;
 
-  public void createNetwork(long networkId, long userId, String accessToken, String accessTokenSecret) {
-    Network.create(getWritableDatabase(), networkId, userId, accessToken, accessTokenSecret);
+  public void addNetworks(Network[] _networks) {
+    for(int ii=0; ii < _networks.length ;ii++) {
+      _networks[ii].save(getWritableDatabase());
+    }
   }
 
   public Network getNetwork(long networkId) {
     return Network.findByNetworkId(getReadableDatabase(), networkId);
   }
-
+  
+  public Network[] getNetworks() {
+    return Network.getAll(getReadableDatabase());
+  }
+  
+  public void save(Network _value) {
+    _value.save(getWritableDatabase());
+  }
 
   /**
    * Get the highest message ID in the messages table
@@ -127,19 +137,19 @@ public class YammerData extends SQLiteOpenHelper {
 
   public Feed addFeed(JSONObject _json) throws YammerDataException {
     try {
-      return Feed.create(getWritableDatabase(), _json, false);
+      return Feed.create(getWritableDatabase(), _json);
     } catch(JSONException e) {
       throw new YammerDataException(e);
     }
   }
   
   
-  public String[] getFeedNames() {
-    return Feed.getFeedNames(getReadableDatabase());
+  public String[] getFeedNames(long _networkId) {
+    return Feed.getFeedNames(getReadableDatabase(), _networkId);
   }
   
-  public String getURLForFeed(String _name) throws YammerDataException {
-    return Feed.getURLForFeed(getReadableDatabase(), _name);
+  public String getURLForFeed(long _networkId, String _name) throws YammerDataException {
+    return Feed.getURLForFeed(getReadableDatabase(), _networkId, _name);
   }
   
 }

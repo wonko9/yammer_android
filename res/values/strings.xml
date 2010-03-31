@@ -17,6 +17,7 @@
     <string name="ok">OK</string>	
 	<string name="cancel">Cancel</string>
 	<string name="about">About</string>
+	<string name="menu_networks">Networks</string>
 	<string name="menu_feeds">Feeds</string>
 	<string name="menu_directory">Directory</string>
 	<string name="menu_reload">Reload</string>
@@ -39,6 +40,7 @@
 		<item quantity="one">There is 1 new Yammer message in your network</item>
 		<item quantity="other">There are %s new Yammer messages in your network</item>
 	</plurals>
+	<string name='select_network'>Select Network</string>
 	<string name='select_feed'>Select Feed</string>
 	<string name='application_update_title'>Yammer Updated</string>
 	<string name='application_update_text'>A new version of Yammer is available.</string>

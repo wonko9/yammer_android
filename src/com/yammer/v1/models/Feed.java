@@ -17,18 +17,21 @@ public class Feed extends Base {
 
   public static final String TABLE_NAME = "feeds";
   
-  public static final String FIELD_NAME = "name";
-  public static final String FIELD_URL = "url";
-  public static final String FIELD_DESCRIPTION = "description";
-  public static final String FIELD_ORDER = "order_index";
+  public static final String FIELD_NAME         = "name";
+  public static final String FIELD_NETWORK_ID   = "network_id";
+  public static final String FIELD_URL          = "url";
+  public static final String FIELD_DESCRIPTION  = "description";
+  public static final String FIELD_ORDER        = "order_index";
   
   public String name;
+  public long networkId;
   public String url;
   public String description;
   public int orderIndex;
 
   public Feed(Cursor _cur) {
     this.name = _cur.getString(_cur.getColumnIndex(FIELD_NAME));
+    this.networkId = _cur.getLong(_cur.getColumnIndex(FIELD_NETWORK_ID));
     this.url = _cur.getString(_cur.getColumnIndex(FIELD_URL));
     this.description = _cur.getString(_cur.getColumnIndex(FIELD_DESCRIPTION));
     this.orderIndex = _cur.getInt(_cur.getColumnIndex(FIELD_ORDER));
@@ -45,6 +48,7 @@ public class Feed extends Base {
     ContentValues values = new ContentValues();
     
     values.put(FIELD_NAME, this.name);
+    values.put(FIELD_NETWORK_ID, this.networkId);
     values.put(FIELD_URL, this.url);
     values.put(FIELD_DESCRIPTION, this.description);
     values.put(FIELD_ORDER, this.orderIndex);
@@ -53,7 +57,6 @@ public class Feed extends Base {
   }
 
   public Feed save(SQLiteDatabase _db) {
-    
     ContentValues values = toValues();
 
     if(0 != _db.update(TABLE_NAME, values, keyClause(), null)) {
@@ -70,12 +73,18 @@ public class Feed extends Base {
     return equalClause(FIELD_NAME, name);
   }
   
-  public static Feed create(SQLiteDatabase _db, JSONObject _obj, boolean _following) throws JSONException, SQLiteConstraintException {
+  public static Feed create(SQLiteDatabase _db, JSONObject _obj) throws JSONException, SQLiteConstraintException {
     return new Feed(_obj).save(_db);
   }
   
-  public static String[] getFeedNames(SQLiteDatabase _db) {
-    Cursor cur = _db.query(TABLE_NAME, new String[] {FIELD_NAME}, null, null, null, null, FIELD_ORDER);
+  public static String[] getFeedNames(SQLiteDatabase _db, long _networkId) {
+    Cursor cur = _db.query(
+                    TABLE_NAME, 
+                    new String[] {FIELD_NAME}, 
+                    equalClause(FIELD_NETWORK_ID, _networkId),
+                    null, null, null, 
+                    FIELD_ORDER
+                 );
     String[] names = new String[cur.getCount()]; 
     cur.moveToFirst();
     for (int ii=0 ; ii < names.length ; ii++) {
@@ -86,8 +95,13 @@ public class Feed extends Base {
     return names;
   }
   
-  public static String getURLForFeed(SQLiteDatabase _db, String _name) {
-    Cursor cur = _db.query(TABLE_NAME, new String[] {FIELD_URL}, equalClause(FIELD_NAME, _name), null, null, null, null);
+  public static String getURLForFeed(SQLiteDatabase _db, long _networkId, String _name) {
+    Cursor cur = _db.query(
+                    TABLE_NAME, 
+                    new String[] {FIELD_URL},
+                    equalClause(FIELD_NETWORK_ID, _networkId) + " AND " + equalClause(FIELD_NAME, _name),
+                    null, null, null, null
+                  );
     cur.moveToFirst();
     return cur.getString(cur.getColumnIndex(FIELD_URL));
   }
@@ -97,12 +111,21 @@ public class Feed extends Base {
     _db.execSQL("DELETE FROM " + TABLE_NAME);
   }
 
+  public static void deleteByNetworkId(SQLiteDatabase _db, long _networkId) {
+    delete(_db, equalClause(FIELD_NETWORK_ID, _networkId));
+  }
+  
+  public static void delete(SQLiteDatabase _db, String _clauseWithoutWhere) {
+    _db.execSQL("DELETE FROM " + TABLE_NAME + " WHERE " + _clauseWithoutWhere);
+  }
+
   public static void onCreateDB(SQLiteDatabase _db) {
     if(DEBUG) Log.d(Feed.class.getName(), ".onCreateDB()");
     
     _db.execSQL( "CREATE TABLE " + TABLE_NAME +" (" 
         + _ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
         + FIELD_NAME + " TEXT, "
+        + FIELD_NETWORK_ID + " BIGINT, "
         + FIELD_URL + " TEXT, "
         + FIELD_DESCRIPTION + " TEXT, "
         + FIELD_ORDER + " INTEGER "
@@ -115,6 +138,5 @@ public class Feed extends Base {
     _db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
     onCreateDB(_db);
   }
-
 
 }

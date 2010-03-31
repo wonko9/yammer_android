@@ -3,6 +3,7 @@ package com.yammer.v1;
 import static android.provider.BaseColumns._ID;
 
 import com.yammer.v1.models.Message;
+import com.yammer.v1.models.Network;
 import com.yammer.v1.models.URL;
 import com.yammer.v1.models.User;
 import com.yammer.v1.settings.SettingsActivity;
@@ -59,7 +60,10 @@ public class YammerActivity extends Activity {
   //TODO: Move to YammerService
   public static final String INTENT_TIMELINE_INITIALIZE = "com.yammer.v1:TIMELINE_INITIALIZE";
   public static final String INTENT_MUST_AUTHENTICATE_DIALOG = "com.yammer.v1:MUST_AUTHENTICATE_DIALOG";
+  
   public static final String INTENT_PUBLIC_TIMELINE_UPDATED = "com.yammer.v1:PUBLIC_TIMELINE_UPDATED";
+  public static final String EXTRA_LAST_SEEN_MESSAGE_ID = "last_seen_message_id";
+  
   public static final String INTENT_NETWORK_ERROR_FATAL = "com.yammer.v1:NETWORK_ERROR_FATAL";
   public static final String INTENT_NETWORK_ERROR_MINOR = "com.yammer.v1:NETWORK_ERROR_MINOR";
   public static final String INTENT_AUTHORIZATION_DONE = "com.yammer.v1:AUTHORIZATION_DONE";
@@ -113,7 +117,7 @@ public class YammerActivity extends Activity {
         if (DEBUG) Log.d(getClass().getName(), "Initializing timeline");
 
         final TweetListView tweetListView = (TweetListView) findViewById(R.id.tweet_list);
-        db = getYammerService().yammerData.getReadableDatabase();
+        db = getYammerService().getYammerData().getReadableDatabase();
         if (DEBUG) Log.d(getClass().getName(), "Querying for known messages in network");
 
         // remove logic here looking for users you are following or your id since call to /messages/following will already do this        
@@ -143,7 +147,7 @@ public class YammerActivity extends Activity {
               if (DEBUG) Log.d(getClass().getName(), "Replying to message");
               long rowId = row;
               String sql = "select _id, message_id from messages where " + _ID + "=" + rowId;
-              SQLiteDatabase db = getYammerService().yammerData.getReadableDatabase();
+              SQLiteDatabase db = getYammerService().getYammerData().getReadableDatabase();
               Cursor c = db.rawQuery(sql, null);
               c.moveToFirst();
               // Just show the reply activity 
@@ -254,6 +258,7 @@ public class YammerActivity extends Activity {
   private static final int MENU_VIEW_MESSAGE = Menu.FIRST + 7;
   private static final int MENU_VIEW_THREAD = Menu.FIRST + 8;
   private static final int MENU_UNFOLLOW = Menu.FIRST + 9;
+  private static final int MENU_NETWORKS = Menu.FIRST + 10;
   private static final int MENU_URL = Menu.FIRST + 1000;
 
   // ??
@@ -266,6 +271,8 @@ public class YammerActivity extends Activity {
   private static final int ID_DIALOG_LOADING = 1;
   private static final int ID_DIALOG_ERROR_FATAL = 2;
   private static final int ID_DIALOG_FEEDS = 3;
+  private static final int ID_DIALOG_NETWORKS = 4;
+  
   private static View cVire = null;
 
   protected void displayLoaderWheel() {
@@ -378,13 +385,16 @@ public class YammerActivity extends Activity {
       // 
     } else if ( id == ID_DIALOG_FEEDS ) {
       return createFeedDialog();		
+    } else if ( id == ID_DIALOG_NETWORKS ) {
+      return createNetworkDialog();    
     }
+    
     return super.onCreateDialog(id);
   }
 
   private Dialog createFeedDialog() {
     final YammerData yd = new YammerData(this);
-    final String[] feeds = yd.getFeedNames();
+    final String[] feeds = yd.getFeedNames(getSettings().getCurrentNetworkId());
     int selected = Arrays.asList(feeds).indexOf(getSettings().getFeed());
     if (selected < 0) selected = 0;
 
@@ -406,8 +416,40 @@ public class YammerActivity extends Activity {
     ).create();
   }
 
+  private Dialog createNetworkDialog() {
+    final YammerData yd = new YammerData(this);
+    final Network[] networks = yd.getNetworks();
+    
+    String[] names = new String[networks.length];
+    long defaultNetworkId = getSettings().getCurrentNetworkId(); 
+    int selected = 0;
+    for(int ii=0; ii<names.length ;ii++) {
+      names[ii] = networks[ii].name;
+      if(defaultNetworkId == networks[ii].networkId) {
+        selected = ii;
+      }
+    }
+    
+    return new AlertDialog.Builder(YammerActivity.this)
+    .setTitle(R.string.select_network)
+    .setIcon(R.drawable.yammer_logo_medium)
+    .setSingleChoiceItems(names, selected,
+        new DialogInterface.OnClickListener() {
+          public void onClick(DialogInterface _dialog, int _button) {
+            Network network = networks[_button];
+            Intent intent = new Intent(YammerService.INTENT_CHANGE_NETWORK);
+            intent.putExtra(YammerService.EXTRA_NETWORK_ID, network.networkId);
+            sendBroadcast(intent);
+//            reload();
+            _dialog.dismiss();
+          }
+        }
+      ).create();
+  }
+
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
+    menu.add(0, MENU_NETWORKS, Menu.NONE, R.string.menu_networks).setIcon(android.R.drawable.ic_menu_compass);
     menu.add(0, MENU_FEEDS, Menu.NONE, R.string.menu_feeds).setIcon(R.drawable.menu_feeds);
 //    menu.add(0, MENU_DIRECTORY, Menu.NONE, R.string.menu_directory).setIcon(R.drawable.menu_directory);
     menu.add(0, MENU_RELOAD, Menu.NONE, R.string.menu_reload).setIcon(R.drawable.menu_refresh);
@@ -440,6 +482,7 @@ public class YammerActivity extends Activity {
       if (DEBUG) Log.d(getClass().getName(), "Whoops.. Cursor or view wasn't valid. Makes no sense to continue.");        	
       return;        	
     }
+    
   }
 
   @Override 
@@ -458,6 +501,11 @@ public class YammerActivity extends Activity {
       if (DEBUG) Log.d(getClass().getName(), "MENU_FEEDS selected");
       // Create activity YammerSettings
       showDialog(ID_DIALOG_FEEDS);
+      break;
+    case MENU_NETWORKS:
+      if (DEBUG) Log.d(getClass().getName(), "MENU_NETWORDS selected");
+      // Create activity YammerSettings
+      showDialog(ID_DIALOG_NETWORKS);
       break;
     };
     return (super.onOptionsItemSelected(item));  
@@ -484,9 +532,9 @@ public class YammerActivity extends Activity {
     // Get the row ID
     AdapterContextMenuInfo info = (AdapterContextMenuInfo)menuInfo;
     long rowId = info.id;
-    // Select
+    // TODO: Refactor this into YammerData().getMessage(rowId); YammerData().getUser(message.userId);
     String sql = "select messages._id, messages.message, messages.message_id, messages.user_id, users.full_name, users.is_following, urls.url from messages join users on messages.user_id=users.user_id left join urls on messages.message_id=urls.message_id where messages." + _ID + "=" + rowId;
-    SQLiteDatabase db = getYammerService().yammerData.getReadableDatabase();
+    SQLiteDatabase db = getYammerService().getYammerData().getReadableDatabase();
     Cursor c = db.rawQuery(sql, null);
     c.moveToFirst();
     // Get the user ID of the user who  posted the message
@@ -504,6 +552,7 @@ public class YammerActivity extends Activity {
     //menu.setHeaderTitle(R.string.popup_title_label);
     // Is this my own message?
     boolean myself = false;
+    //TODO: don't call getYammerService().getCurrentUserId()
     if ( userId == getYammerService().getCurrentUserId() ) {
       myself = true;
     }
@@ -568,7 +617,7 @@ public class YammerActivity extends Activity {
       // Get the row ID for the item clicked
       long rowId = info.id;
       String sql = "select _id, user_id, message_id from messages where " + _ID + "=" + rowId;
-      SQLiteDatabase db = getYammerService().yammerData.getReadableDatabase();
+      SQLiteDatabase db = getYammerService().getYammerData().getReadableDatabase();
       Cursor c = db.rawQuery(sql, null);
       c.moveToFirst();	
       // Retrieve the message ID og the message clicked on

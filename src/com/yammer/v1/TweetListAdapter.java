@@ -1,6 +1,7 @@
 package com.yammer.v1;
 
 import com.yammer.v1.models.Message;
+import com.yammer.v1.models.Network;
 import com.yammer.v1.models.User;
 
 import java.text.SimpleDateFormat;
@@ -43,6 +44,8 @@ public class TweetListAdapter extends SimpleCursorAdapter {
   final String hours_ago;
   final String days_ago;
 
+
+  final int messageIdIndex;
   final int columnIndex;
   final int fullNameColumnIndex;
   final int emailColumnIndex;
@@ -81,6 +84,7 @@ public class TweetListAdapter extends SimpleCursorAdapter {
     days_ago = context.getResources().getString(R.string.days_ago);
     
     // Cache column indexes
+    messageIdIndex = c.getColumnIndex(Message.FIELD_MESSAGE_ID);
     columnIndex = c.getColumnIndex(Message.FIELD_MESSAGE);
     createdColumnIndex = c.getColumnIndex(Message.FIELD_TIMESTAMP);
     emailColumnIndex = c.getColumnIndex(User.FIELD_EMAIL);
@@ -212,7 +216,7 @@ public class TweetListAdapter extends SimpleCursorAdapter {
     // Colorize the message
     int from = 0, to = 0;
     SpannableString str = SpannableString.valueOf(postPrefix+ ": " + message);
-
+    
     // Posters full name is white
     from = 0;
     to = fullNameLength;
@@ -250,7 +254,30 @@ public class TweetListAdapter extends SimpleCursorAdapter {
         bitmapDownloader.getBitmap(c.getString(mugshotUrlColumnIndex), c.getString(mugshotMd5ColumnIndex))
     );
 
+    Network network = getNetwork();
+    long lastMessageId = network.lastMessageId;
+    long messageId = c.getLong(messageIdIndex);
+    if (network.lastMessageId < messageId) {
+      //TODO: Use Style Instead
+      convertView.setBackgroundColor(Color.YELLOW);
+      lastMessageId = Math.max(messageId, lastMessageId);
+    }
+    network.lastMessageId = lastMessageId;
+    getYammerData().save(network);
+    
     return convertView;
+  }
+  
+  private Network getNetwork() {
+    return getYammerData().getNetwork(getSettings().getCurrentNetworkId());
+  }
+
+  YammerData yammerData;
+  private YammerData getYammerData() {
+    if(null == this.yammerData) {
+      this.yammerData = new YammerData(context);
+    }
+    return this.yammerData;
   }
   
   SettingsEditor settings;

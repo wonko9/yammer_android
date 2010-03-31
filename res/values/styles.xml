@@ -40,4 +40,5 @@
 		<item name="android:background">@drawable/preference_category_background</item>
 		<item name="android:textColor">#ffffffff</item>	
  	</style>
+
 </resources>

@@ -29,30 +29,66 @@ public class SettingsEditor {
     return getPreferences().edit();
   }
   
-  public void setDefaultUserId(long _id) {
-    if(DEBUG) Log.d(getClass().getName(), ".setDefaultUserId: " + _id);
+//  public void setUserId(long _id) {
+//    if(DEBUG) Log.d(getClass().getName(), ".setUserId: " + _id);
+//    SharedPreferences.Editor editor = getEditor();
+//    editor.putLong("UserId", _id);
+//    editor.commit();      
+//  }
+//  
+//  public long getUserId() {
+//    if(DEBUG) Log.d(getClass().getName(), ".getUserId");
+//    return getPreferences().getLong("UserId", 0L);
+//  }
+  
+  public void setCurrentNetworkId(long _id) {
+    if(DEBUG) Log.d(getClass().getName(), ".setCurrentNetworkId: " + _id);
     SharedPreferences.Editor editor = getEditor();
-    editor.putLong("DefaultUserId", _id);
+    editor.putLong("CurrentNetworkId", _id);
     editor.commit();      
   }
   
-  public long getDefaultUserId() {
-    if(DEBUG) Log.d(getClass().getName(), ".getDefaultUserId");
-    return getPreferences().getLong("DefaultUserId", 0L);
+  public long getCurrentNetworkId() {
+    if(DEBUG) Log.d(getClass().getName(), ".getCurrentNetworkId");
+    return getPreferences().getLong("CurrentNetworkId", 0L);
   }
-  
-  public void setDefaultNetworkId(long _id) {
-    if(DEBUG) Log.d(getClass().getName(), ".setDefaultNetworkId: " + _id);
-    SharedPreferences.Editor editor = getEditor();
-    editor.putLong("DefaultNetworkId", _id);
-    editor.commit();      
-  }
-  
-  public long getDefaultNetworkId() {
-    if(DEBUG) Log.d(getClass().getName(), ".getDefaultNetworkId");
-    return getPreferences().getLong("DefaultNetworkId", 0L);
-  }
-  
+
+//  public void setRequestToken(String _value) {
+//    if(DEBUG) Log.d(getClass().getName(), ".setRequestToken: " + _value);
+//    SharedPreferences.Editor editor = getEditor();
+//    editor.putString("RequestToken", _value);
+//    editor.commit();      
+//  }
+//  
+//  public String getRequestToken() {
+//    if(DEBUG) Log.d(getClass().getName(), ".getRequestToken");
+//    return getPreferences().getString("RequestToken", null);
+//  }
+//
+//  public void setTokenSecret(String _value) {
+//    if(DEBUG) Log.d(getClass().getName(), ".setTokenSecret: " + _value);
+//    SharedPreferences.Editor editor = getEditor();
+//    editor.putString("TokenSecret", _value);
+//    editor.commit();      
+//  }
+//  
+//  public String getTokenSecret() {
+//    if(DEBUG) Log.d(getClass().getName(), ".getTokenSecret");
+//    return getPreferences().getString("TokenSecret", null);
+//  }
+
+//  public void setLastSeenMessageId(long _id) {
+//    if(DEBUG) Log.d(getClass().getName(), ".setLastSeenMessageId: " + _id);
+//    SharedPreferences.Editor editor = getEditor();
+//    editor.putLong("LastSeenMessageId", _id);
+//    editor.commit();      
+//  }
+//  
+//  public long getLastSeenMessageId() {
+//    if(DEBUG) Log.d(getClass().getName(), ".getLastSeenMessageId");
+//    return getPreferences().getLong("LastSeenMessageId", 0L);
+//  }
+
   public boolean startServiceAtBoot() {
     if(DEBUG) Log.d(getClass().getName(), ".startServiceAtBoot");
     return getPreferences().getBoolean("key_background", true);

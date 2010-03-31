@@ -13,6 +13,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.yammer.v1.models.Network;
 import com.yammer.v1.settings.SettingsEditor;
 
 import net.oauth.OAuth;
@@ -38,6 +43,11 @@ public class YammerProxy {
 
   @SuppressWarnings("serial")
   public static class YammerProxyException extends Exception {
+    public YammerProxyException() {super();}
+    public YammerProxyException(String _message, Throwable _cause) {
+      super(_message);
+      initCause(_cause);
+    }
   }
 
   @SuppressWarnings("serial")
@@ -127,7 +137,7 @@ public class YammerProxy {
     return proxy;
   }
 
-  public YammerProxy(String _baseURL) {
+  protected YammerProxy(String _baseURL) {
     this.baseURL = _baseURL;
     reset();
   }
@@ -307,6 +317,47 @@ public class YammerProxy {
   }
 
   /**
+   * Get Networks.
+   * 
+   * @returns JSONMessage containing networks 
+   */
+  public Network[] getNetworks() throws YammerProxyException {
+    try {
+      
+      // get base information
+      JSONArray jsonArray = new JSONArray(accessResource(this.baseURL + "/api/v1/networks/current.json"));
+      Map<Long, Network> networks = new java.util.HashMap<Long,Network>();
+      for( int ii=0; ii < jsonArray.length(); ii++ ) {
+        JSONObject obj = jsonArray.getJSONObject(ii);
+        networks.put(obj.getLong("id"), new Network(obj));
+      }
+      
+      // fill in tokens
+      jsonArray = new JSONArray(accessResource(this.baseURL + "/api/v1/oauth/tokens.json"));
+      for( int ii=0; ii < jsonArray.length(); ii++ ) {
+        JSONObject obj = jsonArray.getJSONObject(ii);
+        networks.get(obj.getLong("network_id")).update(obj);
+      }
+      
+      return networks.values().toArray(new Network[networks.size()]);
+    } catch (JSONException cause) {
+      if (DEBUG) Log.w(getClass().getName(), cause.getMessage());
+      throw new YammerProxyException("Unable to get networks", cause);
+    }
+  }
+  
+  /**
+   * Set the current network.
+   * 
+   * All subsequent message requests will be made to this network.
+   * 
+   * @param _value New network
+   */
+  public void setCurrentNetwork(Network _value) {
+    this.baseURL = _value.webURL;
+  }
+  
+  /**
    * Post a message or a reply to the current Yammer Network
    *
    * @param message - message to post
@@ -390,6 +441,11 @@ public class YammerProxy {
     }
   }
 
+  public String getMessagesNewerThan(String _feedURL, long _messageId) throws YammerProxyException {
+    return accessResource(this.baseURL + _feedURL.substring(_feedURL.indexOf("/api/")) + ".json?newer_than=" + _messageId);
+  }
+
+
 
   // TODO: privatize
   public String deleteResource(String url) throws YammerProxyException {
@@ -428,13 +484,11 @@ public class YammerProxy {
       responseBody = response.readBodyAsString();
       if (DEBUG) Log.d(getClass().getName(), "responseBody: " + responseBody);
     } catch (IOException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
       throw new ConnectionProblem();
     } catch (URISyntaxException e) {
       e.printStackTrace();
     } catch (OAuthException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
 
@@ -443,7 +497,7 @@ public class YammerProxy {
 
   @SuppressWarnings("unchecked")
   private OAuthMessage sendRequest(Map map, String url, String method) throws IOException, URISyntaxException, OAuthException, AccessDeniedException {
-    if (DEBUG) Log.d(getClass().getName(), "YammerProxy.sendRequest");
+    if (DEBUG) Log.d(getClass().getName(), ".sendRequest");
 
     List<Map.Entry> params = new ArrayList<Map.Entry>();
     Iterator it = map.entrySet().iterator();
@@ -472,6 +526,8 @@ public class YammerProxy {
       } else if (401 == statusCode) {
         throw (AccessDeniedException)new AccessDeniedException().fillInStackTrace();
       }
+    } catch(Exception ex) {
+      ex.printStackTrace();
     }
     // It seems an error occured
     return null;
