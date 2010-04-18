@@ -181,17 +181,6 @@ public class YammerService extends Service {
     wakelock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, getClass().getName());
   }
 
-  /**
-   * Set the internal state of the client
-   * @param newState
-   */
-  public void setClientState(final int newState) {
-    // Change the state
-    YammerService.CLIENT_STATE = newState;
-    // Invoke GUI callback to notify that a change has occured
-    // Invoke...
-  }
-
 
   @Override
   public void onStart(Intent intent, int startId) {
