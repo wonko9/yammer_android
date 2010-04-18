@@ -25,19 +25,21 @@ public class User extends Base {
 
   public static final String TABLE_NAME = "users";
   
-  public static final String FIELD_USER_ID = "user_id";
-  public static final String FIELD_MUGSHOT_URL = "mugshot_url"; 
-  public static final String FIELD_MUGSHOT_MD5 = "mugshot_md5"; 
-  public static final String FIELD_FULL_NAME = "full_name";
-  public static final String FIELD_REPLYEE_FULL_NAME = "replyee_full_name";
-  public static final String FIELD_NAME = "name";
-  public static final String FIELD_TITLE = "title";
-  public static final String FIELD_EMAIL = "email";
-  public static final String FIELD_REPLYEE_EMAIL = "replyee_email";
-  public static final String FIELD_URL = "url";
-  public static final String FIELD_WEB_URL = "web_url";
-  public static final String FIELD_IS_FOLLOWING = "is_following";
+  public static final String FIELD_NETWORK_ID         = Network.FIELD_NETWORK_ID;
+  public static final String FIELD_USER_ID            = "user_id";
+  public static final String FIELD_MUGSHOT_URL        = "mugshot_url"; 
+  public static final String FIELD_MUGSHOT_MD5        = "mugshot_md5"; 
+  public static final String FIELD_FULL_NAME          = "full_name";
+  public static final String FIELD_REPLYEE_FULL_NAME  = "replyee_full_name";
+  public static final String FIELD_NAME               = "name";
+  public static final String FIELD_TITLE              = "title";
+  public static final String FIELD_EMAIL              = "email";
+  public static final String FIELD_REPLYEE_EMAIL      = "replyee_email";
+  public static final String FIELD_URL                = "url";
+  public static final String FIELD_WEB_URL            = "web_url";
+  public static final String FIELD_IS_FOLLOWING       = "is_following";
   
+  public long networkId;
   public long userId;
   public String mugshotURL;
   public String mugshotMD5;
@@ -48,8 +50,10 @@ public class User extends Base {
   public String url;
   public boolean following;
   public String webURL;
+  public User[] followedUsers;
 
   User(Cursor _cur) {
+    this.networkId = _cur.getLong(_cur.getColumnIndex(FIELD_NETWORK_ID));
     this.userId = _cur.getLong(_cur.getColumnIndex(FIELD_USER_ID));
     this.mugshotURL = _cur.getString(_cur.getColumnIndex(FIELD_MUGSHOT_URL));
     this.mugshotMD5 = _cur.getString(_cur.getColumnIndex(FIELD_MUGSHOT_MD5));
@@ -66,23 +70,32 @@ public class User extends Base {
     this(_cur);
     _block.call(this);
   }
-  
-  User(JSONObject _user, boolean _following) throws JSONException {
-    this.userId = _user.getLong("id");
-    this.name = _user.getString("name");
-    this.fullName = _user.getString("full_name");
-    this.title = _user.getString("job_title");
-    this.mugshotURL = _user.getString("mugshot_url");
-    this.mugshotMD5 = Utils.md5(_user.getString("mugshot_url"));
-    this.webURL = _user.getString("web_url");
-    this.url = _user.getString("url");
-    this.email = getEmailAddress(_user, "primary");
-    this.following = _following;
-  }
 
-  User(JSONObject _obj, boolean _following, Block<User, Void> _block) throws JSONException {
-    this(_obj, _following);
-    _block.call(this);
+  public User(JSONObject _json) throws JSONException {
+    this(_json, false);
+  }
+  
+  public User(JSONObject _json, boolean _following) throws JSONException {
+    if(_json.has("network_id")) this.networkId = _json.getLong("network_id");
+    this.userId = _json.getLong("id");
+    this.name = _json.getString("name");
+    this.fullName = _json.getString("full_name");
+    this.title = _json.getString("job_title");
+    this.mugshotURL = _json.getString("mugshot_url");
+    this.mugshotMD5 = Utils.md5(_json.getString("mugshot_url"));
+    this.webURL = _json.getString("web_url");
+    this.url = _json.getString("url");
+    this.email = getEmailAddress(_json, "primary");
+    this.following = _following;
+    
+    if(_json.has("subscriptions")) {
+      JSONArray array = _json.getJSONArray("subscriptions");
+      this.followedUsers = new User[array.length()];
+      for(int ii=0; ii < array.length() ;ii++) {
+        this.followedUsers[ii] = new User(array.getJSONObject(ii), true);
+        this.followedUsers[ii].networkId = this.networkId;
+      }
+    }
   }
 
   private String getEmailAddress(JSONObject _user, String _type) {
@@ -101,6 +114,7 @@ public class User extends Base {
   private ContentValues toValues() {
     ContentValues values = new ContentValues();
     
+    values.put(FIELD_NETWORK_ID, this.networkId);
     values.put(FIELD_USER_ID, this.userId);
     values.put(FIELD_NAME, this.name);
     values.put(FIELD_FULL_NAME, this.fullName);
@@ -162,6 +176,7 @@ public class User extends Base {
     
     _db.execSQL( "CREATE TABLE " + TABLE_NAME +" (" 
         + _ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+        + FIELD_NETWORK_ID + " BIGINT NOT NULL, "
         + FIELD_USER_ID + " BIGINT UNIQUE NOT NULL, "
         + FIELD_MUGSHOT_URL + " TEXT, "
         + FIELD_MUGSHOT_MD5 + " TEXT, "

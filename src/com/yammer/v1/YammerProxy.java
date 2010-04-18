@@ -17,7 +17,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.yammer.v1.models.Feed;
 import com.yammer.v1.models.Network;
+import com.yammer.v1.models.User;
 import com.yammer.v1.settings.SettingsEditor;
 
 import net.oauth.OAuth;
@@ -40,6 +42,30 @@ public class YammerProxy {
   private static final boolean DEBUG = G.DEBUG;
 
   public static final String DEFAULT_FEED = "My Feed";
+  
+  //TODO: I suspect we can get rid of these since we're using OAuth+WRAP
+  private static final String PATH_CALLBACK = "/android/callback";
+  private static final String PATH_REQUEST_TOKEN = "/oauth/request_token";
+  private static final String PATH_AUTHORIZE = "/oauth/authorize";
+  private static final String PATH_ACCESS_TOKEN = "/oauth/access_token";
+
+  private static final String APPLICATION_NAME = "android";
+
+  private static final String PATH_LOGIN            = "/oauth_wrap/access_token";
+  private static final String PATH_CURRENT_USER     = "/api/v1/users/current.json";
+  private static final String PATH_CURRENT_NETWORKS = "/api/v1/networks/current.json";
+  private static final String PATH_TOKENS           = "/api/v1/oauth/tokens.json";
+
+  private String baseURL = null;
+
+  private String requestToken = null;
+  private String tokenSecret = null;
+
+  private OAuthAccessor accessor = null;
+  private OAuthConsumer consumer = null;
+  private OAuthClient client = null;
+  private OAuthServiceProvider provider = null;
+
 
   @SuppressWarnings("serial")
   public static class YammerProxyException extends Exception {
@@ -103,31 +129,6 @@ public class YammerProxy {
     }
   }
 
-  /**
-   * Properties for service we are trying to authenticate against.
-   *
-   * Yammer properties:
-   */
-  String baseURL = null;
-  String applicationName = "android";
-  String callbackPath = "/android/callback";
-  String reqPath = "/oauth/request_token";
-  String authzPath = "/oauth/authorize";
-  String accessPath = "/oauth/access_token";
-
-  String requestToken = null;
-  String tokenSecret = null;
-
-  private static final String URL_LOGIN = "/oauth_wrap/access_token";
-
-  /**
-   * These are the properties that should be set by the values
-   * returned by the server.
-   */
-  private OAuthAccessor accessor = null;
-  private OAuthConsumer consumer = null;
-  private OAuthClient client = null;
-  private OAuthServiceProvider provider = null;
 
   private static YammerProxy proxy;
   public static YammerProxy getYammerProxy(Context _ctx) {
@@ -155,8 +156,8 @@ public class YammerProxy {
    * Reset the OAuth library
    */
   public void reset() {
-    this.provider = new OAuthServiceProvider(baseURL+reqPath, baseURL+authzPath, baseURL+accessPath);
-    this.consumer = new OAuthConsumer(baseURL+callbackPath, OAuthCustom.KEY, OAuthCustom.SECRET, provider);
+    this.provider = new OAuthServiceProvider(baseURL+PATH_REQUEST_TOKEN, baseURL+PATH_AUTHORIZE, baseURL+PATH_ACCESS_TOKEN);
+    this.consumer = new OAuthConsumer(baseURL+PATH_CALLBACK, OAuthCustom.KEY, OAuthCustom.SECRET, provider);
     this.accessor = new OAuthAccessor(consumer);
     this.client = new OAuthClient(getHttpClient());
     this.requestToken = null;
@@ -179,7 +180,7 @@ public class YammerProxy {
   public int login(String _email, String _password) {
 
       try {
-        URL url = new URL(baseURL + URL_LOGIN + "?wrap_username=" + _email + "&wrap_password=" + _password + "&wrap_client_id=" + OAuthCustom.KEY);
+        URL url = new URL(baseURL + PATH_LOGIN + "?wrap_username=" + _email + "&wrap_password=" + _password + "&wrap_client_id=" + OAuthCustom.KEY);
         HttpMessage request = new HttpMessage(OAuthMessage.GET, url);
         HttpResponseMessage response = getHttpClient().execute(request);
         if(200 == response.getStatusCode()) {
@@ -246,7 +247,7 @@ public class YammerProxy {
     Properties paramProps = new Properties();
     paramProps.setProperty("oauth_token", this.requestToken);
     try {
-      OAuthMessage response = sendRequest( paramProps, this.baseURL+this.accessPath+"?callback_token="+callbackToken, "GET");
+      OAuthMessage response = sendRequest( paramProps, this.baseURL+PATH_ACCESS_TOKEN+"?callback_token="+callbackToken, "GET");
       // Store the access token secret
       this.requestToken =  response.getParameter("oauth_token");
       this.tokenSecret =  response.getParameter("oauth_token_secret");
@@ -280,7 +281,7 @@ public class YammerProxy {
     assert( this.requestToken != null && this.accessor != null );
 
     Properties paramProps = new Properties();
-    paramProps.setProperty("application_name", applicationName);
+    paramProps.setProperty("application_name", APPLICATION_NAME);
     paramProps.setProperty("oauth_token", requestToken);
     String responseUrl = null;
     try {
@@ -316,6 +317,30 @@ public class YammerProxy {
     return responseUrl;
   }
 
+  public User getCurrentUser(boolean _includeFollowed) throws YammerProxyException {
+    try {
+      return new User(getCurrentUserJSON(_includeFollowed));
+    } catch(JSONException cause) {
+      throw new YammerProxyException("Unable to get current user", cause);
+    }
+  }
+  
+  private String currentUserData;
+  private JSONObject getCurrentUserJSON(boolean _includeFollowed) throws YammerProxyException {
+    try {
+      if(null == currentUserData) {
+        String url = this.baseURL + PATH_CURRENT_USER;
+        if(_includeFollowed) {
+          url += "?include_followed_users=1";
+        }
+        currentUserData = accessResource(url);
+      }
+      return new JSONObject(currentUserData);
+    } catch(JSONException cause) {
+      throw new YammerProxyException("Unable to get current user", cause);
+    }
+  }
+  
   /**
    * Get Networks.
    * 
@@ -325,7 +350,7 @@ public class YammerProxy {
     try {
       
       // get base information
-      JSONArray jsonArray = new JSONArray(accessResource(this.baseURL + "/api/v1/networks/current.json"));
+      JSONArray jsonArray = new JSONArray(accessResource(this.baseURL + PATH_CURRENT_NETWORKS));
       Map<Long, Network> networks = new java.util.HashMap<Long,Network>();
       for( int ii=0; ii < jsonArray.length(); ii++ ) {
         JSONObject obj = jsonArray.getJSONObject(ii);
@@ -333,7 +358,7 @@ public class YammerProxy {
       }
       
       // fill in tokens
-      jsonArray = new JSONArray(accessResource(this.baseURL + "/api/v1/oauth/tokens.json"));
+      jsonArray = new JSONArray(accessResource(this.baseURL + PATH_TOKENS));
       for( int ii=0; ii < jsonArray.length(); ii++ ) {
         JSONObject obj = jsonArray.getJSONObject(ii);
         networks.get(obj.getLong("network_id")).update(obj);
@@ -351,10 +376,32 @@ public class YammerProxy {
    * 
    * All subsequent message requests will be made to this network.
    * 
-   * @param _value New network
+   * @param _network New network
    */
-  public void setCurrentNetwork(Network _value) {
-    this.baseURL = _value.webURL;
+  public void setCurrentNetwork(Network _network) {
+    baseURL = _network.webURL;
+    requestToken = _network.accessToken;
+    tokenSecret = _network.accessTokenSecret;
+    currentUserData = null;
+  }
+  
+  public Feed[] getFeeds() throws YammerProxyException {
+    try {
+      JSONObject currentUserJSON = getCurrentUserJSON(false);
+      long networkId = currentUserJSON.getLong("network_id");
+      
+      JSONArray jsonArray = currentUserJSON.getJSONObject("web_preferences").getJSONArray("home_tabs");
+      if (DEBUG) Log.d(getClass().getName(), "Found " + jsonArray.length() + " feeds");
+      Feed[] feeds = new Feed[jsonArray.length()];
+      for( int ii=0; ii < jsonArray.length(); ii++ ) {
+        feeds[ii] = new Feed(jsonArray.getJSONObject(ii));
+        feeds[ii].networkId = networkId;
+      }
+      
+      return feeds;
+    } catch (JSONException cause) {
+      throw new YammerProxyException("Unable to get feeds", cause);
+    }
   }
   
   /**

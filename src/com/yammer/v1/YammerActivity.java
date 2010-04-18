@@ -52,6 +52,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 
@@ -205,7 +206,7 @@ public class YammerActivity extends Activity {
                   showLoadingAnimation(true);
                   // Update the messages timeline
 //                  getYammerService().updateCurrentUserData();
-                  getYammerService().updatePublicMessages(false);
+                  getYammerService().reloadMessages(false);
                   // Initialize the tweets view
                   sendBroadcast(INTENT_TIMELINE_INITIALIZE);
                   runOnUiThread( new Runnable() {
@@ -403,16 +404,16 @@ public class YammerActivity extends Activity {
     .setIcon(R.drawable.yammer_logo_medium)
     .setSingleChoiceItems(feeds, selected,
         new DialogInterface.OnClickListener() {
-      public void onClick(DialogInterface _dialog, int _button) {
-        String feed = feeds[_button];
-        if (DEBUG) Log.d(getClass().getName(), "Feed '" + feed + "' selected" );                  
-        getSettings().setFeed(feed);
-        showHeaderForFeed(feed);
-        yd.clearMessages();
-        reload();
-        _dialog.dismiss();
-      }
-    }
+          public void onClick(DialogInterface _dialog, int _button) {
+            _dialog.dismiss();
+            String feed = feeds[_button];
+            if (DEBUG) Log.d(getClass().getName(), "Feed '" + feed + "' selected" );                  
+            getSettings().setFeed(feed);
+            showHeaderForFeed(feed);
+            yd.clearMessages();
+            reload();
+          }
+        }
     ).create();
   }
 
@@ -436,12 +437,12 @@ public class YammerActivity extends Activity {
     .setSingleChoiceItems(names, selected,
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface _dialog, int _button) {
+            _dialog.dismiss();
             Network network = networks[_button];
             Intent intent = new Intent(YammerService.INTENT_CHANGE_NETWORK);
             intent.putExtra(YammerService.EXTRA_NETWORK_ID, network.networkId);
             sendBroadcast(intent);
 //            reload();
-            _dialog.dismiss();
           }
         }
       ).create();
@@ -487,7 +488,6 @@ public class YammerActivity extends Activity {
 
   @Override 
   public boolean onOptionsItemSelected(MenuItem item) {
-    // Which item was selected
     switch ( item.getItemId() ) {
     case MENU_RELOAD:
       if (DEBUG) Log.d(getClass().getName(), "MENU_RELOAD selected");
@@ -499,12 +499,10 @@ public class YammerActivity extends Activity {
       break;
     case MENU_FEEDS:
       if (DEBUG) Log.d(getClass().getName(), "MENU_FEEDS selected");
-      // Create activity YammerSettings
       showDialog(ID_DIALOG_FEEDS);
       break;
     case MENU_NETWORKS:
       if (DEBUG) Log.d(getClass().getName(), "MENU_NETWORDS selected");
-      // Create activity YammerSettings
       showDialog(ID_DIALOG_NETWORKS);
       break;
     };
@@ -517,9 +515,9 @@ public class YammerActivity extends Activity {
           public void run() {
             try {
               showLoadingAnimation(true);
-              getYammerService().clearMessages();
-              getYammerService().updatePublicMessages(true);
               getYammerService().updateCurrentUserData();
+              getYammerService().clearMessages();
+              getYammerService().reloadMessages(true);
             } finally {
               showLoadingAnimation(false);									
             }
@@ -932,7 +930,7 @@ public class YammerActivity extends Activity {
       getYammerService().resetMessageCount();
       
       if(getSettings().updateOnResume() && getYammerService().isAuthorized()) {
-        getYammerService().updatePublicMessages(true);
+        getYammerService().reloadMessages(true);
       }
       
     } else {
@@ -1003,4 +1001,5 @@ public class YammerActivity extends Activity {
   private void sendBroadcast(String _intent) {
     sendBroadcast(new Intent(_intent));
   }
+  
 }

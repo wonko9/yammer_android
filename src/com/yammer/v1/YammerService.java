@@ -2,8 +2,10 @@ package com.yammer.v1;
 
 import com.yammer.v1.YammerData.YammerDataException;
 import com.yammer.v1.YammerProxy.YammerProxyException;
+import com.yammer.v1.models.Feed;
 import com.yammer.v1.models.Message;
 import com.yammer.v1.models.Network;
+import com.yammer.v1.models.User;
 import com.yammer.v1.settings.SettingsEditor;
 import com.yammer.v1.YammerProxy;
 
@@ -24,6 +26,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.Process;
@@ -76,6 +79,8 @@ public class YammerService extends Service {
   
   private boolean notificationEnabled = true;
   
+  private Handler mHandler;
+  
   // Wakelock
   PowerManager.WakeLock wakelock = null; 
 
@@ -102,7 +107,7 @@ public class YammerService extends Service {
     public YammerIntentReceiver() {
     }
     @Override
-    public void onReceive(Context context, Intent intent) {
+    public void onReceive(Context context, final Intent intent) {
       if (DEBUG) Log.d(getClass().getName(), "Intent received: " + intent.getAction());
       if (INTENT_RESET_ACCOUNT.equals(intent.getAction())) {
         // Acquire sempahore to disallow updates
@@ -145,7 +150,11 @@ public class YammerService extends Service {
         YammerService.this.notificationEnabled = false;
 
       } else if(INTENT_CHANGE_NETWORK.equals(intent.getAction())) {
-        changeNetwork(intent.getLongExtra(EXTRA_NETWORK_ID, 0L));
+        new Thread() {
+          public void run() {
+            changeNetwork(intent.getLongExtra(EXTRA_NETWORK_ID, 0L));
+          }
+        }.start();
       }
     }
 
@@ -155,11 +164,6 @@ public class YammerService extends Service {
       sendBroadcast(new Intent(YammerActivity.INTENT_AUTHORIZATION_DONE));
    }
 
-    private void changeNetwork(long _id) {
-      if (DEBUG) Log.d(getClass().getName(), "changeNetwork: " + _id);
-      setCurrentNetworkId(_id);
-    }
-    
     private void reset() {
       getYammerData().resetData(getCurrentNetworkId());
       getSettings().setCurrentNetworkId(0L);
@@ -172,6 +176,7 @@ public class YammerService extends Service {
   public void onCreate() {
     if (DEBUG) Log.d(getClass().getName(), "YammerService.onCreate");
     super.onCreate();
+    this.mHandler = new Handler();
     PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
     wakelock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, getClass().getName());
   }
@@ -203,15 +208,9 @@ public class YammerService extends Service {
       // Service has been started once and considered initialized
       YammerService.CLIENT_STATE = STATE_INITIALIZED;
 
-      if (DEBUG) Log.d(getClass().getName(), "Fetching request token from Yammer");
-      Network network = getCurrentNetwork();
-      if (null == network || null == network.accessToken|| null == network.accessTokenSecret) {
+      if (null == getCurrentNetwork()) {
         sendBroadcast(YammerActivity.INTENT_MUST_AUTHENTICATE_DIALOG);        		        	
       } else {
-        getYammerProxy().requestToken = network.accessToken;
-        getYammerProxy().tokenSecret = network.accessTokenSecret;
-        
-        // There is already an access token available, so we are authorized
         setAuthorized(true);
       }
 
@@ -231,7 +230,7 @@ public class YammerService extends Service {
                   if (DEBUG) Log.d(getClass().getName(), "Acquiring wakelock");
                   wakelock.acquire();
                   // Time to update
-                  updatePublicMessages(false);
+                  reloadMessages(false);
                   lastUpdateTime = System.currentTimeMillis();		        					
                 } 
               } catch (Exception e) {
@@ -358,50 +357,45 @@ public class YammerService extends Service {
     getYammerProxy().unfollowUser(userId);
   }
 
+  private void changeNetwork(long _id) {
+    if (DEBUG) Log.d(getClass().getName(), "changeNetwork: " + _id);
+    setCurrentNetworkId(_id);
+    toastUser(R.string.changing_network_text, getCurrentNetwork().name);
+    updateCurrentUserData();
+    reloadMessages(true);
+  }
+
   public void updateCurrentUserData() {
-    String userData = null;
+    if (DEBUG) Log.i(getClass().getName(), ".updateCurrentUserData");
     try {
-      userData = getYammerProxy().accessResource(getURLBase() + "/api/v1/users/current.json");
-    } catch (YammerProxy.YammerProxyException e) {
-      e.printStackTrace();
-      Toast.makeText(this, "Unable to get user data", Toast.LENGTH_LONG);
-      return;
+      User user = getYammerProxy().getCurrentUser(true);
+      getYammerData().saveUsers(user.followedUsers);
+      reloadNetworks();
+    } catch (YammerProxy.YammerProxyException ex) {
+      ex.printStackTrace();
     }
-    // If json public timeline doesn't exist, create it
+  }
+
+  private void reloadNetworks() {
+    if (DEBUG) Log.i(getClass().getName(), ".reloadNetworks");
     try {
-      JSONObject jsonUserData = new JSONObject(userData);
-      
-      // populate networks table
-      try {
-        this.getYammerData().addNetworks(getYammerProxy().getNetworks());
-      } catch( YammerProxy.YammerProxyException e ) {
-        if (DEBUG) Log.w(getClass().getName(), e.getMessage());
-        e.printStackTrace();
-      }
-        
-      if (0L == getCurrentNetworkId()) {
-        setCurrentNetworkId(jsonUserData.getLong("network_id"));
-      }
-      Intent intent = new Intent(YammerService.INTENT_CHANGE_NETWORK);
-      intent.putExtra(YammerService.EXTRA_NETWORK_ID, getCurrentNetworkId());
-      sendBroadcast(intent);
+      getYammerData().clearNetworks();
+      getYammerData().addNetworks(getYammerProxy().getNetworks());
+    } catch(YammerProxyException ex) {
+      ex.printStackTrace();
+    }
+    reloadFeeds();
+  }
 
-      // Populate feeds table
-      JSONArray jsonArray = jsonUserData.getJSONObject("web_preferences").getJSONArray("home_tabs");
-      if (DEBUG) Log.d(getClass().getName(), "Found " + jsonArray.length() + " feeds");    		
-      this.getYammerData().clearFeeds();
-      for( int ii=0; ii < jsonArray.length(); ii++ ) {
-        try {
-          this.getYammerData().addFeed(jsonArray.getJSONObject(ii));
-        } catch( YammerData.YammerDataException e ) {
-          if (DEBUG) Log.w(getClass().getName(), e.getMessage());
-          e.printStackTrace();
-        }
-      }
-
-    } catch (JSONException e) {
-      Toast.makeText(this, "Unable to parse user data", Toast.LENGTH_LONG);
-      e.printStackTrace();
+  private void reloadFeeds() {
+    if (DEBUG) Log.i(getClass().getName(), ".reloadFeeds");
+    try {
+      getYammerData().clearFeeds();
+      Feed[] feeds = getYammerProxy().getFeeds();
+      this.getSettings().setFeed(feeds[0].name);
+      getYammerData().addFeeds(feeds);
+    } catch(YammerProxyException ex) {
+      ex.printStackTrace();
     }
   }
 
@@ -409,8 +403,8 @@ public class YammerService extends Service {
     getYammerData().clearMessages();
   }
   
-  public void updatePublicMessages(boolean reloading) {
-    if (DEBUG) Log.i(getClass().getName(), "Updating public timeline");
+  public void reloadMessages(boolean reloading) {
+    if (DEBUG) Log.i(getClass().getName(), ".reloadMessages");
     
     if ( ! isAuthorized() ) {
       if (DEBUG) Log.i(getClass().getName(), "User not authorized - skipping update");
@@ -608,4 +602,12 @@ public class YammerService extends Service {
     return getCurrentNetwork().userId;
   }
 
+  private void toastUser(final int _resId, final Object... _args) {
+    this.mHandler.post(new Runnable() {
+      public void run() {
+        Toast.makeText(getApplicationContext(), String.format(getText(_resId).toString(), _args), Toast.LENGTH_LONG).show();
+      }
+    });
+  }
+   
 }

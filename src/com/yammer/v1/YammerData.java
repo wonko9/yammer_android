@@ -29,14 +29,14 @@ public class YammerData extends SQLiteOpenHelper {
   }
 
   private static final String DATABASE_NAME = "yammer.db";
-  private static final int DATABASE_VERSION = 29;
+  private static final int DATABASE_VERSION = 30;
 
   public YammerData(Context ctx) {
     super(ctx, DATABASE_NAME, null, DATABASE_VERSION);
   }
 
   public void onCreate(SQLiteDatabase db) {
-    if (DEBUG) Log.d(getClass().getName(), "YammerData.onCreate");
+    if (DEBUG) Log.d(getClass().getName(), ".onCreate");
     Message.onCreateDB(db);
     User.onCreateDB(db);
     Network.onCreateDB(db);
@@ -45,7 +45,7 @@ public class YammerData extends SQLiteOpenHelper {
   }
 
   public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-    if (DEBUG) Log.i(getClass().getName(), "YammerData.onUpgrade");
+    if (DEBUG) Log.i(getClass().getName(), ".onUpgrade");
     Message.onUpgradeDB(db, oldVersion, newVersion);
     User.onUpgradeDB(db, oldVersion, newVersion);
     Network.onUpgradeDB(db, oldVersion, newVersion);
@@ -54,7 +54,7 @@ public class YammerData extends SQLiteOpenHelper {
   }
 
   public void resetData(long networkId) {
-    if (DEBUG) Log.d(getClass().getName(), "YammerData.resetData for network");
+    if (DEBUG) Log.d(getClass().getName(), ".resetData");
     SQLiteDatabase db = this.getWritableDatabase();
     Message.deleteByNetworkId(db, networkId);
     Feed.deleteByNetworkId(db, networkId);
@@ -78,7 +78,13 @@ public class YammerData extends SQLiteOpenHelper {
   public Network[] getNetworks() {
     return Network.getAll(getReadableDatabase());
   }
-  
+
+  public void clearNetworks() {
+    if (DEBUG) Log.d(getClass().getName(), ".clearNetworks");
+    Network.deleteAll(getWritableDatabase());
+  }
+
+
   public void save(Network _value) {
     _value.save(getWritableDatabase());
   }
@@ -113,7 +119,7 @@ public class YammerData extends SQLiteOpenHelper {
   }
   
   public void clearMessages() {
-    if (DEBUG) Log.d(getClass().getName(), "YammerData.resetData");
+    if (DEBUG) Log.d(getClass().getName(), ".resetData");
     Message.deleteAll(getWritableDatabase());
   }
 
@@ -129,21 +135,24 @@ public class YammerData extends SQLiteOpenHelper {
       throw new YammerDataException(e);
     }
   }
+  
+  public void saveUsers(User[] _users) {
+    for(int ii=0; ii < _users.length ;ii++) {
+      _users[ii].save(getWritableDatabase());
+    }
+  }
 
   public void clearFeeds() {
-    if (DEBUG) Log.d(getClass().getName(), "YammerData.clearFeeds");
+    if (DEBUG) Log.d(getClass().getName(), ".clearFeeds");
     Feed.deleteAll(getWritableDatabase());
   }
 
-  public Feed addFeed(JSONObject _json) throws YammerDataException {
-    try {
-      return Feed.create(getWritableDatabase(), _json);
-    } catch(JSONException e) {
-      throw new YammerDataException(e);
+  public void addFeeds(Feed[] _feeds) {
+    for(int ii=0; ii < _feeds.length ;ii++) {
+      _feeds[ii].save(getWritableDatabase());
     }
   }
-  
-  
+
   public String[] getFeedNames(long _networkId) {
     return Feed.getFeedNames(getReadableDatabase(), _networkId);
   }
