@@ -52,7 +52,6 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 
@@ -95,14 +94,28 @@ public class YammerActivity extends Activity {
     return mYammerService;
   }
 
+  private void registerIntents() {
+    if (DEBUG) Log.d(getClass().getName(), "Registering intents for Yammer");
+    IntentFilter filter = new IntentFilter();
+    filter.addAction(INTENT_PUBLIC_TIMELINE_UPDATED);
+    filter.addAction(INTENT_TIMELINE_INITIALIZE);
+    filter.addAction(INTENT_AUTHORIZATION_START);
+    filter.addAction(INTENT_AUTHORIZATION_DONE);
+    filter.addAction(INTENT_MUST_AUTHENTICATE_DIALOG);
+    filter.addAction(INTENT_NETWORK_ERROR_MINOR);
+    filter.addAction(INTENT_NETWORK_ERROR_FATAL);
+    filter.addAction(YammerService.INTENT_CHANGE_NETWORK);
+    filter.addAction(YammerService.INTENT_CHANGE_FEED);
+    
+    yammerIntentReceiver = new YammerIntentReceiver();        
+    registerReceiver(yammerIntentReceiver, filter);
+  }
+
   class YammerIntentReceiver extends BroadcastReceiver {
 
     public YammerIntentReceiver() {
     }
-
-    /**
-     * Intent receiver
-     */
+    
     public void onReceive(Context context, Intent intent) {
       /**
        * Launch the browser and let the user authenticate himself
@@ -206,7 +219,7 @@ public class YammerActivity extends Activity {
                   showLoadingAnimation(true);
                   // Update the messages timeline
 //                  getYammerService().updateCurrentUserData();
-                  getYammerService().reloadMessages(false);
+                  getYammerService().getMessages(false);
                   // Initialize the tweets view
                   sendBroadcast(INTENT_TIMELINE_INITIALIZE);
                   runOnUiThread( new Runnable() {
@@ -220,6 +233,11 @@ public class YammerActivity extends Activity {
                 }
               }
             }).start();
+      } else if (YammerService.INTENT_CHANGE_NETWORK.equals(intent.getAction()) ) {
+        
+      } else if (YammerService.INTENT_CHANGE_FEED.equals(intent.getAction()) ) {
+        showHeaderForFeed(intent.getStringExtra(YammerService.EXTRA_FEED_NAME));
+        
       } else if ( INTENT_NETWORK_ERROR_MINOR.equals(intent.getAction()) ) {
         /**
          * A minor error occurred (connection lost or similar - can be retried later)
@@ -394,32 +412,35 @@ public class YammerActivity extends Activity {
   }
 
   private Dialog createFeedDialog() {
-    final YammerData yd = new YammerData(this);
-    final String[] feeds = yd.getFeedNames(getSettings().getCurrentNetworkId());
+    final String[] feeds = new YammerData(this).getFeedNames(getSettings().getCurrentNetworkId());
     int selected = Arrays.asList(feeds).indexOf(getSettings().getFeed());
     if (selected < 0) selected = 0;
-
+    
     return new AlertDialog.Builder(YammerActivity.this)
-    .setTitle(R.string.select_feed)
-    .setIcon(R.drawable.yammer_logo_medium)
-    .setSingleChoiceItems(feeds, selected,
+      .setTitle(R.string.select_feed)
+      .setIcon(R.drawable.yammer_logo_medium)
+      .setOnCancelListener(
+          new OnCancelListener() {
+            public void onCancel(DialogInterface _dialog) {
+              YammerActivity.this.removeDialog(ID_DIALOG_FEEDS);
+            }
+          }
+      ).setSingleChoiceItems(feeds, selected,
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface _dialog, int _button) {
-            _dialog.dismiss();
+            YammerActivity.this.removeDialog(ID_DIALOG_FEEDS);
             String feed = feeds[_button];
-            if (DEBUG) Log.d(getClass().getName(), "Feed '" + feed + "' selected" );                  
-            getSettings().setFeed(feed);
-            showHeaderForFeed(feed);
-            yd.clearMessages();
-            reload();
+            
+            Intent intent = new Intent(YammerService.INTENT_CHANGE_FEED);
+            intent.putExtra(YammerService.EXTRA_FEED_NAME, feed);
+            sendBroadcast(intent);
           }
         }
     ).create();
   }
 
   private Dialog createNetworkDialog() {
-    final YammerData yd = new YammerData(this);
-    final Network[] networks = yd.getNetworks();
+    final Network[] networks = new YammerData(this).getNetworks();
     
     String[] names = new String[networks.length];
     long defaultNetworkId = getSettings().getCurrentNetworkId(); 
@@ -432,20 +453,28 @@ public class YammerActivity extends Activity {
     }
     
     return new AlertDialog.Builder(YammerActivity.this)
-    .setTitle(R.string.select_network)
-    .setIcon(R.drawable.yammer_logo_medium)
-    .setSingleChoiceItems(names, selected,
-        new DialogInterface.OnClickListener() {
-          public void onClick(DialogInterface _dialog, int _button) {
-            _dialog.dismiss();
-            Network network = networks[_button];
-            Intent intent = new Intent(YammerService.INTENT_CHANGE_NETWORK);
-            intent.putExtra(YammerService.EXTRA_NETWORK_ID, network.networkId);
-            sendBroadcast(intent);
-//            reload();
+      .setTitle(R.string.select_network)
+      .setIcon(R.drawable.yammer_logo_medium)
+      .setOnCancelListener(
+          new OnCancelListener() {
+            public void onCancel(DialogInterface _dialog) {
+              YammerActivity.this.removeDialog(ID_DIALOG_NETWORKS);
+              YammerActivity.this.removeDialog(ID_DIALOG_FEEDS);
+            }
           }
-        }
-      ).create();
+      ).setSingleChoiceItems(names, selected,
+          new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface _dialog, int _button) {
+              YammerActivity.this.removeDialog(ID_DIALOG_NETWORKS);
+              YammerActivity.this.removeDialog(ID_DIALOG_FEEDS);
+              Network network = networks[_button];
+              
+              Intent intent = new Intent(YammerService.INTENT_CHANGE_NETWORK);
+              intent.putExtra(YammerService.EXTRA_NETWORK_ID, network.networkId);
+              sendBroadcast(intent);
+            }
+          }
+        ).create();
   }
 
   @Override
@@ -457,6 +486,40 @@ public class YammerActivity extends Activity {
     menu.add(0, MENU_SETTINGS, Menu.NONE, R.string.menu_settings).setIcon(android.R.drawable.ic_menu_preferences);
     return (super.onCreateOptionsMenu(menu));
   }
+
+  @Override
+  public boolean onPrepareOptionsMenu(Menu _menu) {
+    YammerData yd = new YammerData(this);
+    
+    _menu.findItem(MENU_NETWORKS).setEnabled(0 < yd.getNetworks().length);
+    _menu.findItem(MENU_FEEDS).setEnabled(0 < yd.getFeedNames(getSettings().getCurrentNetworkId()).length);
+    
+    return true;
+  }
+
+  @Override 
+  public boolean onOptionsItemSelected(MenuItem item) {
+    switch ( item.getItemId() ) {
+    case MENU_RELOAD:
+      if (DEBUG) Log.d(getClass().getName(), "MENU_RELOAD selected");
+      reload();
+      break;
+    case MENU_SETTINGS:
+      if (DEBUG) Log.d(getClass().getName(), "MENU_SETTINGS selected");
+      startActivityForResult(new Intent(this, SettingsActivity.class), YAMMER_SETTINGS_CREATE);        
+      break;
+    case MENU_FEEDS:
+      if (DEBUG) Log.d(getClass().getName(), "MENU_FEEDS selected");
+      showDialog(ID_DIALOG_FEEDS);
+      break;
+    case MENU_NETWORKS:
+      if (DEBUG) Log.d(getClass().getName(), "MENU_NETWORDS selected");
+      showDialog(ID_DIALOG_NETWORKS);
+      break;
+    };
+    return (super.onOptionsItemSelected(item));  
+  }
+
 
   public void updateListView() {
     if (DEBUG) Log.d(getClass().getName(), "Yammer.updateListView");
@@ -485,30 +548,7 @@ public class YammerActivity extends Activity {
     }
     
   }
-
-  @Override 
-  public boolean onOptionsItemSelected(MenuItem item) {
-    switch ( item.getItemId() ) {
-    case MENU_RELOAD:
-      if (DEBUG) Log.d(getClass().getName(), "MENU_RELOAD selected");
-      reload();
-      break;
-    case MENU_SETTINGS:
-      if (DEBUG) Log.d(getClass().getName(), "MENU_SETTINGS selected");
-      startActivityForResult(new Intent(this, SettingsActivity.class), YAMMER_SETTINGS_CREATE);        
-      break;
-    case MENU_FEEDS:
-      if (DEBUG) Log.d(getClass().getName(), "MENU_FEEDS selected");
-      showDialog(ID_DIALOG_FEEDS);
-      break;
-    case MENU_NETWORKS:
-      if (DEBUG) Log.d(getClass().getName(), "MENU_NETWORDS selected");
-      showDialog(ID_DIALOG_NETWORKS);
-      break;
-    };
-    return (super.onOptionsItemSelected(item));  
-  }
-
+  
   private void reload() {
     new Thread(
         new Runnable() {
@@ -517,7 +557,7 @@ public class YammerActivity extends Activity {
               showLoadingAnimation(true);
               getYammerService().updateCurrentUserData();
               getYammerService().clearMessages();
-              getYammerService().reloadMessages(true);
+              getYammerService().getMessages(true);
             } finally {
               showLoadingAnimation(false);									
             }
@@ -802,18 +842,7 @@ public class YammerActivity extends Activity {
     //setTheme(android.R.style.Theme_Black_NoTitleBar);
     setContentView(R.layout.yammer_activity);
 
-    // Register supported intents
-    if (DEBUG) Log.d(getClass().getName(), "Registering intents for Yammer");
-    IntentFilter filter = new IntentFilter();
-    filter.addAction(INTENT_PUBLIC_TIMELINE_UPDATED);
-    filter.addAction(INTENT_TIMELINE_INITIALIZE);
-    filter.addAction(INTENT_AUTHORIZATION_START);
-    filter.addAction(INTENT_AUTHORIZATION_DONE);
-    filter.addAction(INTENT_MUST_AUTHENTICATE_DIALOG);
-    filter.addAction(INTENT_NETWORK_ERROR_MINOR);
-    filter.addAction(INTENT_NETWORK_ERROR_FATAL);
-    yammerIntentReceiver = new YammerIntentReceiver();        
-    registerReceiver(yammerIntentReceiver, filter);
+    registerIntents();
 
     // Setup a clicklistener for the message textedit
     final EditText tweetEditor = getEditor();
@@ -930,7 +959,7 @@ public class YammerActivity extends Activity {
       getYammerService().resetMessageCount();
       
       if(getSettings().updateOnResume() && getYammerService().isAuthorized()) {
-        getYammerService().reloadMessages(true);
+        getYammerService().getMessages(true);
       }
       
     } else {

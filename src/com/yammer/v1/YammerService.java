@@ -51,6 +51,9 @@ public class YammerService extends Service {
   public static final String INTENT_CHANGE_NETWORK = "com.yammer.v1:CHANGE_NETWORK";
   public static final String EXTRA_NETWORK_ID = "network_id";
 
+  public static final String INTENT_CHANGE_FEED = "com.yammer.v1:CHANGE_FEED";
+  public static final String EXTRA_FEED_NAME = "feed_name";
+
   /** Client states **/
   private static int STATE_RAW = -1;
   private static int STATE_INITIALIZED = 0;		
@@ -155,6 +158,12 @@ public class YammerService extends Service {
             changeNetwork(intent.getLongExtra(EXTRA_NETWORK_ID, 0L));
           }
         }.start();
+      } else if(INTENT_CHANGE_FEED.equals(intent.getAction())) {
+        new Thread() {
+          public void run() {
+            changeFeed(intent.getStringExtra(EXTRA_FEED_NAME));
+          }
+        }.start();
       }
     }
 
@@ -219,7 +228,7 @@ public class YammerService extends Service {
                   if (DEBUG) Log.d(getClass().getName(), "Acquiring wakelock");
                   wakelock.acquire();
                   // Time to update
-                  reloadMessages(false);
+                  getMessages(false);
                   lastUpdateTime = System.currentTimeMillis();		        					
                 } 
               } catch (Exception e) {
@@ -245,6 +254,7 @@ public class YammerService extends Service {
     filter.addAction(INTENT_ENABLE_NOTIFICATION);
     filter.addAction(INTENT_DISABLE_NOTIFICATION);
     filter.addAction(INTENT_CHANGE_NETWORK);
+    filter.addAction(INTENT_CHANGE_FEED);
 
     registerReceiver(new YammerIntentReceiver(), filter);
   }
@@ -351,7 +361,16 @@ public class YammerService extends Service {
     setCurrentNetworkId(_id);
     toastUser(R.string.changing_network_text, getCurrentNetwork().name);
     updateCurrentUserData();
-    reloadMessages(true);
+    clearMessages();
+    getMessages(true);
+  }
+  
+  private void changeFeed(String _name) {
+    if (DEBUG) Log.d(getClass().getName(), "changeFeed: " + _name);
+    toastUser(R.string.changing_feed_text, _name);
+    getSettings().setFeed(_name);
+    clearMessages();
+    getMessages(true);    
   }
 
   public void updateCurrentUserData() {
@@ -392,7 +411,7 @@ public class YammerService extends Service {
     getYammerData().clearMessages();
   }
   
-  public void reloadMessages(boolean reloading) {
+  public void getMessages(boolean reloading) {
     if (DEBUG) Log.i(getClass().getName(), ".reloadMessages");
     
     if ( ! isAuthorized() ) {

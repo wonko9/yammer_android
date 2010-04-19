@@ -43,6 +43,7 @@
 	<string name='select_network'>Select Network</string>
 	<string name='changing_network_text'>Changing network to: %s</string>
 	<string name='select_feed'>Select Feed</string>
+	<string name='changing_feed_text'>Changing feed to: %s</string>
 	<string name='application_update_title'>Yammer Updated</string>
 	<string name='application_update_text'>A new version of Yammer is available.</string>
 	<string name="about_text">Yammer v%s\n© 2009 Yammer, Inc.\nhttp://www.yammer.com/</string>
@@ -52,7 +53,7 @@
 	<string name="check_this_out">Check this out:</string>
 	<string name="in_reply_to">in reply to</string>
 
-	<string name="auth_welcome_text">Welcome! Please enter your login credentials.</string>
+	<string name="auth_welcome_text">Welcome!\nPlease enter your login credentials.</string>
 	<string name="auth_email_label_text">Email</string>
 	<string name="auth_password_label_text">Password</string>
 	<string name="auth_login_button_text">Login</string>
