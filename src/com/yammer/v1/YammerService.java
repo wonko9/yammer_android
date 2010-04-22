@@ -370,7 +370,7 @@ public class YammerService extends Service {
     toastUser(R.string.changing_feed_text, _name);
     getSettings().setFeed(_name);
     clearMessages();
-    getMessages(true);    
+    getMessages(true);
   }
 
   public void updateCurrentUserData() {

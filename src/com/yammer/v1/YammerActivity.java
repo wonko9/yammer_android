@@ -140,8 +140,8 @@ public class YammerActivity extends Activity {
           "select messages._id, messages.message, messages.message_id, messages.timestamp, users.mugshot_url, users.mugshot_md5, users.full_name, users.is_following, users.email, u1.full_name as replyee_full_name, u1.email as replyee_email from messages " + 
           "left join users on users.user_id=messages.user_id " +
           "left join messages as m1 on messages.replied_to_id=m1.message_id " + 
-          "left join users as u1 on u1.user_id=m1.user_id where messages.deleted='0' AND messages.network_id='"+getYammerService().getCurrentNetworkId()+"' order by messages.message_id desc";
-        Cursor cursor = db.rawQuery(sql, null);
+          "left join users as u1 on u1.user_id=m1.user_id where messages.deleted='0' AND messages.network_id=? order by messages.message_id desc";
+        Cursor cursor = db.rawQuery(sql, new String[] {String.valueOf(getYammerService().getCurrentNetworkId())});
         cursor.moveToFirst();
 
         if (DEBUG) Log.d(getClass().getName(), "Creating new TweetListAdapter");
@@ -522,12 +522,13 @@ public class YammerActivity extends Activity {
 
 
   public void updateListView() {
-    if (DEBUG) Log.d(getClass().getName(), "Yammer.updateListView");
+    if (DEBUG) Log.d(getClass().getName(), ".updateListView");
     try {
       // Reconfigure the list view
       TweetListView tweetListView = (TweetListView) findViewById(R.id.tweet_list);
       TweetListAdapter tweetListAdapter = (TweetListAdapter)tweetListView.getAdapter();
       SQLiteCursor cursor = (SQLiteCursor)tweetListAdapter.getCursor();
+      cursor.setSelectionArguments(new String[] {String.valueOf(getYammerService().getCurrentNetworkId())});
       cursor.requery();
       tweetListAdapter.notifyDataSetChanged();
       // If we are at the top of the screen, then show the newest item

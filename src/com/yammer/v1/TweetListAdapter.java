@@ -55,8 +55,6 @@ public class TweetListAdapter extends SimpleCursorAdapter {
   final int mugshotUrlColumnIndex;
   final int mugshotMd5ColumnIndex;
 
-  Cursor c;
-
   final SimpleDateFormat formatter;
 
   public TweetListAdapter(Context context, int layout, Cursor c, String[] from, int[] to) {
@@ -93,8 +91,6 @@ public class TweetListAdapter extends SimpleCursorAdapter {
     replyeeColumnIndex = c.getColumnIndex(User.FIELD_REPLYEE_FULL_NAME);
     mugshotUrlColumnIndex = c.getColumnIndex(User.FIELD_MUGSHOT_URL);		
     mugshotMd5ColumnIndex = c.getColumnIndex(User.FIELD_MUGSHOT_MD5);
-    
-    this.c = c;
     
     // Cache formatter
     formatter = new SimpleDateFormat("MMMMM dd yyyy, HH:mm:ss");
@@ -161,15 +157,17 @@ public class TweetListAdapter extends SimpleCursorAdapter {
       holder = (ViewHolder)convertView.getTag();
     }
 
-    c.moveToPosition(position);
+    Cursor cursor = getCursor();
+    
+    cursor.moveToPosition(position);
 
     // Get full name of poster
-    String fullName = c.getString(fullNameColumnIndex);
+    String fullName = cursor.getString(fullNameColumnIndex);
 
     // Full name not found?
     if ( fullName == null ) {
       // Use email for full name
-      fullName = c.getString(emailColumnIndex);
+      fullName = cursor.getString(emailColumnIndex);
     }
     // Full name still empty
     if ( fullName == null ) {
@@ -178,7 +176,7 @@ public class TweetListAdapter extends SimpleCursorAdapter {
     }
 
     // Get full name of replyee
-    String replyeeFullName = c.getString(replyeeColumnIndex);
+    String replyeeFullName = cursor.getString(replyeeColumnIndex);
 
     // Convert full name to first name only
     if ("firstname".equals(getSettings().getDisplayName())) {
@@ -190,9 +188,9 @@ public class TweetListAdapter extends SimpleCursorAdapter {
         replyeeFullName = replyeeFullName.substring(0, replyeeFullName.indexOf(' '));				
       }
     } else if ("email_only".equals(getSettings().getDisplayName())) {
-      fullName = c.getString(emailColumnIndex);
+      fullName = cursor.getString(emailColumnIndex);
       if (replyeeFullName != null ) {
-        replyeeFullName = c.getString(replyeeEmailColumnIndex);
+        replyeeFullName = cursor.getString(replyeeEmailColumnIndex);
       }
     }
 
@@ -211,7 +209,7 @@ public class TweetListAdapter extends SimpleCursorAdapter {
     }
 
     // Get the message/tweet text from the database
-    String message = c.getString(columnIndex);
+    String message = cursor.getString(columnIndex);
 
     // Colorize the message
     int from = 0, to = 0;
@@ -247,16 +245,16 @@ public class TweetListAdapter extends SimpleCursorAdapter {
     holder.message.setText(str);
 
     // Convert the timestamp to a prettier timestamp (e.g. 5 hours ago etc.)
-    holder.tweet_time.setText(prettyDate(c.getLong(createdColumnIndex)));
+    holder.tweet_time.setText(prettyDate(cursor.getLong(createdColumnIndex)));
 
     // Download and decode avatar
     holder.user_icon.setImageBitmap(
-        bitmapDownloader.getBitmap(c.getString(mugshotUrlColumnIndex), c.getString(mugshotMd5ColumnIndex))
+        bitmapDownloader.getBitmap(cursor.getString(mugshotUrlColumnIndex), cursor.getString(mugshotMd5ColumnIndex))
     );
 
     Network network = getNetwork();
     long lastMessageId = network.lastMessageId;
-    long messageId = c.getLong(messageIdIndex);
+    long messageId = cursor.getLong(messageIdIndex);
     if (network.lastMessageId < messageId) {
       //TODO: Use Style Instead
       convertView.setBackgroundColor(Color.YELLOW);
