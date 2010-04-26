@@ -212,7 +212,9 @@ public class YammerService extends Service {
         setAuthorized(true);
       }
 
-      registerIntents();	        
+      registerIntents();
+      
+      getYammerProxy().setCurrentNetwork(getCurrentNetwork());
 
       // Start the update timer
       timer.scheduleAtFixedRate(

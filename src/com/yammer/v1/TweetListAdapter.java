@@ -257,7 +257,7 @@ public class TweetListAdapter extends SimpleCursorAdapter {
     long messageId = cursor.getLong(messageIdIndex);
     if (network.lastMessageId < messageId) {
       //TODO: Use Style Instead
-      convertView.setBackgroundColor(Color.YELLOW);
+//      convertView.setBackgroundColor(Color.YELLOW);
       lastMessageId = Math.max(messageId, lastMessageId);
     }
     network.lastMessageId = lastMessageId;
