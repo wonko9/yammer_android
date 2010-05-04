@@ -22,7 +22,7 @@ public class YammerApp extends Application {
   public void onCreate() {
     super.onCreate();
     if (DEBUG) Log.d(TAG, "YammerApp::onCreate");
-    ExceptionHandler.register(this);
+    ExceptionHandler.register(this, "http://www.stdmn.com/ss/android/report_exception.php");
     // Get the files path
     G.FILES_PATH = getFilesDir().getAbsolutePath();
     // Get version of application
