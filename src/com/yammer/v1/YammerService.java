@@ -210,12 +210,11 @@ public class YammerService extends Service {
         sendBroadcast(YammerActivity.INTENT_MUST_AUTHENTICATE_DIALOG);        		        	
       } else {
         setAuthorized(true);
+        getYammerProxy().setCurrentNetwork(getCurrentNetwork());
       }
 
       registerIntents();
       
-      getYammerProxy().setCurrentNetwork(getCurrentNetwork());
-
       // Start the update timer
       timer.scheduleAtFixedRate(
           new TimerTask() {
