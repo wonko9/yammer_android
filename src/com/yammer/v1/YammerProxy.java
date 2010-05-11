@@ -78,10 +78,18 @@ public class YammerProxy {
 
   @SuppressWarnings("serial")
   public static class AccessDeniedException extends YammerProxyException {
+    public AccessDeniedException(Throwable _cause) {
+      super();
+      initCause(_cause);
+    }
   }
 
   @SuppressWarnings("serial")
   public static class ConnectionProblem extends YammerProxyException {
+    public ConnectionProblem(Throwable _cause) {
+      super();
+      initCause(_cause);
+    }
   }
 
   static class WRAPResponse extends OAuthMessage {
@@ -201,7 +209,7 @@ public class YammerProxy {
    * Request a OAuth "Request Token".
    * @throws ConnectionProblem
    */
-  public void getRequestToken() throws ConnectionProblem {
+  public void getRequestToken() throws YammerProxyException {
     if (DEBUG) Log.d(getClass().getName(), "YammerProxy.getRequestToken");
 
     if ( accessor == null ) {
@@ -212,15 +220,11 @@ public class YammerProxy {
     try {
       client.getRequestToken(accessor);
     } catch (java.io.IOException e) {
-      if (DEBUG) Log.e("yammerApp", "IOException: " + e.toString());
-      throw new ConnectionProblem();
+      throw new ConnectionProblem(e);
     } catch (OAuthException e) {
-      if (DEBUG) Log.e("yammerApp", "OAuthException: " + e.toString());
-      throw new ConnectionProblem();
+      throw new AccessDeniedException(e);
     } catch (Exception e) {
-      // Do something
-      if (DEBUG) Log.e("yammerApp", "An unknown error occured: " + e.toString());
-      throw new ConnectionProblem();
+      throw new ConnectionProblem(e);
     }
     // We should now have a request token and a token secret
     this.requestToken = accessor.requestToken;
@@ -424,15 +428,11 @@ public class YammerProxy {
     try {
       sendRequest(paramProps, this.baseURL + "/api/v1/messages/", OAuthMessage.POST);
     } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-      throw new ConnectionProblem();
+      throw new ConnectionProblem(e);
     } catch (URISyntaxException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new ConnectionProblem(e);
     } catch (OAuthException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new AccessDeniedException(e);
     }
   }
 
@@ -454,15 +454,11 @@ public class YammerProxy {
     try {
       sendRequest(paramProps, url, OAuthMessage.POST);
     } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-      throw new ConnectionProblem();
+      throw new ConnectionProblem(e);
     } catch (URISyntaxException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new ConnectionProblem(e);
     } catch (OAuthException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new AccessDeniedException(e);
     }
   }
 
@@ -476,15 +472,11 @@ public class YammerProxy {
     try {
       sendRequest(paramProps, url, "DELETE");
     } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-      throw new ConnectionProblem();
+      throw new ConnectionProblem(e);
     } catch (URISyntaxException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new ConnectionProblem(e);
     } catch (OAuthException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new AccessDeniedException(e);
     }
   }
 
@@ -505,15 +497,11 @@ public class YammerProxy {
       response = sendRequest(paramProps, url, "DELETE");
       responseBody = response.readBodyAsString();
     } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-      throw new ConnectionProblem();
+      throw new ConnectionProblem(e);
     } catch (URISyntaxException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new ConnectionProblem(e);
     } catch (OAuthException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new AccessDeniedException(e);
     }
 
     return responseBody;
@@ -532,11 +520,11 @@ public class YammerProxy {
       if (DEBUG) Log.d(getClass().getName(), "responseBody: " + responseBody);
     } catch (IOException e) {
       e.printStackTrace();
-      throw new ConnectionProblem();
+      throw new ConnectionProblem(e);
     } catch (URISyntaxException e) {
-      e.printStackTrace();
+      throw new ConnectionProblem(e);
     } catch (OAuthException e) {
-      e.printStackTrace();
+      throw new AccessDeniedException(e);
     }
 
     return responseBody;
@@ -562,22 +550,19 @@ public class YammerProxy {
       } else {
         accessor.consumer.setProperty(OAuthClient.PARAMETER_STYLE, "QUERY_STRING");
       }
+      
       if (DEBUG) Log.d(getClass().getName(), "Invoking: " + url + " params: "+params.toString());
       return client.invoke(accessor, method, url, params);
     } catch (OAuthProblemException e) {
       int statusCode = e.getHttpStatusCode();
-      if (DEBUG) Log.d(getClass().getName(), "HTTP status code: "+statusCode);
-      if (302 == statusCode) {
-        if (DEBUG) Log.d(getClass().getName(), (String)e.getParameters().get(HttpResponseMessage.LOCATION));
-        throw e;
-      } else if (401 == statusCode) {
-        throw (AccessDeniedException)new AccessDeniedException().fillInStackTrace();
+      if (DEBUG) Log.d(getClass().getName(), "HTTP status code: " + statusCode);
+      
+      if (401 == statusCode) {
+        throw new AccessDeniedException(e);
       }
-    } catch(Exception ex) {
-      ex.printStackTrace();
+       
+      throw e;
     }
-    // It seems an error occured
-    return null;
   }
 
   private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss ZZZZZ");
