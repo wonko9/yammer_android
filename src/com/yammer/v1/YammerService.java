@@ -28,6 +28,7 @@ import android.content.IntentFilter;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.os.Process;
 import android.util.Log;
@@ -377,7 +378,7 @@ public class YammerService extends Service {
       User user = getYammerProxy().getCurrentUser(true);
       getYammerData().saveUsers(user.followedUsers);
       reloadNetworks();
-    } catch (YammerProxy.YammerProxyException ex) {
+    } catch (YammerProxyException ex) {
       ex.printStackTrace();
     }
   }
@@ -609,6 +610,7 @@ public class YammerService extends Service {
   }
 
   private void toastUser(final int _resId, final Object... _args) {
+    Looper.prepare();
     new Handler().post(new Runnable() {
       public void run() {
         Toast.makeText(getApplicationContext(), String.format(getText(_resId).toString(), _args), Toast.LENGTH_LONG).show();

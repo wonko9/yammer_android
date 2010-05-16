@@ -518,8 +518,9 @@ public class YammerProxy {
       response = sendRequest(paramProps, url, "GET");
       responseBody = response.readBodyAsString();
       if (DEBUG) Log.d(getClass().getName(), "responseBody: " + responseBody);
+    } catch (NullPointerException e) {
+      throw new ConnectionProblem(e);
     } catch (IOException e) {
-      e.printStackTrace();
       throw new ConnectionProblem(e);
     } catch (URISyntaxException e) {
       throw new ConnectionProblem(e);
