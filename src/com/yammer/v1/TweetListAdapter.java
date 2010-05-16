@@ -253,15 +253,17 @@ public class TweetListAdapter extends SimpleCursorAdapter {
     );
 
     Network network = getNetwork();
-    long lastMessageId = network.lastMessageId;
-    long messageId = cursor.getLong(messageIdIndex);
-    if (network.lastMessageId < messageId) {
-      //TODO: Use Style Instead
-//      convertView.setBackgroundColor(Color.YELLOW);
-      lastMessageId = Math.max(messageId, lastMessageId);
+    if(null != network) {
+      long lastMessageId = network.lastMessageId;
+      long messageId = cursor.getLong(messageIdIndex);
+      if (network.lastMessageId < messageId) {
+        //TODO: Use Style Instead
+//        convertView.setBackgroundColor(Color.YELLOW);
+        lastMessageId = Math.max(messageId, lastMessageId);
+      }
+      network.lastMessageId = lastMessageId;
+      getYammerData().save(network);
     }
-    network.lastMessageId = lastMessageId;
-    getYammerData().save(network);
     
     return convertView;
   }
