@@ -254,18 +254,29 @@ public class TweetListAdapter extends SimpleCursorAdapter {
 
     Network network = getNetwork();
     if(null != network) {
-      long lastMessageId = network.lastMessageId;
       long messageId = cursor.getLong(messageIdIndex);
       if (network.lastMessageId < messageId) {
         //TODO: Use Style Instead
 //        convertView.setBackgroundColor(Color.YELLOW);
-        lastMessageId = Math.max(messageId, lastMessageId);
+        this.lastMessageId = Math.max(messageId, network.lastMessageId);
       }
-      network.lastMessageId = lastMessageId;
-      getYammerData().save(network);
     }
     
     return convertView;
+  }
+
+  public void onDoneDrawing() {
+    saveLastMessageId();
+  }
+  
+  private long lastMessageId = 0L;
+  
+  private void saveLastMessageId() {
+    Network network = getNetwork();
+    if(null != network && network.lastMessageId != lastMessageId) {
+      network.lastMessageId = lastMessageId;
+      getYammerData().save(network);
+    }
   }
   
   private Network getNetwork() {
