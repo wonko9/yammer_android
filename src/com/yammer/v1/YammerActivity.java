@@ -35,6 +35,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.drawable.AnimationDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -52,6 +53,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 
@@ -568,26 +570,26 @@ public class YammerActivity extends Activity {
 
   public void onCreateContextMenu(ContextMenu menu, View view, ContextMenuInfo menuInfo) {
     if (DEBUG) Log.d(getClass().getName(), "Create context menu");
-    // Get the row ID
+
     AdapterContextMenuInfo info = (AdapterContextMenuInfo)menuInfo;
-    long rowId = info.id;
-    // TODO: Refactor this into YammerData().getMessage(rowId); YammerData().getUser(message.userId);
-    String sql = "select messages._id, messages.message, messages.message_id, messages.user_id, users.full_name, users.is_following, urls.url from messages join users on messages.user_id=users.user_id left join urls on messages.message_id=urls.message_id where messages." + _ID + "=" + rowId;
+    
+    // TODO: Refactor this into 
+    // message = YammerData().getMessage(rowinfo.id); 
+    // YammerData().getUser(message.userId);
+    String sql = "select messages._id, messages.message, messages.message_id, messages.user_id, users.full_name, users.is_following, urls.url from messages join users on messages.user_id=users.user_id left join urls on messages.message_id=urls.message_id where messages." + _ID + "=" + info.id;
     SQLiteDatabase db = getYammerService().getYammerData().getReadableDatabase();
     Cursor c = db.rawQuery(sql, null);
     c.moveToFirst();
-    // Get the user ID of the user who  posted the message
-    int columnIndex = c.getColumnIndex(User.FIELD_USER_ID);
-    long userId = c.getLong(columnIndex);
-    // Get the message posted
-    columnIndex = c.getColumnIndex(Message.FIELD_MESSAGE);
-    String message = c.getString(columnIndex);
-    // Get the full name of the user who posted the message
-    columnIndex = c.getColumnIndex(User.FIELD_FULL_NAME);
-    String fullName = c.getString(columnIndex);
-    // Get the full name of the user who posted the message
-    columnIndex = c.getColumnIndex(User.FIELD_IS_FOLLOWING);
-    int isFollowing = c.getInt(columnIndex);
+    
+    if (DEBUG) Log.d(getClass().getName(), "c.getCount(): " + c.getCount());
+    if(0 == c.getCount()) {
+      c.close();
+      toastUser(R.string.no_message_selected);
+      return;
+    }
+    
+    long userId = c.getLong(c.getColumnIndex(User.FIELD_USER_ID));
+    String message = c.getString(c.getColumnIndex(Message.FIELD_MESSAGE));
     //menu.setHeaderTitle(R.string.popup_title_label);
     // Is this my own message?
     boolean myself = false;
@@ -605,24 +607,20 @@ public class YammerActivity extends Activity {
     menu.add(0, MENU_REPLY, ContextMenu.NONE, R.string.reply_label);
     // I don't want to be able to follow myself
     if ( !myself ) {
-      if ( isFollowing == 0 ) {
-        // Not following already, so allow follow
+      String fullName = c.getString(c.getColumnIndex(User.FIELD_FULL_NAME));
+      if ( 0 == c.getInt(c.getColumnIndex(User.FIELD_IS_FOLLOWING)) ) {
         menu.add(0, MENU_FOLLOW, ContextMenu.NONE, getResources().getString(R.string.follow_label) + " " + fullName);
       } else {	            
-        // Do I already follow this user ID? Then allow unfollow
         menu.add(0, MENU_UNFOLLOW, ContextMenu.NONE, getResources().getString(R.string.unfollow_label) + " " + fullName);
       }
-    }
-    // If this is myself, then there is a delete button
-    if ( myself ) {
+    } else {
       menu.add(0, MENU_DELETE, ContextMenu.NONE, R.string.delete_label).setIcon(R.drawable.yammer_logo_small);
     }
 
     // Submenu for URLs
     //Menu urlSubMenu = null;
-    if (DEBUG) Log.d(getClass().getName(), "c.getCount(): " + c.getCount());
     // Add any URL's that may have been enclosed in the message
-    columnIndex = c.getColumnIndex(URL.FIELD_URL);
+    int columnIndex = c.getColumnIndex(URL.FIELD_URL);
     for ( int i=0; i<c.getCount(); i++) {
       String url = c.getString(columnIndex);
       // No URLs in this post, so break	
@@ -641,7 +639,6 @@ public class YammerActivity extends Activity {
     }
     // Done using the cursor, so close it
     c.close();
-    // TODO: Determine if any links should be shown here
   }
 
   public boolean onContextItemSelected(MenuItem item) {		
@@ -1031,5 +1028,13 @@ public class YammerActivity extends Activity {
   private void sendBroadcast(String _intent) {
     sendBroadcast(new Intent(_intent));
   }
-  
+
+  private void toastUser(final int _resId, final Object... _args) {
+    new Handler().post(new Runnable() {
+      public void run() {
+        Toast.makeText(getApplicationContext(), String.format(getText(_resId).toString(), _args), Toast.LENGTH_LONG).show();
+      }
+    });
+  }
+
 }

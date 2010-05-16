@@ -44,8 +44,7 @@
 	<string name='changing_network_text'>Changing network to: %s</string>
 	<string name='select_feed'>Select Feed</string>
 	<string name='changing_feed_text'>Changing feed to: %s</string>
-	<string name='application_update_title'>Yammer Updated</string>
-	<string name='application_update_text'>A new version of Yammer is available.</string>
+	<string name='no_message_selected'>Unable to find message in local store.  Please refresh and try again.</string>
 	<string name="about_text">Yammer v%s\n© 2009 Yammer, Inc.\nhttp://www.yammer.com/</string>
 	<string name="about_disclaimer"></string>
 	<string name="setting_select_active_account">Select active account</string>

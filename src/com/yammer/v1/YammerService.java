@@ -82,8 +82,6 @@ public class YammerService extends Service {
   
   private boolean notificationEnabled = true;
   
-  private Handler mHandler;
-  
   // Wakelock
   PowerManager.WakeLock wakelock = null; 
 
@@ -185,7 +183,6 @@ public class YammerService extends Service {
   public void onCreate() {
     if (DEBUG) Log.d(getClass().getName(), "YammerService.onCreate");
     super.onCreate();
-    this.mHandler = new Handler();
     PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
     wakelock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, getClass().getName());
   }
@@ -612,7 +609,7 @@ public class YammerService extends Service {
   }
 
   private void toastUser(final int _resId, final Object... _args) {
-    this.mHandler.post(new Runnable() {
+    new Handler().post(new Runnable() {
       public void run() {
         Toast.makeText(getApplicationContext(), String.format(getText(_resId).toString(), _args), Toast.LENGTH_LONG).show();
       }
