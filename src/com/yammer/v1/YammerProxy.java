@@ -190,7 +190,7 @@ public class YammerProxy {
 
       try {
         URL url = new URL(baseURL + PATH_LOGIN +
-            "?wrap_username=" + Uri.encode(_email) + 
+            "?wrap_username=" + Uri.encode(_email.trim()) + 
             "&wrap_password=" + Uri.encode(_password) + 
             "&wrap_client_id=" + OAuthCustom.KEY
         );
@@ -424,14 +424,16 @@ public class YammerProxy {
    */
   public void postMessage(final String message, final long messageId) throws YammerProxyException {
     if (DEBUG) Log.d(getClass().getName(), ".postMessage");
-    Properties paramProps = new Properties();
-    paramProps.setProperty("oauth_token", this.requestToken);
-    paramProps.setProperty("body", message);
-    if( messageId != 0 ) {
-      paramProps.setProperty("replied_to_id", Long.toString(messageId));
-    }
     try {
+      Properties paramProps = new Properties();
+      paramProps.setProperty("oauth_token", this.requestToken);
+      paramProps.setProperty("body", message);
+      if( messageId != 0 ) {
+        paramProps.setProperty("replied_to_id", Long.toString(messageId));
+      }
       sendRequest(paramProps, this.baseURL + "/api/v1/messages/", OAuthMessage.POST);
+    } catch (NullPointerException e) {
+      throw new ConnectionProblem(e);
     } catch (IOException e) {
       throw new ConnectionProblem(e);
     } catch (URISyntaxException e) {

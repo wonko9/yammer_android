@@ -1,7 +1,7 @@
 
 2010-05-20
   Bumped versionCode for release (22)
-  Catch NPE and throw ConnectionProblem
+  More bug fixes
   Bumped versionCode for release (21)
   Fixed stupid login bug
 
