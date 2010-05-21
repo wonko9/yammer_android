@@ -515,13 +515,11 @@ public class YammerProxy {
   // TODO: privatize
   public String accessResource(String url) throws YammerProxyException {
     if (DEBUG) Log.d(getClass().getName(), "Accessing resource: " + url);
-    Properties paramProps = new Properties();
-    paramProps.setProperty("oauth_token", this.requestToken);
-    OAuthMessage response;
     String responseBody = null;
     try {
-      response = sendRequest(paramProps, url, "GET");
-      responseBody = response.readBodyAsString();
+      Properties paramProps = new Properties();
+      paramProps.setProperty("oauth_token", this.requestToken);
+      responseBody = sendRequest(paramProps, url, "GET").readBodyAsString();
       if (DEBUG) Log.d(getClass().getName(), "responseBody: " + responseBody);
     } catch (NullPointerException e) {
       throw new ConnectionProblem(e);
