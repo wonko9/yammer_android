@@ -35,6 +35,7 @@ import net.oauth.http.HttpClient;
 import net.oauth.http.HttpMessage;
 import net.oauth.http.HttpResponseMessage;
 import android.content.Context;
+import android.net.Uri;
 import android.util.Log;
 
 public class YammerProxy {
@@ -188,7 +189,11 @@ public class YammerProxy {
   public int login(String _email, String _password) {
 
       try {
-        URL url = new URL(baseURL + PATH_LOGIN + "?wrap_username=" + _email + "&wrap_password=" + _password + "&wrap_client_id=" + OAuthCustom.KEY);
+        URL url = new URL(baseURL + PATH_LOGIN +
+            "?wrap_username=" + Uri.encode(_email) + 
+            "&wrap_password=" + Uri.encode(_password) + 
+            "&wrap_client_id=" + OAuthCustom.KEY
+        );
         HttpMessage request = new HttpMessage(OAuthMessage.GET, url);
         HttpResponseMessage response = getHttpClient().execute(request);
         if(200 == response.getStatusCode()) {

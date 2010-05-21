@@ -1,4 +1,8 @@
 
+2010-05-20
+  Bumped versionCode for release (21)
+  Fixed stupid login bug
+
 2010-04-21
   Allow User to select network (ANDROID-53)
   More code cleanup
