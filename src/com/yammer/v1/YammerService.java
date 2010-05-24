@@ -584,7 +584,9 @@ public class YammerService extends Service {
     currentNetworkId = _id;
     currentNetwork = null;
     getSettings().setCurrentNetworkId(_id);
-    getYammerProxy().setCurrentNetwork(getCurrentNetwork());
+    if(null != getCurrentNetwork()) {
+      getYammerProxy().setCurrentNetwork(getCurrentNetwork());
+    }
   }
  
   //TODO: privatize
