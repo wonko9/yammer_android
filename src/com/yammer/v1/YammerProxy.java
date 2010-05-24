@@ -427,7 +427,7 @@ public class YammerProxy {
     try {
       Properties paramProps = new Properties();
       paramProps.setProperty("oauth_token", this.requestToken);
-      paramProps.setProperty("body", message);
+      paramProps.setProperty("body", Uri.encode(message));
       if( messageId != 0 ) {
         paramProps.setProperty("replied_to_id", Long.toString(messageId));
       }
