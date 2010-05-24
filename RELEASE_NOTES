@@ -1,4 +1,9 @@
 
+2010-05-23
+  Bumped versionCode for release (23)
+  Fixed posting bug
+  Fixed wake lock release bug
+
 2010-05-20
   Bumped versionCode for release (22)
   More bug fixes
