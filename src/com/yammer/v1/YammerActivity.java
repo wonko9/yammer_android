@@ -177,7 +177,9 @@ public class YammerActivity extends Activity {
               c.close();
               
             } else if(getSettings().isMessageClickMenu()) {
-              openContextMenu(view);
+              if(null != view.getParent()) {
+                openContextMenu(view);
+              }
               
             } else {
               if (DEBUG) Log.d(getClass().getName(), "Viewing message");    							
