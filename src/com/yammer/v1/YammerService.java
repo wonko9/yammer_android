@@ -229,13 +229,12 @@ public class YammerService extends Service {
                   // Time to update
                   getMessages(false);
                   lastUpdateTime = System.currentTimeMillis();		        					
+                  wakelock.release();
+                  if (DEBUG) Log.d(getClass().getName(), "Wakelock released");
                 } 
               } catch (Exception e) {
                 if (DEBUG) Log.d(getClass().getName(), "An exception occured during updatePublicMessage()");
                 e.printStackTrace();
-              } finally {
-                wakelock.release();
-                if (DEBUG) Log.d(getClass().getName(), "Wakelock released");
               }
             }
           }, 0, GLOBAL_UPDATE_INTERVAL
