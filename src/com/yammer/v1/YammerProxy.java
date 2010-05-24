@@ -1,5 +1,6 @@
 package com.yammer.v1;
 
+import java.lang.IllegalArgumentException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -432,6 +433,8 @@ public class YammerProxy {
         paramProps.setProperty("replied_to_id", Long.toString(messageId));
       }
       sendRequest(paramProps, this.baseURL + "/api/v1/messages/", OAuthMessage.POST);
+    } catch (IllegalArgumentException ex) {
+      // happens when there is a % in the body of the message
     } catch (NullPointerException e) {
       throw new ConnectionProblem(e);
     } catch (IOException e) {
