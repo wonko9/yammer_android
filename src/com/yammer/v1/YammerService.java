@@ -142,8 +142,8 @@ public class YammerService extends Service {
           e.printStackTrace();
         }
       } else if(INTENT_AUTHENTICATION_COMPLETE.equals(intent.getAction())) {
-          updateCurrentUserData();
           authenticationComplete();
+          updateCurrentUserData();
           
       } else if(INTENT_ENABLE_NOTIFICATION.equals(intent.getAction())) {
           YammerService.this.notificationEnabled = true;
@@ -386,7 +386,9 @@ public class YammerService extends Service {
     if (DEBUG) Log.i(getClass().getName(), ".reloadNetworks");
     try {
       getYammerData().clearNetworks();
-      getYammerData().addNetworks(getYammerProxy().getNetworks());
+      Network[] networks = getYammerProxy().getNetworks();
+      setCurrentNetworkId(networks[0].networkId);
+      getYammerData().addNetworks(networks);
     } catch(YammerProxyException ex) {
       ex.printStackTrace();
     }
@@ -410,7 +412,7 @@ public class YammerService extends Service {
   }
   
   public void getMessages(boolean reloading) {
-    if (DEBUG) Log.i(getClass().getName(), ".reloadMessages");
+    if (DEBUG) Log.i(getClass().getName(), ".getMessages");
     
     if ( ! isAuthorized() ) {
       if (DEBUG) Log.i(getClass().getName(), "User not authorized - skipping update");
@@ -496,8 +498,8 @@ public class YammerService extends Service {
     } catch (YammerDataException e) {
       if (DEBUG) Log.w(getClass().getName(), e.getMessage());
       return;
-    } catch (Exception e) {
-       e.printStackTrace();
+//    } catch (Exception e) {
+//       e.printStackTrace();
     } finally {
       // Release the semaphore
       jsonUpdateSemaphore.release();
@@ -611,12 +613,12 @@ public class YammerService extends Service {
   }
 
   private void toastUser(final int _resId, final Object... _args) {
-    Looper.prepare();
-    new Handler().post(new Runnable() {
+    new Handler(Looper.getMainLooper()).post(new Runnable() {
       public void run() {
         Toast.makeText(getApplicationContext(), String.format(getText(_resId).toString(), _args), Toast.LENGTH_LONG).show();
       }
     });
   }
+  
    
 }
