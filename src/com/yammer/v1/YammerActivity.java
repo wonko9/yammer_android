@@ -95,7 +95,11 @@ public class YammerActivity extends Activity {
   
   private void unbindYammerService() {
     if(DEBUG) Log.d(getClass().getName(), "Unbinding ServiceConnection");
-    unbindService(mConnection);
+    try {
+      unbindService(mConnection);
+    } catch(IllegalArgumentException ex) {
+      ex.printStackTrace();
+    }
   }
 
   private YammerService getYammerService() {
