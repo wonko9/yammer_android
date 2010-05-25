@@ -1,4 +1,14 @@
 
+2010-05-24
+  Bumped versionName 1.3.1 for release
+  Imported trace source instead of using jars.
+    I may want to log handled exceptions.
+  Reworked service binding logic in YammerActivity.
+    Should prevent NPEs in handling AUTHENTICATION_COMPLETE intent.
+  Swallow exceptions from unbindService
+    Exceptions were being thrown from Froyo
+  Fixed bug preventing loading of messages after authentication.
+
 2010-05-23
   Bumped versionCode for release (23)
   Fixed posting bug
