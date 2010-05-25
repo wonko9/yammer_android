@@ -86,16 +86,23 @@ public class YammerActivity extends Activity {
   private static int loadingRefCounter = 0;
   private final Semaphore loadingRefCounterSemaphore = new Semaphore(1);
 
-  private YammerService getYammerService() {
-    if (DEBUG) Log.d(getClass().getName(), "Yammer.getYammerService()");
-    if ( mYammerService == null ) {
-      bindService( 	new Intent(YammerActivity.this, YammerService.class), 
-          mConnection, 
-          Context.BIND_AUTO_CREATE);    				
+  private void bindYammerService() {
+    if(DEBUG) Log.d(getClass().getName(), "Binding ServiceConnection");
+    if(null == mYammerService) {
+      bindService(new Intent(YammerActivity.this, YammerService.class), mConnection, Context.BIND_AUTO_CREATE);
     }
-    return mYammerService;
+  }
+  
+  private void unbindYammerService() {
+    if(DEBUG) Log.d(getClass().getName(), "Unbinding ServiceConnection");
+    unbindService(mConnection);
   }
 
+  private YammerService getYammerService() {
+    if (DEBUG) Log.d(getClass().getName(), "Yammer.getYammerService()");
+    return mYammerService;
+  }
+  
   private void registerIntents() {
     if (DEBUG) Log.d(getClass().getName(), "Registering intents for Yammer");
     IntentFilter filter = new IntentFilter();
@@ -948,7 +955,7 @@ public class YammerActivity extends Activity {
   public void onStart() {
     super.onStart();
     if (DEBUG) Log.d(getClass().getName(), "Yammer.onStart");
-    bindService(new Intent(YammerActivity.this, YammerService.class), mConnection, Context.BIND_AUTO_CREATE);
+    bindYammerService();
   }
 
   public void onResume() {
@@ -982,8 +989,8 @@ public class YammerActivity extends Activity {
       // Reset the message count - we probably saw any new message
       getYammerService().resetMessageCount();
     }
-    if (DEBUG) Log.d(getClass().getName(), "Unbinding ServiceConnection");
-    unbindService(mConnection);
+    
+    unbindYammerService();
     // TODO: Unregister receiver
     // Make sure intent receiver was registered before unregistering it
   }
