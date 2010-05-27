@@ -553,6 +553,7 @@ public class YammerService extends Service {
   private YammerProxy yammerProxy;
 
   private void resetYammerProxy() {
+    this.yammerProxy.reset();
     this.yammerProxy = null;
   }
   private YammerProxy getYammerProxy() {

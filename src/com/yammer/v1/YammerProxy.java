@@ -142,8 +142,9 @@ public class YammerProxy {
 
   private static YammerProxy proxy;
   public static YammerProxy getYammerProxy(Context _ctx) {
-    if(null == proxy) {
-      proxy = new YammerProxy(new SettingsEditor(_ctx).getUrl());
+    String newURL = new SettingsEditor(_ctx).getUrl();
+    if(null == proxy || ! newURL.equals(proxy.baseURL)) {
+      proxy = new YammerProxy(newURL);
     }
     return proxy;
   }
