@@ -431,7 +431,8 @@ public class YammerService extends Service {
         return;
       }
       
-      String messages = getYammerProxy().getMessagesNewerThan(getFeedURL(), getCurrentNetwork().lastMessageId);
+      Network currentNetwork = getCurrentNetwork();
+      String messages = getYammerProxy().getMessagesNewerThan(getFeedURL(), currentNetwork.lastMessageId);
 
       if (DEBUG) Log.d(getClass().getName(), "Messages JSON: " + messages);
       jsonMessages = new JSONObject(messages);
@@ -471,6 +472,11 @@ public class YammerService extends Service {
         for( int ii=0; ii < jsonArray.length(); ii++ ) {
           // Add the message reference to the database
           Message message = getYammerData().addMessage(jsonArray.getJSONObject(ii), getCurrentNetworkId());
+      
+          if(message.messageId > currentNetwork.lastMessageId) {
+            currentNetwork.lastMessageId = message.messageId;
+          }
+          
           // Is this my own message?
           boolean ownMessage = getCurrentUserId() == message.userId;
           // Only ask if notification is required if none of
@@ -492,6 +498,8 @@ public class YammerService extends Service {
         if (DEBUG) Log.w(getClass().getName(), e.getMessage());
       }			
 
+      getYammerData().save(currentNetwork);
+      
     } catch (YammerProxyException e) {
       if (DEBUG) Log.w(getClass().getName(), e.getMessage());
       return;
@@ -501,8 +509,6 @@ public class YammerService extends Service {
     } catch (YammerDataException e) {
       if (DEBUG) Log.w(getClass().getName(), e.getMessage());
       return;
-//    } catch (Exception e) {
-//       e.printStackTrace();
     } finally {
       // Release the semaphore
       jsonUpdateSemaphore.release();
