@@ -387,7 +387,10 @@ public class YammerService extends Service {
     try {
       getYammerData().clearNetworks();
       Network[] networks = getYammerProxy().getNetworks();
-      setCurrentNetworkId(networks[0].networkId);
+      if(0L == getCurrentNetworkId()) {
+        setCurrentNetworkId(networks[0].networkId);
+        getYammerProxy().setCurrentNetwork(networks[0]);
+      }
       getYammerData().addNetworks(networks);
     } catch(YammerProxyException ex) {
       ex.printStackTrace();
