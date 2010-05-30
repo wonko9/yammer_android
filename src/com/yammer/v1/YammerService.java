@@ -70,10 +70,7 @@ public class YammerService extends Service {
   private static long lastUpdateTime = 0;
   // Check for application updates once a day
   private Timer timer = new Timer();
-  // Maintained JSON objects
-  JSONObject jsonMessages = null;
-  // Default feed
-  int defaultFeedId = 0; /* 0 - All messages */
+  
   // Properties of the current network
   int newMessageCount = 0;
   
@@ -231,8 +228,8 @@ public class YammerService extends Service {
                   lastUpdateTime = System.currentTimeMillis();		        					
                   wakelock.release();
                   if (DEBUG) Log.d(getClass().getName(), "Wakelock released");
-                } 
-              } catch (Exception e) {
+                }
+              } catch (RuntimeException e) {
                 if (DEBUG) Log.d(getClass().getName(), "An exception occured during updatePublicMessage()");
                 e.printStackTrace();
               }
@@ -401,6 +398,7 @@ public class YammerService extends Service {
   private void reloadFeeds() {
     if (DEBUG) Log.i(getClass().getName(), ".reloadFeeds");
     try {
+      //getYammerData().deleteFeedsFor(getCurrentNetworkId());
       getYammerData().clearFeeds();
       Feed[] feeds = getYammerProxy().getFeeds();
       this.getSettings().setFeed(feeds[0].name);
@@ -431,11 +429,10 @@ public class YammerService extends Service {
         return;
       }
       
-      Network currentNetwork = getCurrentNetwork();
-      String messages = getYammerProxy().getMessagesNewerThan(getFeedURL(), currentNetwork.lastMessageId);
+      String messages = getYammerProxy().getMessagesNewerThan(getFeedURL(), getYammerData().getLastMessageId(getCurrentNetworkId()));
 
       if (DEBUG) Log.d(getClass().getName(), "Messages JSON: " + messages);
-      jsonMessages = new JSONObject(messages);
+      JSONObject jsonMessages = new JSONObject(messages);
 
       try {
         if (DEBUG) Log.d(getClass().getName(), "Updating users from references");
@@ -466,15 +463,13 @@ public class YammerService extends Service {
 
       try {
         if (DEBUG) Log.d(getClass().getName(), "Updating messages");
-        // Retrieve all messages
+        Network network = getCurrentNetwork();
         JSONArray jsonArray = jsonMessages.getJSONArray("messages");
-        // Add all fetched messages tp the database
         for( int ii=0; ii < jsonArray.length(); ii++ ) {
-          // Add the message reference to the database
           Message message = getYammerData().addMessage(jsonArray.getJSONObject(ii), getCurrentNetworkId());
       
-          if(message.messageId > currentNetwork.lastMessageId) {
-            currentNetwork.lastMessageId = message.messageId;
+          if(message.messageId > network.lastMessageId) {
+            network.lastMessageId = message.messageId;
           }
           
           // Is this my own message?
@@ -494,12 +489,12 @@ public class YammerService extends Service {
         }
         
         getSettings().setUpdatedAt();
+        getYammerData().save(network);
+        
       } catch (JSONException e) {
         if (DEBUG) Log.w(getClass().getName(), e.getMessage());
       }			
 
-      getYammerData().save(currentNetwork);
-      
     } catch (YammerProxyException e) {
       if (DEBUG) Log.w(getClass().getName(), e.getMessage());
       return;
@@ -508,7 +503,8 @@ public class YammerService extends Service {
       return;
     } catch (YammerDataException e) {
       if (DEBUG) Log.w(getClass().getName(), e.getMessage());
-      return;
+      setCurrentNetworkId(0L);
+      reloadNetworks();
     } finally {
       // Release the semaphore
       jsonUpdateSemaphore.release();
@@ -559,17 +555,17 @@ public class YammerService extends Service {
     sendBroadcast(new Intent(_intent));
   }
 
-  private YammerProxy yammerProxy;
+  private YammerProxy mYammerProxy;
 
   private void resetYammerProxy() {
-    this.yammerProxy.reset();
-    this.yammerProxy = null;
+    this.mYammerProxy.reset();
+    this.mYammerProxy = null;
   }
   private YammerProxy getYammerProxy() {
-    if (null == this.yammerProxy) {
-      this.yammerProxy = YammerProxy.getYammerProxy(getApplicationContext());
+    if (null == this.mYammerProxy) {
+      this.mYammerProxy = YammerProxy.getYammerProxy(getApplicationContext());
     }
-    return this.yammerProxy;
+    return this.mYammerProxy;
   }
 
   //TODO: Refactor these statics to instance methods
@@ -581,20 +577,20 @@ public class YammerService extends Service {
     return authorized;
   }
 
-  private YammerData yammerData = null;
+  private YammerData mYammerData = null;
   //TODO: privatize
   YammerData getYammerData() {
-    if(null == yammerData) {
-      yammerData = new YammerData(this);
+    if(null == mYammerData) {
+      mYammerData = new YammerData(this);
     }
-    return yammerData; 
+    return mYammerData; 
   }
 
-  private long currentNetworkId = 0L;
+  private long mCurrentNetworkId = 0L;
   
   private void setCurrentNetworkId(long _id) {
-    currentNetworkId = _id;
-    currentNetwork = null;
+    mCurrentNetworkId = _id;
+    mCurrentNetwork = null;
     getSettings().setCurrentNetworkId(_id);
     if(null != getCurrentNetwork()) {
       getYammerProxy().setCurrentNetwork(getCurrentNetwork());
@@ -603,18 +599,18 @@ public class YammerService extends Service {
  
   //TODO: privatize
   long getCurrentNetworkId() {
-    if(0L == currentNetworkId) { 
-      currentNetworkId = getSettings().getCurrentNetworkId();
+    if(0L == mCurrentNetworkId) { 
+      mCurrentNetworkId = getSettings().getCurrentNetworkId();
     }
-    return currentNetworkId;
+    return mCurrentNetworkId;
   }
 
-  private Network currentNetwork;
+  private Network mCurrentNetwork;
   private Network getCurrentNetwork() {
-    if(null == currentNetwork) { 
-      currentNetwork = getYammerData().getNetwork(getCurrentNetworkId());
+    if(null == mCurrentNetwork) { 
+      mCurrentNetwork = getYammerData().getNetwork(getCurrentNetworkId());
     }
-    return currentNetwork;
+    return mCurrentNetwork;
   }
 
   //TODO: privatize

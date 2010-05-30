@@ -10,6 +10,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.content.Context;
+import android.database.CursorIndexOutOfBoundsException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
@@ -146,6 +147,11 @@ public class YammerData extends SQLiteOpenHelper {
     if (DEBUG) Log.d(getClass().getName(), ".clearFeeds");
     Feed.deleteAll(getWritableDatabase());
   }
+  
+  public void deleteFeedsFor(long _networkId) {
+    if (DEBUG) Log.d(getClass().getName(), ".deleteFeedsFor: " + _networkId);
+    Feed.deleteByNetworkId(getWritableDatabase(), _networkId);
+  }
 
   public void addFeeds(Feed[] _feeds) {
     for(int ii=0; ii < _feeds.length ;ii++) {
@@ -158,7 +164,11 @@ public class YammerData extends SQLiteOpenHelper {
   }
   
   public String getURLForFeed(long _networkId, String _name) throws YammerDataException {
-    return Feed.getURLForFeed(getReadableDatabase(), _networkId, _name);
+    try {
+      return Feed.getURLForFeed(getReadableDatabase(), _networkId, _name);
+    } catch(CursorIndexOutOfBoundsException ex) {
+      throw new YammerDataException(ex);
+    }
   }
   
 }

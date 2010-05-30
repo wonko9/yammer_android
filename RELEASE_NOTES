@@ -1,6 +1,15 @@
 
+2010-05-30
+  Bumped versionName 1.3.4 for release
+  Feed switch bug fix.
+  Message reload bug fix.
+    Use messages table to determine last message instead of network.last_message_id.
+  More code cleanup.
+  Wrap CursorIndexOutOfBoundsException in YammerDataException
+    Reload networks if we receive a YammerDataException while loading messages
+
 2010-05-27
-  Bumped versionName 1.3.2 for release
+  Bumped versionName 1.3.3 for release
   Network switch bug fix
   No feeds on first login bug fix
   Notification bug fix
