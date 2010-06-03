@@ -1,4 +1,14 @@
 
+2010-06-02
+  Bumped versionName 1.3.5 for release
+  Worked around for posting bug in OAuthClient.
+    OAuthClient.invoke throws an exception unless the return code is 200 OK.
+    Posting a message returns a code of 201 Created.
+  YammerActivity no longer does a full reload after a post.
+    Added YammerActivity.updateMessages to just get new messages
+  Shortened the reload after post delay to 500ms.
+  Message.save no longer throws exception on failed insert.
+
 2010-05-30
   Bumped versionName 1.3.4 for release
   Feed switch bug fix.

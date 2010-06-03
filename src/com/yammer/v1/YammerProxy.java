@@ -567,10 +567,15 @@ public class YammerProxy {
       int statusCode = e.getHttpStatusCode();
       if (DEBUG) Log.d(getClass().getName(), "HTTP status code: " + statusCode);
       
+      // creating a message returns a status code of 201 Created
+      if (201 == statusCode) {
+        return null;
+      }
+
       if (401 == statusCode) {
         throw new AccessDeniedException(e);
       }
-       
+
       throw e;
     }
   }

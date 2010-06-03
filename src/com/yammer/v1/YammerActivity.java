@@ -73,7 +73,7 @@ public class YammerActivity extends Activity {
 
   private static final boolean DEBUG = G.DEBUG;
   
-  private static final long TEMP_SLEEP = 3000;
+  private static final long TEMP_SLEEP = 500;
 
   private YammerService mYammerService = null;
   private SQLiteDatabase db = null;;
@@ -583,6 +583,21 @@ public class YammerActivity extends Activity {
         }).start();
   }
 
+  private void updateMessages() {
+    new Thread(
+        new Runnable() {
+          public void run() {
+            try {
+              showLoadingAnimation(true);
+              getYammerService().getMessages(true);
+            } finally {
+              showLoadingAnimation(false);
+            }
+          }
+        }).start();
+  }
+
+
   public void onCreateContextMenu(ContextMenu menu, View view, ContextMenuInfo menuInfo) {
     if (DEBUG) Log.d(getClass().getName(), "Create context menu");
 
@@ -796,12 +811,10 @@ public class YammerActivity extends Activity {
                 try {
                   getYammerService().postMessage(reply, messageId);
                   Thread.sleep(TEMP_SLEEP);                  
-                  reload();
+                  updateMessages();
                 } catch (YammerProxy.YammerProxyException e) {
-                  // TODO Auto-generated catch block
                   e.printStackTrace();
                 } catch (InterruptedException e) {
-                  // TODO Auto-generated catch block
                   e.printStackTrace();
                 }
               }
@@ -873,12 +886,10 @@ public class YammerActivity extends Activity {
                     try {
                       getYammerService().postMessage(message, 0);
                       Thread.sleep(TEMP_SLEEP);
-                      reload();
+                      updateMessages();
                     } catch (YammerProxy.YammerProxyException e) {
-                      // TODO Auto-generated catch block
                       e.printStackTrace();
                     } catch (InterruptedException e) {
-                      // TODO Auto-generated catch block
                       e.printStackTrace();
                     }
                   }
