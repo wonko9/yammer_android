@@ -520,7 +520,7 @@ public class YammerProxy {
 
   // TODO: privatize
   public String accessResource(String url) throws YammerProxyException {
-    if (DEBUG) Log.d(getClass().getName(), "Accessing resource: " + url);
+    if (DEBUG) Log.d(getClass().getName(), "accessResource: " + url);
     String responseBody = null;
     try {
       Properties paramProps = new Properties();

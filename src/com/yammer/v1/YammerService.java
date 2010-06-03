@@ -115,7 +115,7 @@ public class YammerService extends Service {
           return;
         }
         
-        reset();
+        resetAccount();
         
         // Allow updates again (if authorized)
         jsonUpdateSemaphore.release();
@@ -169,9 +169,9 @@ public class YammerService extends Service {
       sendBroadcast(new Intent(YammerActivity.INTENT_AUTHORIZATION_DONE));
    }
 
-    private void reset() {
+    private void resetAccount() {
       getYammerData().resetData(getCurrentNetworkId());
-      getSettings().setCurrentNetworkId(0L);
+      setCurrentNetworkId(0L);
       resetYammerProxy();
       YammerService.setAuthorized(false);
     }
@@ -338,16 +338,13 @@ public class YammerService extends Service {
     sendBroadcast(YammerActivity.INTENT_PUBLIC_TIMELINE_UPDATED);
   }
 
-  public void followUser(final long userId) throws YammerProxy.YammerProxyException {
-    if (DEBUG) Log.d(getClass().getName(), "YammerService.followUser");
-    // GET https://yammer.com/api/v1/subscriptions/to_user/<id>.json
-    if (DEBUG) Log.d(getClass().getName(), "Following user");
+  public void followUser(long userId) throws YammerProxy.YammerProxyException {
+    if (DEBUG) Log.d(getClass().getName(), ".followUser: " + userId);
     getYammerProxy().followUser(userId);
-    if (DEBUG) Log.d(getClass().getName(), "User followed!");
   }
 
-  public void unfollowUser(final long userId) throws YammerProxy.YammerProxyException {
-    if (DEBUG) Log.d(getClass().getName(), ".followUser");
+  public void unfollowUser(long userId) throws YammerProxy.YammerProxyException {
+    if (DEBUG) Log.d(getClass().getName(), ".unfollowUser: " + userId);
     getYammerProxy().unfollowUser(userId);
   }
 
@@ -356,8 +353,9 @@ public class YammerService extends Service {
     setCurrentNetworkId(_id);
     toastUser(R.string.changing_network_text, getCurrentNetwork().name);
     updateCurrentUserData();
-    clearMessages();
-    getMessages(true);
+// handled by intent fired from updateCurrentUserData => reloadNetworks => reloadFeeds     
+//    clearMessages();
+//    getMessages(true);
   }
   
   private void changeFeed(String _name) {
@@ -386,7 +384,6 @@ public class YammerService extends Service {
       Network[] networks = getYammerProxy().getNetworks();
       if(0L == getCurrentNetworkId()) {
         setCurrentNetworkId(networks[0].networkId);
-        getYammerProxy().setCurrentNetwork(networks[0]);
       }
       getYammerData().addNetworks(networks);
     } catch(YammerProxyException ex) {
@@ -401,13 +398,16 @@ public class YammerService extends Service {
       //getYammerData().deleteFeedsFor(getCurrentNetworkId());
       getYammerData().clearFeeds();
       Feed[] feeds = getYammerProxy().getFeeds();
-      this.getSettings().setFeed(feeds[0].name);
       getYammerData().addFeeds(feeds);
+      
+      Intent intent = new Intent(YammerService.INTENT_CHANGE_FEED);
+      intent.putExtra(YammerService.EXTRA_FEED_NAME, feeds[0].name);
+      sendBroadcast(intent);
     } catch(YammerProxyException ex) {
       ex.printStackTrace();
     }
   }
-
+  
   public void clearMessages() {
     getYammerData().clearMessages();
   }
