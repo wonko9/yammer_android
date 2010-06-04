@@ -135,7 +135,7 @@ public class User extends Base {
     if(0 != _db.update(TABLE_NAME, values, keyClause(), null)) {
       if(DEBUG) Log.d(getClass().getName(), "Updated URL: " + url);
     } else {
-      _db.insertOrThrow(TABLE_NAME, null, values);                   
+      _db.insert(TABLE_NAME, null, values);                   
       if(DEBUG) Log.d(getClass().getName(), "Added URL: " + url);
     }
 

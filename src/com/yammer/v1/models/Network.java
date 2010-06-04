@@ -72,7 +72,7 @@ public class Network extends Base {
     if(0 != _db.update(TABLE_NAME, values, keyClause(), null)) {
       if(DEBUG) Log.d(getClass().getName(), "Updated Network: " + name);
     } else {
-      _db.insertOrThrow(TABLE_NAME, null, values);                   
+      _db.insert(TABLE_NAME, null, values);                   
       if(DEBUG) Log.d(getClass().getName(), "Added Network: " + name);
     }
 
