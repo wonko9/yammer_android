@@ -546,7 +546,6 @@ public class YammerActivity extends Activity {
       cursor.setSelectionArguments(new String[] {String.valueOf(getYammerService().getCurrentNetworkId())});
       cursor.requery();
       tweetListAdapter.notifyDataSetChanged();
-      tweetListAdapter.onDoneDrawing();
       
       // If we are at the top of the screen, then show the newest item
       if ( tweetListView.getFirstVisiblePosition() == 0 ) {

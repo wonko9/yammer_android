@@ -251,46 +251,10 @@ public class TweetListAdapter extends SimpleCursorAdapter {
     holder.user_icon.setImageBitmap(
         bitmapDownloader.getBitmap(cursor.getString(mugshotUrlColumnIndex), cursor.getString(mugshotMd5ColumnIndex))
     );
-
-    Network network = getNetwork();
-    if(null != network) {
-      long messageId = cursor.getLong(messageIdIndex);
-      if (network.lastMessageId < messageId) {
-        //TODO: Use Style Instead
-//        convertView.setBackgroundColor(Color.YELLOW);
-        this.lastMessageId = Math.max(messageId, network.lastMessageId);
-      }
-    }
-    
+   
     return convertView;
   }
 
-  public void onDoneDrawing() {
-    saveLastMessageId();
-  }
-  
-  private long lastMessageId = 0L;
-  
-  private void saveLastMessageId() {
-    Network network = getNetwork();
-    if(null != network && network.lastMessageId != lastMessageId) {
-      network.lastMessageId = lastMessageId;
-      getYammerData().save(network);
-    }
-  }
-  
-  private Network getNetwork() {
-    return getYammerData().getNetwork(getSettings().getCurrentNetworkId());
-  }
-
-  YammerData yammerData;
-  private YammerData getYammerData() {
-    if(null == this.yammerData) {
-      this.yammerData = new YammerData(context);
-    }
-    return this.yammerData;
-  }
-  
   SettingsEditor settings;
   private SettingsEditor getSettings() {
     if(null == this.settings) {
