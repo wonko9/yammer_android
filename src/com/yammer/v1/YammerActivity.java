@@ -251,6 +251,7 @@ public class YammerActivity extends Activity {
       } else if (YammerService.INTENT_CHANGE_NETWORK.equals(intent.getAction()) ) {
         
       } else if (YammerService.INTENT_CHANGE_FEED.equals(intent.getAction()) ) {
+        clearMessages();
         showHeaderForFeed(intent.getStringExtra(YammerService.EXTRA_FEED_NAME));
         
       } else if ( INTENT_NETWORK_ERROR_MINOR.equals(intent.getAction()) ) {
@@ -535,6 +536,11 @@ public class YammerActivity extends Activity {
     return (super.onOptionsItemSelected(item));  
   }
 
+  public void clearMessages() {
+    TweetListView view = (TweetListView) findViewById(R.id.tweet_list);
+    TweetListAdapter adapter = (TweetListAdapter)view.getAdapter();
+    adapter.getCursor().deactivate();
+  }
 
   public void updateListView() {
     if (DEBUG) Log.d(getClass().getName(), ".updateListView");
@@ -573,6 +579,7 @@ public class YammerActivity extends Activity {
             try {
               showLoadingAnimation(true);
               getYammerService().updateCurrentUserData();
+              clearMessages();
               getYammerService().clearMessages();
               getYammerService().getMessages(true);
             } finally {
