@@ -27,61 +27,56 @@ public class TweetListAdapter extends SimpleCursorAdapter {
 
   private static final boolean DEBUG = G.DEBUG;
 
-  private static String TAG_TWEETLISTADAPTER = "TWEETLISTADAPTER";
-
   // Single bitmap loader needed
   private static BitmapDownloader bitmapDownloader = null;
   LayoutInflater layoutInflater = null;
-  Context context = null;
+  Context mContext = null;
 
-  final String in_reply_to;
-  final String a_moment_ago;
-  final String one_minute_ago;
-  final String a_few_minutes_ago;
-  final String minutes_ago;
-  final String about_half_an_hour_ago;
-  final String about_an_hour_ago;
-  final String hours_ago;
-  final String days_ago;
+  String in_reply_to;
+  String a_moment_ago;
+  String one_minute_ago;
+  String a_few_minutes_ago;
+  String minutes_ago;
+  String about_half_an_hour_ago;
+  String about_an_hour_ago;
+  String hours_ago;
+  String days_ago;
 
 
-  final int messageIdIndex;
-  final int columnIndex;
-  final int fullNameColumnIndex;
-  final int emailColumnIndex;
-  final int replyeeEmailColumnIndex;
-  final int replyeeColumnIndex;
-  final int createdColumnIndex;
-  final int mugshotUrlColumnIndex;
-  final int mugshotMd5ColumnIndex;
+  int messageIdIndex;
+  int columnIndex;
+  int fullNameColumnIndex;
+  int emailColumnIndex;
+  int replyeeEmailColumnIndex;
+  int replyeeColumnIndex;
+  int createdColumnIndex;
+  int mugshotUrlColumnIndex;
+  int mugshotMd5ColumnIndex;
 
-  final SimpleDateFormat formatter;
+  SimpleDateFormat formatter;
 
   public TweetListAdapter(Context context, int layout, Cursor c, String[] from, int[] to) {
     super(context, layout, c, from, to);
-    if (DEBUG) Log.d(TAG_TWEETLISTADAPTER, "TweetListAdapter constructor");
-    // Retrieve view inflater
-    this.layoutInflater = LayoutInflater.from(context);
-    // Create bitmap downloader
+    if (DEBUG) Log.d(getClass().getName(), ".constructor");
+    this.mContext = context;
 
-    if ( bitmapDownloader == null ) {
-      bitmapDownloader = new BitmapDownloader(context);
-    }
-    // Store context
-    this.context = context;
+    ensureLayoutInflater();
+    ensureBitmapDownloader();
+    ensureTimestampFormatter();
+    prefetchStrings(context);
+    cacheColumnIndices();
+  }
 
-    // prefetch the strings used to build the view
-    in_reply_to = " " + context.getResources().getString(R.string.in_reply_to) + " ";
-    a_moment_ago = context.getResources().getString(R.string.a_moment_ago);
-    one_minute_ago = context.getResources().getString(R.string.one_minute_ago);
-    a_few_minutes_ago = context.getResources().getString(R.string.a_few_minutes_ago);
-    minutes_ago = context.getResources().getString(R.string.minutes_ago);
-    about_half_an_hour_ago = context.getResources().getString(R.string.about_half_an_hour_ago);
-    about_an_hour_ago = context.getResources().getString(R.string.about_an_hour_ago);
-    hours_ago = context.getResources().getString(R.string.hours_ago);
-    days_ago = context.getResources().getString(R.string.days_ago);
-    
-    // Cache column indexes
+  private void ensureTimestampFormatter() {
+    formatter = new SimpleDateFormat("MMMMM dd yyyy, HH:mm:ss");
+  }
+
+  private void ensureLayoutInflater() {
+    layoutInflater = LayoutInflater.from(mContext);
+  }
+
+  private void cacheColumnIndices() {
+    Cursor c = getCursor();
     messageIdIndex = c.getColumnIndex(Message.FIELD_MESSAGE_ID);
     columnIndex = c.getColumnIndex(Message.FIELD_MESSAGE);
     createdColumnIndex = c.getColumnIndex(Message.FIELD_TIMESTAMP);
@@ -91,9 +86,24 @@ public class TweetListAdapter extends SimpleCursorAdapter {
     replyeeColumnIndex = c.getColumnIndex(User.FIELD_REPLYEE_FULL_NAME);
     mugshotUrlColumnIndex = c.getColumnIndex(User.FIELD_MUGSHOT_URL);		
     mugshotMd5ColumnIndex = c.getColumnIndex(User.FIELD_MUGSHOT_MD5);
-    
-    // Cache formatter
-    formatter = new SimpleDateFormat("MMMMM dd yyyy, HH:mm:ss");
+  }
+
+  private void prefetchStrings(Context context) {
+    in_reply_to = " " + context.getResources().getString(R.string.in_reply_to) + " ";
+    a_moment_ago = context.getResources().getString(R.string.a_moment_ago);
+    one_minute_ago = context.getResources().getString(R.string.one_minute_ago);
+    a_few_minutes_ago = context.getResources().getString(R.string.a_few_minutes_ago);
+    minutes_ago = context.getResources().getString(R.string.minutes_ago);
+    about_half_an_hour_ago = context.getResources().getString(R.string.about_half_an_hour_ago);
+    about_an_hour_ago = context.getResources().getString(R.string.about_an_hour_ago);
+    hours_ago = context.getResources().getString(R.string.hours_ago);
+    days_ago = context.getResources().getString(R.string.days_ago);
+  }
+
+  private void ensureBitmapDownloader() {
+    if ( bitmapDownloader == null ) {
+      bitmapDownloader = new BitmapDownloader(mContext);
+    }
   }
 
   /**
@@ -172,7 +182,7 @@ public class TweetListAdapter extends SimpleCursorAdapter {
     // Full name still empty
     if ( fullName == null ) {
       // Assume name is unknown
-      fullName = context.getResources().getString(R.string.unknown);
+      fullName = mContext.getResources().getString(R.string.unknown);
     }
 
     // Get full name of replyee
@@ -258,7 +268,7 @@ public class TweetListAdapter extends SimpleCursorAdapter {
   SettingsEditor settings;
   private SettingsEditor getSettings() {
     if(null == this.settings) {
-      this.settings = new SettingsEditor(context);
+      this.settings = new SettingsEditor(mContext);
     }
     return this.settings;
   }
