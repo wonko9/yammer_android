@@ -37,6 +37,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.KeyEvent;
@@ -537,9 +538,17 @@ public class YammerActivity extends Activity {
   }
 
   public void clearMessages() {
-    TweetListView view = (TweetListView) findViewById(R.id.tweet_list);
-    TweetListAdapter adapter = (TweetListAdapter)view.getAdapter();
-    adapter.getCursor().deactivate();
+    new Handler(Looper.getMainLooper()).post(new Runnable() {
+      public void run() {
+        TweetListView view = (TweetListView) findViewById(R.id.tweet_list);
+        if(null != view) {
+          TweetListAdapter adapter = (TweetListAdapter)view.getAdapter();
+          if(null != adapter ) {
+            adapter.notifyDataSetInvalidated();
+          }
+        }
+      }
+    });
   }
 
   public void updateListView() {
@@ -1062,7 +1071,7 @@ public class YammerActivity extends Activity {
   }
 
   private void toastUser(final int _resId, final Object... _args) {
-    new Handler().post(new Runnable() {
+    new Handler(Looper.getMainLooper()).post(new Runnable() {
       public void run() {
         Toast.makeText(getApplicationContext(), String.format(getText(_resId).toString(), _args), Toast.LENGTH_LONG).show();
       }
