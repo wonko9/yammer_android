@@ -150,22 +150,6 @@ public class User extends Base {
     return new User(_obj, _following).save(_db);
   }
   
-  public static void each(SQLiteDatabase _db, String[] _cols, boolean _following, Block<User, Void> _block) {
-    if(DEBUG) Log.d(User.class.getName(), ".each()");
-    
-    String where = null;
-    if(_following) {
-      where = equalClause(FIELD_IS_FOLLOWING, "1");
-    }
-    
-    Cursor c = _db.query(TABLE_NAME, _cols, where, null, null, null, FIELD_FULL_NAME);
-    c.moveToFirst();
-    while(!c.isAfterLast()) {
-      _block.call(new User(c));
-    }
-    c.close();
-  }
-  
   public static void deleteAll(SQLiteDatabase _db) {
     if(DEBUG) Log.d(User.class.getName(), ".deleteAll()");
     _db.execSQL("DELETE FROM " + TABLE_NAME);
