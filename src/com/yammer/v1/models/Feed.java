@@ -78,32 +78,47 @@ public class Feed extends Base {
   }
   
   public static String[] getFeedNames(SQLiteDatabase _db, long _networkId) {
-    Cursor cur = _db.query(
-                    TABLE_NAME, 
-                    new String[] {FIELD_NAME}, 
-                    equalClause(FIELD_NETWORK_ID, _networkId),
-                    null, null, null, 
-                    FIELD_ORDER
-                 );
-    String[] names = new String[cur.getCount()]; 
-    cur.moveToFirst();
-    for (int ii=0 ; ii < names.length ; ii++) {
-      names[ii] = cur.getString(0);
-      cur.moveToNext();
+    Cursor cur = null;
+    try {
+      cur = _db.query(
+                      TABLE_NAME, 
+                      new String[] {FIELD_NAME}, 
+                      equalClause(FIELD_NETWORK_ID, _networkId),
+                      null, null, null, 
+                      FIELD_ORDER
+                   );
+      String[] names = new String[cur.getCount()]; 
+      cur.moveToFirst();
+      for (int ii=0 ; ii < names.length ; ii++) {
+        names[ii] = cur.getString(0);
+        cur.moveToNext();
+      }
+      
+      return names;
+    } finally {
+      if(null != cur) {
+        cur.close();
+      }
     }
-    cur.close();
-    return names;
+    
   }
   
   public static String getURLForFeed(SQLiteDatabase _db, long _networkId, String _name) {
-    Cursor cur = _db.query(
-                    TABLE_NAME, 
-                    new String[] {FIELD_URL},
-                    equalClause(FIELD_NETWORK_ID, _networkId) + " AND " + equalClause(FIELD_NAME, _name),
-                    null, null, null, null
-                  );
-    cur.moveToFirst();
-    return cur.getString(cur.getColumnIndex(FIELD_URL));
+    Cursor cur = null;
+    try {
+      cur = _db.query(
+                      TABLE_NAME, 
+                      new String[] {FIELD_URL},
+                      equalClause(FIELD_NETWORK_ID, _networkId) + " AND " + equalClause(FIELD_NAME, _name),
+                      null, null, null, null
+                    );
+      cur.moveToFirst();
+      return cur.getString(cur.getColumnIndex(FIELD_URL));
+    } finally {
+      if(null != cur) {
+        cur.close();
+      }
+    }
   }
 
   public static void deleteAll(SQLiteDatabase _db) {

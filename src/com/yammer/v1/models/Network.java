@@ -98,26 +98,37 @@ public class Network extends Base {
   }
   
   public static Network findByNetworkId(SQLiteDatabase _db, long _id) {
-    Cursor cur = _db.query(TABLE_NAME, columns, equalClause(FIELD_NETWORK_ID, _id), null, null, null, null, "1");
+    Cursor cur = null;
     try { 
+      cur = _db.query(TABLE_NAME, columns, equalClause(FIELD_NETWORK_ID, _id), null, null, null, null, "1");
       if(0 == cur.getCount()) return null;
       cur.moveToFirst();
+      
       return new Network(cur);
     } finally {
-      cur.close();
+      if(null != cur) {
+        cur.close();
+      }
     }
   }
 
   public static Network[] getAll(SQLiteDatabase _db) {
-    Cursor cur = _db.query(TABLE_NAME, columns, null, null, null, null, FIELD_NAME);
-    Network[] networks = new Network[cur.getCount()]; 
-    cur.moveToFirst();
-    for (int ii=0 ; ii < networks.length ; ii++) {
-      networks[ii] = new Network(cur);
-      cur.moveToNext();
+    Cursor cur = null;
+    try {
+      cur = _db.query(TABLE_NAME, columns, null, null, null, null, FIELD_NAME);
+      Network[] networks = new Network[cur.getCount()]; 
+      cur.moveToFirst();
+      for (int ii=0 ; ii < networks.length ; ii++) {
+        networks[ii] = new Network(cur);
+        cur.moveToNext();
+      }
+      
+      return networks;
+    } finally {
+      if(null != cur) {
+        cur.close();
+      }
     }
-    cur.close();
-    return networks;
   }
   
 

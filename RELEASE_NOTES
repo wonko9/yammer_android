@@ -5,6 +5,7 @@
   Added code to clean message list before switching feeds.
   Removed unused methods
   Fixed CalledFromWrongThreadException
+  Improved cursor management.
 
 2010-06-03
   Bumped versionName to: 1.3.6

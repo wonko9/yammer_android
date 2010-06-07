@@ -176,17 +176,23 @@ public class YammerActivity extends Activity {
               long rowId = row;
               String sql = "select _id, message_id from messages where " + _ID + "=" + rowId;
               SQLiteDatabase db = getYammerService().getYammerData().getReadableDatabase();
-              Cursor c = db.rawQuery(sql, null);
-              c.moveToFirst();
-              // Just show the reply activity 
-              Intent i = new Intent(YammerActivity.this, YammerReply.class);
-              // Post the message ID being replied upon along with the intent
-              int columnIndex = c.getColumnIndex(Message.FIELD_MESSAGE_ID);
-              if (DEBUG) Log.d(getClass().getName(), "columnIndex: " + columnIndex);
-              long messageId = c.getLong(columnIndex);
-              i.putExtra("messageId", messageId);
-              startActivityForResult(i, YAMMER_REPLY_CREATE);
-              c.close();
+              Cursor c = null;
+              try { 
+                c = db.rawQuery(sql, null);
+                c.moveToFirst();
+                // Just show the reply activity 
+                Intent i = new Intent(YammerActivity.this, YammerReply.class);
+                // Post the message ID being replied upon along with the intent
+                int columnIndex = c.getColumnIndex(Message.FIELD_MESSAGE_ID);
+                if (DEBUG) Log.d(getClass().getName(), "columnIndex: " + columnIndex);
+                long messageId = c.getLong(columnIndex);
+                i.putExtra("messageId", messageId);
+                startActivityForResult(i, YAMMER_REPLY_CREATE);
+              } finally {
+                if(null != c) {
+                  c.close();
+                }
+              }
               
             } else if(getSettings().isMessageClickMenu()) {
               if(null != view.getParent()) {
@@ -623,67 +629,72 @@ public class YammerActivity extends Activity {
     // YammerData().getUser(message.userId);
     String sql = "select messages._id, messages.message, messages.message_id, messages.user_id, users.full_name, users.is_following, urls.url from messages join users on messages.user_id=users.user_id left join urls on messages.message_id=urls.message_id where messages." + _ID + "=" + info.id;
     SQLiteDatabase db = getYammerService().getYammerData().getReadableDatabase();
-    Cursor c = db.rawQuery(sql, null);
-    c.moveToFirst();
-    
-    if (DEBUG) Log.d(getClass().getName(), "c.getCount(): " + c.getCount());
-    if(0 == c.getCount()) {
-      c.close();
-      toastUser(R.string.no_message_selected);
-      return;
-    }
-    
-    long userId = c.getLong(c.getColumnIndex(User.FIELD_USER_ID));
-    String message = c.getString(c.getColumnIndex(Message.FIELD_MESSAGE));
-    //menu.setHeaderTitle(R.string.popup_title_label);
-    // Is this my own message?
-    boolean myself = false;
-    //TODO: don't call getYammerService().getCurrentUserId()
-    if ( userId == getYammerService().getCurrentUserId() ) {
-      myself = true;
-    }
-    // Start building the menu
-    menu.setHeaderTitle(message);   
-    menu.setHeaderIcon(R.drawable.yammer_logo_small);
-    // For version 1.1
-    //menu.add(0, MENU_VIEW_MESSAGE, ContextMenu.NONE, R.string.view_message_label);
-    // For version 1.2
-    //menu.add(0, MENU_VIEW_THREAD, ContextMenu.NONE, R.string.view_thread_label);
-    menu.add(0, MENU_REPLY, ContextMenu.NONE, R.string.reply_label);
-    // I don't want to be able to follow myself
-    if ( !myself ) {
-      String fullName = c.getString(c.getColumnIndex(User.FIELD_FULL_NAME));
-      if ( 0 == c.getInt(c.getColumnIndex(User.FIELD_IS_FOLLOWING)) ) {
-        menu.add(0, MENU_FOLLOW, ContextMenu.NONE, getResources().getString(R.string.follow_label) + " " + fullName);
-      } else {	            
-        menu.add(0, MENU_UNFOLLOW, ContextMenu.NONE, getResources().getString(R.string.unfollow_label) + " " + fullName);
+    Cursor c = null;
+    try { 
+      c = db.rawQuery(sql, null);
+      c.moveToFirst();
+      
+      if (DEBUG) Log.d(getClass().getName(), "c.getCount(): " + c.getCount());
+      if(0 == c.getCount()) {
+        toastUser(R.string.no_message_selected);
+        return;
       }
-    } else {
-      menu.add(0, MENU_DELETE, ContextMenu.NONE, R.string.delete_label).setIcon(R.drawable.yammer_logo_small);
-    }
-
-    // Submenu for URLs
-    //Menu urlSubMenu = null;
-    // Add any URL's that may have been enclosed in the message
-    int columnIndex = c.getColumnIndex(URL.FIELD_URL);
-    for ( int i=0; i<c.getCount(); i++) {
-      String url = c.getString(columnIndex);
-      // No URLs in this post, so break	
-      if ( url == null ) {
-        break;
+    
+      long userId = c.getLong(c.getColumnIndex(User.FIELD_USER_ID));
+      String message = c.getString(c.getColumnIndex(Message.FIELD_MESSAGE));
+      //menu.setHeaderTitle(R.string.popup_title_label);
+      // Is this my own message?
+      boolean myself = false;
+      //TODO: don't call getYammerService().getCurrentUserId()
+      if ( userId == getYammerService().getCurrentUserId() ) {
+        myself = true;
       }
-      // Add submenu on first URL fetched
-      //if ( i == 0 ) {
-      //	urlSubMenu = menu.addSubMenu("URLs");            	
-      //}
-      if (DEBUG) Log.d(getClass().getName(), "URL: " + url);
-      Intent browserLaunchUrlIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-      menu.add(0, MENU_URL, ContextMenu.NONE, getResources().getString(R.string.url_icon)+url)
-      .setIntent(browserLaunchUrlIntent);        	
-      c.moveToNext();
+      // Start building the menu
+      menu.setHeaderTitle(message);   
+      menu.setHeaderIcon(R.drawable.yammer_logo_small);
+      // For version 1.1
+      //menu.add(0, MENU_VIEW_MESSAGE, ContextMenu.NONE, R.string.view_message_label);
+      // For version 1.2
+      //menu.add(0, MENU_VIEW_THREAD, ContextMenu.NONE, R.string.view_thread_label);
+      menu.add(0, MENU_REPLY, ContextMenu.NONE, R.string.reply_label);
+      // I don't want to be able to follow myself
+      if ( !myself ) {
+        String fullName = c.getString(c.getColumnIndex(User.FIELD_FULL_NAME));
+        if ( 0 == c.getInt(c.getColumnIndex(User.FIELD_IS_FOLLOWING)) ) {
+          menu.add(0, MENU_FOLLOW, ContextMenu.NONE, getResources().getString(R.string.follow_label) + " " + fullName);
+        } else {	            
+          menu.add(0, MENU_UNFOLLOW, ContextMenu.NONE, getResources().getString(R.string.unfollow_label) + " " + fullName);
+        }
+      } else {
+        menu.add(0, MENU_DELETE, ContextMenu.NONE, R.string.delete_label).setIcon(R.drawable.yammer_logo_small);
+      }
+  
+      // Submenu for URLs
+      //Menu urlSubMenu = null;
+      // Add any URL's that may have been enclosed in the message
+      int columnIndex = c.getColumnIndex(URL.FIELD_URL);
+      for ( int i=0; i<c.getCount(); i++) {
+        String url = c.getString(columnIndex);
+        // No URLs in this post, so break	
+        if ( url == null ) {
+          break;
+        }
+        // Add submenu on first URL fetched
+        //if ( i == 0 ) {
+        //	urlSubMenu = menu.addSubMenu("URLs");            	
+        //}
+        if (DEBUG) Log.d(getClass().getName(), "URL: " + url);
+        Intent browserLaunchUrlIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        menu.add(0, MENU_URL, ContextMenu.NONE, getResources().getString(R.string.url_icon)+url)
+        .setIntent(browserLaunchUrlIntent);        	
+        c.moveToNext();
+      }
+      
+    } finally {
+      if(null != c) {
+        c.close();
+      }
     }
-    // Done using the cursor, so close it
-    c.close();
   }
 
   public boolean onContextItemSelected(MenuItem item) {		
@@ -695,102 +706,111 @@ public class YammerActivity extends Activity {
       if ( info == null ) {
         return false;
       }
+      
       // Get the row ID for the item clicked
       long rowId = info.id;
       String sql = "select _id, user_id, message_id from messages where " + _ID + "=" + rowId;
       SQLiteDatabase db = getYammerService().getYammerData().getReadableDatabase();
-      Cursor c = db.rawQuery(sql, null);
-      c.moveToFirst();	
-      // Retrieve the message ID og the message clicked on
-      int columnIndex = c.getColumnIndex(Message.FIELD_MESSAGE_ID);
-      if (DEBUG) Log.d(getClass().getName(), "columnIndex: " + columnIndex);
-      final long messageId = c.getLong(columnIndex);
-      columnIndex = c.getColumnIndex(User.FIELD_USER_ID);
-      final long userId = c.getLong(columnIndex);
-      // Which item was selected
-      switch ( item.getItemId() ) {
-
-      case MENU_VIEW_MESSAGE:
-        if (DEBUG) Log.d(getClass().getName(), "MENU_VIEW_MESSAGE selected");
-        break;
-      case MENU_VIEW_THREAD:
-        if (DEBUG) Log.d(getClass().getName(), "MENU_VIEW_THREAD selected");				
-        break;
-      case MENU_REPLY:
-        if (DEBUG) Log.d(getClass().getName(), "MENU_REPLY selected");				
-        // Start the reply activity
-        Intent i = new Intent(this, YammerReply.class);
-        i.putExtra("messageId", messageId);
-        startActivityForResult(i, YAMMER_REPLY_CREATE);        
-        break;
-      case MENU_DELETE:
-        if (DEBUG) Log.d(getClass().getName(), "MENU_DELETE selected");
-        // Delete the item from the database
-        // Send delete request to the database
-        new Thread(
-            new Runnable() {
-              public void run() {
-                if (DEBUG) Log.d(getClass().getName(), "Deleting message with ID " + messageId);
-                try {
-                  showLoadingAnimation(true);
-                  getYammerService().deleteMessage(messageId);
-                } catch (YammerProxy.YammerProxyException e) {
-                  // TODO Auto-generated catch block
-                  e.printStackTrace();
-                } finally {
-                  showLoadingAnimation(false);									
+      Cursor c = null;
+      try {
+        c = db.rawQuery(sql, null);
+        c.moveToFirst();	
+        // Retrieve the message ID og the message clicked on
+        int columnIndex = c.getColumnIndex(Message.FIELD_MESSAGE_ID);
+        if (DEBUG) Log.d(getClass().getName(), "columnIndex: " + columnIndex);
+        final long messageId = c.getLong(columnIndex);
+        columnIndex = c.getColumnIndex(User.FIELD_USER_ID);
+        final long userId = c.getLong(columnIndex);
+      
+        // Which item was selected
+        switch ( item.getItemId() ) {
+  
+        case MENU_VIEW_MESSAGE:
+          if (DEBUG) Log.d(getClass().getName(), "MENU_VIEW_MESSAGE selected");
+          break;
+        case MENU_VIEW_THREAD:
+          if (DEBUG) Log.d(getClass().getName(), "MENU_VIEW_THREAD selected");				
+          break;
+        case MENU_REPLY:
+          if (DEBUG) Log.d(getClass().getName(), "MENU_REPLY selected");				
+          // Start the reply activity
+          Intent i = new Intent(this, YammerReply.class);
+          i.putExtra("messageId", messageId);
+          startActivityForResult(i, YAMMER_REPLY_CREATE);        
+          break;
+        case MENU_DELETE:
+          if (DEBUG) Log.d(getClass().getName(), "MENU_DELETE selected");
+          // Delete the item from the database
+          // Send delete request to the database
+          new Thread(
+              new Runnable() {
+                public void run() {
+                  if (DEBUG) Log.d(getClass().getName(), "Deleting message with ID " + messageId);
+                  try {
+                    showLoadingAnimation(true);
+                    getYammerService().deleteMessage(messageId);
+                  } catch (YammerProxy.YammerProxyException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                  } finally {
+                    showLoadingAnimation(false);									
+                  }
+                  if (DEBUG) Log.d(getClass().getName(), "Message with ID " + messageId + " deleted!");
                 }
-                if (DEBUG) Log.d(getClass().getName(), "Message with ID " + messageId + " deleted!");
-              }
-            }).start();
-        break;
-      case MENU_FOLLOW:
-        if (DEBUG) Log.d(getClass().getName(), "MENU_FOLLOW selected");
-        new Thread(
-            new Runnable() {
-              public void run() {
-                // Delete it from the server
-                if (DEBUG) Log.d(getClass().getName(), "Following user with ID " + userId);
-                try {
-                  showLoadingAnimation(true);
-                  getYammerService().followUser(userId);
-                } catch (YammerProxy.YammerProxyException e) {
-                  // TODO Auto-generated catch block
-                  e.printStackTrace();
-                } finally {
-                  showLoadingAnimation(false);									
+              }).start();
+          break;
+        case MENU_FOLLOW:
+          if (DEBUG) Log.d(getClass().getName(), "MENU_FOLLOW selected");
+          new Thread(
+              new Runnable() {
+                public void run() {
+                  // Delete it from the server
+                  if (DEBUG) Log.d(getClass().getName(), "Following user with ID " + userId);
+                  try {
+                    showLoadingAnimation(true);
+                    getYammerService().followUser(userId);
+                  } catch (YammerProxy.YammerProxyException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                  } finally {
+                    showLoadingAnimation(false);									
+                  }
+                  if (DEBUG) Log.d(getClass().getName(), "User with ID " + userId + " followed!");
                 }
-                if (DEBUG) Log.d(getClass().getName(), "User with ID " + userId + " followed!");
-              }
-            }).start();
-        break;
-      case MENU_UNFOLLOW:
-        if (DEBUG) Log.d(getClass().getName(), "MENU_UNFOLLOW selected");
-        new Thread(
-            new Runnable() {
-              public void run() {
-                // Delete it from the server
-                if (DEBUG) Log.d(getClass().getName(), "Unfollowing user with ID " + userId);
-                try {
-                  showLoadingAnimation(true);
-                  getYammerService().unfollowUser(userId);
-                } catch (YammerProxy.YammerProxyException e) {
-                  // TODO Auto-generated catch block
-                  e.printStackTrace();
-                } finally {
-                  showLoadingAnimation(false);									
+              }).start();
+          break;
+        case MENU_UNFOLLOW:
+          if (DEBUG) Log.d(getClass().getName(), "MENU_UNFOLLOW selected");
+          new Thread(
+              new Runnable() {
+                public void run() {
+                  // Delete it from the server
+                  if (DEBUG) Log.d(getClass().getName(), "Unfollowing user with ID " + userId);
+                  try {
+                    showLoadingAnimation(true);
+                    getYammerService().unfollowUser(userId);
+                  } catch (YammerProxy.YammerProxyException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                  } finally {
+                    showLoadingAnimation(false);									
+                  }
+                  if (DEBUG) Log.d(getClass().getName(), "User with ID " + userId + " unfollowed!");
                 }
-                if (DEBUG) Log.d(getClass().getName(), "User with ID " + userId + " unfollowed!");
-              }
-            }).start();
-        break;
-      case MENU_URL:
-        Intent intent = item.getIntent();
-        this.startActivity(intent);
-        break;
+              }).start();
+          break;
+        case MENU_URL:
+          Intent intent = item.getIntent();
+          this.startActivity(intent);
+          break;
+        }
+        
+      } finally {
+        if(null != c) {
+          c.close();
+        } 
       }
-      // Close the cursor
-      c.close();
+      
       // Return true to consume
       return true;
 
