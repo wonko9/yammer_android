@@ -20,7 +20,6 @@ public class Message extends Base {
 
   public static final String TABLE_NAME = "messages";
   
-  public static final String FIELD_TABLE_MESSAGES = "messages";
   public static final String FIELD_USER_ID = User.FIELD_USER_ID;
   public static final String FIELD_MESSAGE_ID = "message_id";
   public static final String FIELD_MESSAGE = "message";
@@ -32,6 +31,20 @@ public class Message extends Base {
   public static final String FIELD_CREATED_AT = "created_at";
   public static final String FIELD_NETWORK_ID = Network.FIELD_NETWORK_ID;
   public static final String FIELD_DELETED = "deleted";
+
+  private static final String[] columns = new String[] {
+    FIELD_USER_ID,
+    FIELD_MESSAGE_ID,
+    FIELD_MESSAGE,
+    FIELD_TIMESTAMP,
+    FIELD_SENDER_TYPE,
+    FIELD_THREAD_ID,
+    FIELD_CLIENT_TYPE,
+    FIELD_REPLIED_TO_ID,
+    FIELD_CREATED_AT,
+    FIELD_NETWORK_ID,
+    FIELD_DELETED,
+  };
 
   public long userId;
   public long messageId;
@@ -71,6 +84,20 @@ public class Message extends Base {
         if (DEBUG) Log.d(getClass().getName(), "Extracted URL: " + this.urls[ii]);
       }
     }
+  }
+
+  public Message(Cursor _cur) {
+    userId = _cur.getLong(_cur.getColumnIndex(FIELD_USER_ID));
+    messageId = _cur.getLong(_cur.getColumnIndex(FIELD_MESSAGE_ID));
+    message = _cur.getString(_cur.getColumnIndex(FIELD_MESSAGE));
+    timestamp = new Date(_cur.getLong(_cur.getColumnIndex(FIELD_TIMESTAMP)));
+    senderType = _cur.getString(_cur.getColumnIndex(FIELD_SENDER_TYPE));
+    threadId = _cur.getLong(_cur.getColumnIndex(FIELD_THREAD_ID));
+    clientType = _cur.getString(_cur.getColumnIndex(FIELD_CLIENT_TYPE));
+    repliedToId = _cur.getLong(_cur.getColumnIndex(FIELD_REPLIED_TO_ID));
+    createdAt = _cur.getString(_cur.getColumnIndex(FIELD_CREATED_AT));
+    networkId = _cur.getLong(_cur.getColumnIndex(FIELD_NETWORK_ID));
+    deleted = (1 == _cur.getInt(_cur.getColumnIndex(FIELD_DELETED)));
   }
 
   private ContentValues toValues() {
@@ -154,6 +181,23 @@ public class Message extends Base {
       }
     }
   } 
+
+  public static Message findById(SQLiteDatabase _db, long _id) {
+    Cursor c = null;
+    try {
+      c = _db.query(TABLE_NAME, columns, _ID + "=" + _id, null, null, null, null);
+      c.moveToFirst();
+      if(0 == c.getCount()) {
+        return null;
+      } else {
+        return new Message(c);
+      }
+    } finally {
+      if(null != c) {
+        c.close();
+      }
+    }
+  }
 
   public static Message create(SQLiteDatabase _db, JSONObject _obj, long _netoworkId) throws JSONException {
     return new Message(_obj, _netoworkId).save(_db);

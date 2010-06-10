@@ -173,25 +173,13 @@ public class YammerActivity extends Activity {
             
             if(getSettings().isMessageClickReply()) {
               if (DEBUG) Log.d(getClass().getName(), "Replying to message");
-              long rowId = row;
-              String sql = "select _id, message_id from messages where " + _ID + "=" + rowId;
-              SQLiteDatabase db = getYammerService().getYammerData().getReadableDatabase();
-              Cursor c = null;
-              try { 
-                c = db.rawQuery(sql, null);
-                c.moveToFirst();
-                // Just show the reply activity 
-                Intent i = new Intent(YammerActivity.this, YammerReply.class);
-                // Post the message ID being replied upon along with the intent
-                int columnIndex = c.getColumnIndex(Message.FIELD_MESSAGE_ID);
-                if (DEBUG) Log.d(getClass().getName(), "columnIndex: " + columnIndex);
-                long messageId = c.getLong(columnIndex);
-                i.putExtra("messageId", messageId);
-                startActivityForResult(i, YAMMER_REPLY_CREATE);
-              } finally {
-                if(null != c) {
-                  c.close();
-                }
+              Message message = getYammerService().getYammerData().getMessage(row);
+              if(null == message) {
+                YammerActivity.this.toastUser(R.string.no_message_selected);
+              } else {
+                Intent intent = new Intent(YammerActivity.this, YammerReply.class);
+                intent.putExtra("messageId", message.messageId);
+                startActivityForResult(intent, YAMMER_REPLY_CREATE);
               }
               
             } else if(getSettings().isMessageClickMenu()) {

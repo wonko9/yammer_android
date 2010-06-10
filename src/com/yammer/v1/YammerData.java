@@ -90,6 +90,9 @@ public class YammerData extends SQLiteOpenHelper {
     _value.save(getWritableDatabase());
   }
 
+  public Message getMessage(long _id) {
+    return Message.findById(getReadableDatabase(), _id);
+  }
   /**
    * Get the highest message ID in the messages table
    * @param networkId
