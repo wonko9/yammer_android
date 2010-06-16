@@ -8,7 +8,7 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 
-public class YammerShare extends YammerReply {
+public class YammerShare extends YammerReplyActivity {
 
 	private CharSequence url = null;	
 	

@@ -16,9 +16,9 @@ import android.view.View.OnKeyListener;
 import android.widget.Button;
 import android.widget.EditText;
 
-public class YammerReply extends Activity {
-	
-	private static String TAG_YREPLY = "YREPLY";
+public class YammerReplyActivity extends Activity {
+  
+  private static boolean DEBUG = G.DEBUG;
 	
 	/**
 	 * Activity being created
@@ -26,7 +26,7 @@ public class YammerReply extends Activity {
 	@Override
 	public void onCreate(Bundle bundle) {
 		super.onCreate(bundle);
-		if (G.DEBUG) Log.d(TAG_YREPLY, "YammerReply::onCreate");
+		if (DEBUG) Log.d(getClass().getName(), ".onCreate");
 		setTheme(android.R.style.Theme_Translucent_NoTitleBar);
 		// Make sure that the background is blurred behind the activity
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND, WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
@@ -45,18 +45,18 @@ public class YammerReply extends Activity {
 		// Set the default result to cancel
 		setResult(-1);
 		// Hide the Yammer logo
-		findViewById(R.id.share_logo).setVisibility(View.GONE);
+//		findViewById(R.id.share_logo).setVisibility(View.GONE);
 	}
 
 	@Override
 	public void onStart() {
-		if (G.DEBUG) Log.d(TAG_YREPLY, "YammerReply::onStart");
+		if (DEBUG) Log.d(getClass().getName(), ".onStart");
 		super.onStart();
 	}
 	
 	@Override
 	public void onResume() {
-		if (G.DEBUG) Log.d(TAG_YREPLY, "YammerReply::onResume");
+		if (DEBUG) Log.d(getClass().getName(), ".onResume");
 		super.onResume();
 		// Set reply button state
 		setReplyButtonState();
@@ -67,7 +67,7 @@ public class YammerReply extends Activity {
 		EditText replyEdit = (EditText)findViewById(R.id.reply_edit);
 		Button replyButton = (Button)findViewById(R.id.reply_post);
 		String reply = replyEdit.getText().toString();
-		//if (G.DEBUG) Log.d(TAG_YREPLY, "reply.length()="+reply.length());
+		if (DEBUG) Log.d(getClass().getName(), "reply.length()="+reply.length());
 		if ( reply.length() > 0 ) {
 			replyButton.setEnabled(true);
 		} else {
@@ -93,7 +93,7 @@ public class YammerReply extends Activity {
 	 */
 	private OnClickListener onCancelListener = new OnClickListener() {
 		public void onClick(View v) {
-			if (G.DEBUG) Log.d(TAG_YREPLY, "Cancel clicked");
+			if (DEBUG) Log.d(getClass().getName(), "Cancel clicked");
 			// Destroy with -1 as result. I.e. cancel
 			setResult(-1);
 			finish();
@@ -105,13 +105,13 @@ public class YammerReply extends Activity {
 	 */
 	protected OnClickListener onReplyListener = new OnClickListener() {
 		public void onClick(View v) {
-			if (G.DEBUG) Log.d(TAG_YREPLY, "YammerReply::onClick");
+			if (DEBUG) Log.d(getClass().getName(), ".onClick");
 			// Get the reply from the edit box
 			EditText replyEdit = (EditText)findViewById(R.id.reply_edit);
 			String reply = replyEdit.getText().toString(); 
 			// Retrieve the message ID
 			long messageId = getIntent().getLongExtra("messageId", 0);
-			if (G.DEBUG) Log.d(TAG_YREPLY, "Replying to message with ID: " + messageId);
+			if (DEBUG) Log.d(getClass().getName(), "Replying to message with ID: " + messageId);
 			// Respond with the reply text
 			Intent result = new Intent();
 			result.putExtra("reply", reply);

@@ -177,7 +177,7 @@ public class YammerActivity extends Activity {
               if(null == message) {
                 YammerActivity.this.toastUser(R.string.no_message_selected);
               } else {
-                Intent intent = new Intent(YammerActivity.this, YammerReply.class);
+                Intent intent = new Intent(YammerActivity.this, YammerReplyActivity.class);
                 intent.putExtra("messageId", message.messageId);
                 startActivityForResult(intent, YAMMER_REPLY_CREATE);
               }
@@ -722,7 +722,7 @@ public class YammerActivity extends Activity {
         case MENU_REPLY:
           if (DEBUG) Log.d(getClass().getName(), "MENU_REPLY selected");				
           // Start the reply activity
-          Intent i = new Intent(this, YammerReply.class);
+          Intent i = new Intent(this, YammerReplyActivity.class);
           i.putExtra("messageId", messageId);
           startActivityForResult(i, YAMMER_REPLY_CREATE);        
           break;

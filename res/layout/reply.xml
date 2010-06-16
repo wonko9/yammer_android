@@ -2,25 +2,28 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-	android:gravity="center">
+    android:layout_height="wrap_content"
+	android:gravity="top">
+	<ImageView
+		android:id="@+id/share_logo"
+		android:layout_height="wrap_content" 
+		android:layout_width="wrap_content"
+		android:paddingRight="202px"
+		android:src="@drawable/yammer_logo_medium"
+		android:layout_centerInParent="true"
+		android:gravity="top"
+		/>
 	<EditText
 		android:id="@+id/reply_edit"
 		android:layout_height="150sp"
 		android:paddingTop="5px"
 		android:layout_marginRight="10sp"
 		android:layout_marginLeft="10sp"
-		android:gravity="top" android:layout_centerInParent="true" android:layout_width="250px"/>
-	<ImageView
-		android:id="@+id/share_logo"
-		android:layout_height="wrap_content" 
-		android:layout_width="wrap_content"
-		android:layout_above="@id/reply_edit"
-		android:paddingRight="202px"
-		android:src="@drawable/yammer_logo_medium"
+		android:layout_below="@id/share_logo"
+		android:gravity="top"
 		android:layout_centerInParent="true"
-		android:gravity="left"
-		/>
+		android:layout_width="250px"
+	/>
 	<LinearLayout
 	    android:layout_width="fill_parent"
 	    android:layout_height="wrap_content"
@@ -42,5 +45,5 @@
 		android:layout_height="wrap_content"
 		android:text="@string/reply_label"
 		/>
-</LinearLayout>
+  </LinearLayout>
 </RelativeLayout>
